@@ -1,7 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import { NavLink } from 'react-router-dom';
-const modeLogo = require('../common_images/mode-logo-dark.svg');
-
+import LoginHeader from '../components/LoginHeader';
 interface LoginState {
     inputState: string;
     emailValid: boolean;
@@ -30,11 +29,7 @@ export class Login extends Component<LoginProps, LoginState> {
     render() {
         return (
             <Fragment>
-                <div className="login-header">
-                    <img src={modeLogo} className="login-mode-logo" />
-                    <h1 className="title">MODE SENSOR CLOUD</h1>
-                    <hr />
-                </div>
+                <LoginHeader />
                 <div className="login-section">
                     <h1 className="title">Welcome Back!</h1>
                     <p id="login-text">Your sensor data is just one log-in away</p>
@@ -64,7 +59,7 @@ export class Login extends Component<LoginProps, LoginState> {
                         </p>
                         <p>or</p>
                         <NavLink 
-                            to="/email_reset_password" 
+                            to="/reset_password" 
                             className="navlinks"
                         >Forgot Password?
                         </NavLink>

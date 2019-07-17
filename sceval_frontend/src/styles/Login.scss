@@ -1,37 +1,7 @@
 @import 'variables.scss';
 
-.login-header {
-    padding-left: 30px;
-    padding-right: 30px;
-    margin-top: 0;
-    margin-bottom: 0;
-    padding-top: 10;
-    padding-bottom: 20px;
-    border: 0 none;
-    border-bottom: 0 none;
-    margin-top: 25px;
-    text-align: center;
-
-    .login-mode-logo {
-        width: 58px;
-        height: auto;    
-    }
-
-    hr {
-        border-color: #d8d8d8;
-        margin-left: 40px;
-        margin-right: 40px;
-        margin-top: 20px;
-        margin-bottom: 20px;
-        border: 0;
-        border-top: 1px solid #eee;
-        box-sizing: content-box;
-    }
-}
-
 .title {
     font-family: $font-family;
-    text-transform: uppercase;
     display: block;
     flex-flow: row wrap;
     font-size: 24px;
@@ -41,7 +11,7 @@
     letter-spacing: 0.4px;
 }
 
-.login-section {
+.login-section, .pass-reset-section, .register-section {
     text-align: center;
     .form-group {
         margin-top: 15px;
@@ -90,11 +60,17 @@
     opacity: 0.5;
 }
 
-.dont-have-account {
+.dont-have-account, .agreement-account-status {
     margin-top: 40px;
     .navlinks {
         text-decoration: none;
         color: $base-turquoise;
     }
+}
+
+.agreement-account-status {
+    display: inline;
+    text-align: center;
+    max-width: 500px;
 }
 

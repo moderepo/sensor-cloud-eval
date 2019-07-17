@@ -1,0 +1,30 @@
+@import 'variables.scss';
+
+.login-header {
+    padding-left: 30px;
+    padding-right: 30px;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 10;
+    padding-bottom: 20px;
+    border: 0 none;
+    border-bottom: 0 none;
+    margin-top: 25px;
+    text-align: center;
+
+    .login-mode-logo {
+        width: 58px;
+        height: auto;    
+    }
+
+    hr {
+        border-color: #d8d8d8;
+        margin-left: 40px;
+        margin-right: 40px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        border: 0;
+        border-top: 1px solid #eee;
+        box-sizing: content-box;
+    }
+}
