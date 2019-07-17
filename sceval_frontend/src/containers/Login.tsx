@@ -3,8 +3,8 @@ import { NavLink } from 'react-router-dom';
 const modeLogo = require('../common_images/mode-logo-dark.svg');
 
 interface LoginState {
+    inputState: string;
     emailValid: boolean;
-    submitted: boolean;
 }
 
 interface LoginProps {}
@@ -12,9 +12,20 @@ export class Login extends Component<LoginProps, LoginState> {
     constructor(props: any) {
         super(props);
         this.state = {
+            inputState: '',
             emailValid: false,
-            submitted: false
         };
+    }
+
+    validateEmail (event: React.ChangeEvent<HTMLInputElement>): void {
+        const input = event.target.value;
+        const re = /\S+@\S+\.\S+/;
+        this.setState(() =>  {
+            return {
+                inputState: input,
+                emailValid: re.test(input)
+            };
+        });
     }
     render() {
         return (
@@ -29,6 +40,7 @@ export class Login extends Component<LoginProps, LoginState> {
                     <p id="login-text">Your sensor data is just one log-in away</p>
                     <form className="form-group">
                         <input 
+                            onChange={event => this.validateEmail(event)}
                             type="email" 
                             className="form-control"
                         />
