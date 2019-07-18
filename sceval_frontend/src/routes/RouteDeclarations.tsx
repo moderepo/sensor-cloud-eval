@@ -2,9 +2,10 @@ import * as React from 'react';
 import { Route, Redirect } from 'react-router-dom';
 import { Login, ResetPassword, Register } from '../containers/index';
 export interface RouteDeclarationsProps {
-  isLoggedIn: boolean;
   isSavedLoginPresent: boolean;
-  isAdmin: boolean;
+  isLoggedIn: boolean;
+  isAuthenticated: boolean;
+  onLogin: () => void;
 }
 
 export enum RouteKeys {
@@ -35,7 +36,10 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
           path="/login"
           component={() => (
             <>
-              <Login />
+              <Login
+                isLoggedIn={this.props.isLoggedIn}
+                onLogIn={this.props.onLogin}
+              />
             </>
           )}
         />

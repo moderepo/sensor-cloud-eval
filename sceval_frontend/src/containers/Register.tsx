@@ -1,6 +1,9 @@
 import React, { Component, Fragment } from 'react';
 import LoginHeader from '../components/LoginHeader';
 import { NavLink } from 'react-router-dom';
+import { AxiosRequestConfig, AxiosInstance } from 'axios';
+import modeAPI from '../controllers/ModeAPI';
+import AppContext from '../controllers/AppContext';
 
 export interface RegisterState {
   nameState: string;
@@ -66,7 +69,8 @@ export class Register extends Component<any, RegisterState> {
   }
 
   onSubmit(event: React.FormEvent<HTMLElement>) {
-    // add post
+    event.preventDefault();
+      
   }
 
   render() {

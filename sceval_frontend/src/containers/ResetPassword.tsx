@@ -1,5 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import LoginHeader from '../components/LoginHeader';
+import { NavLink } from 'react-router-dom';
 
 export interface EmailResetPasswordState {
   inputState: string;
@@ -104,6 +105,9 @@ export class ResetPassword extends Component<any, EmailResetPasswordState> {
                     </button>
                     </div>
                 </form>
+                <NavLink to="/login" className="navlinks">
+                  Go Back
+                </NavLink>
             </div>
             {/* {this.getDoneElement(this.state.isSent)} */}
             <div className="error">

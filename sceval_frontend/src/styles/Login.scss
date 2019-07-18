@@ -39,7 +39,7 @@
 }
 
 .disabled {
-    background-color: #bbbbbb!important;
+    background-color: $disabled-button!important;
 }
 
 .btn-large {
@@ -60,7 +60,7 @@
     opacity: 0.5;
 }
 
-.dont-have-account, .agreement-account-status {
+.dont-have-account, .agreement-account-status, .pass-reset-section {
     margin-top: 40px;
     .navlinks {
         text-decoration: none;
@@ -72,5 +72,16 @@
     display: inline;
     text-align: center;
     max-width: 500px;
+}
+
+.pass-reset-section .navlinks {
+    margin-top: 15px;
+    display: block;
+    text-align: center;
+}
+
+.error-message-login {
+    color: $base-warning;
+    margin-top: 10px;
 }
 
