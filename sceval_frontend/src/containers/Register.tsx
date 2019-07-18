@@ -1,20 +1,22 @@
 import React, { Component, Fragment } from 'react';
 import LoginHeader from '../components/LoginHeader';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Redirect } from 'react-router-dom';
 import { AxiosRequestConfig, AxiosInstance } from 'axios';
 import modeAPI from '../controllers/ModeAPI';
 import AppContext from '../controllers/AppContext';
+import handleErrors from '../utils/ErrorMessages';
 
 export interface RegisterState {
   nameState: string;
   emailState: string;
   passwordState: string;
   confirmPasswordState: string;
+  isRedirectConfirmEmailVerification: boolean;
   passwordsMatch: boolean;
   emailValid: boolean;
   formValid: boolean;
   isSent: boolean;
-  error: string;
+  error: string | null;
 }
 
 export class Register extends Component<any, RegisterState> {
@@ -25,11 +27,12 @@ export class Register extends Component<any, RegisterState> {
       emailState: '',
       passwordState: '',
       confirmPasswordState: '',
+      isRedirectConfirmEmailVerification: false,
       passwordsMatch: false,
       emailValid: false,
       formValid: false,
       isSent: false,
-      error: ''
+      error: null
     };
 
     this.onSubmit = this.onSubmit.bind(this);
@@ -70,10 +73,49 @@ export class Register extends Component<any, RegisterState> {
 
   onSubmit(event: React.FormEvent<HTMLElement>) {
     event.preventDefault();
-      
+    const params = {
+      projectId: AppContext.getProjectId(),
+      email: this.state.emailState,
+      password: this.state.passwordState,
+      name: this.state.nameState
+    };
+    modeAPI.request('POST', 'https://api.tinkermode.com/users', params, false)
+    .then(
+      (resp: any) => {
+        console.log(resp);
+        this.setState(() => {
+          return { isRedirectConfirmEmailVerification: true };
+        });
+      }
+    )
+    .catch(
+      (reason: any) => {
+        if (reason.response && reason.response.data && reason.response.data.reason) {
+          console.log(reason.response.data.reason);
+          const transformedErr =  handleErrors(reason.response.data.reason);
+          this.setState(() => {
+            return {
+              error: transformedErr
+            };
+          });
+        } else {
+          alert('Error! ' + reason);
+          console.log(reason);
+        }
+      }
+    );  
   }
 
   render() {
+    if (this.props.isLoggedIn) {
+      return (
+        <Redirect to="/hardware"/>
+      );
+    } else if (this.state.isRedirectConfirmEmailVerification) {
+      return (
+        <Redirect to="/email_sent"/>
+      );
+    }
     return (
       <Fragment>
         <LoginHeader />
@@ -129,6 +171,10 @@ export class Register extends Component<any, RegisterState> {
                 />
               </div>
               <div>
+                {
+                  this.state.error !== null &&
+                  <div className="error-message-login">{this.state.error}</div>
+                }
                 <button
                   type="submit"
                   className={

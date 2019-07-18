@@ -127,43 +127,10 @@ export class ModeAPI {
     return this.axios.request<T>(config);
   }
 
-  public getHomes(userId: number) {
-    return new Promise(
-      (resolve: (homes: Home[]) => void, reject: (reason?: any) => void) => {
-        return this.request<Home[]>('GET', '/homes', {userId: userId}).then((response: AxiosResponse<any>) => {
-          resolve(response.data);
-        });
-      }
-    );
-  }
-
-  public async getHomeByHomeId(homeId: number) {
-    const response = await this.request<Home>('GET', '/homes/' + homeId, {});
-    return response.data as Home;
-  }
-
-  public getHome(userId: number) {
-    if (this.defaultHome === null) {
-      return this.getHomes(userId).then((homes: Home[]) => {
-        console.log('GET /homes - success');
-        if (homes.length > 0) {
-          // pick the first home
-          this.defaultHome = homes[0];
-          return Promise.resolve(homes[0]);
-        } else {
-          // If no home, create "home" once.
-          return this.makeHome();
-        }
-      });
-    } else {
-      return Promise.resolve(this.defaultHome);
-    }
-  }
-
   public getDevice(deviceId: number) {
     return new Promise<Device>(
       (resolve: (value?: Device) => void, reject: (reason?: any) => void) => {
-        return this.request('GET', '/devices/' + deviceId, {}).then(
+        return this.request('GET', 'https://api.tinkermode.com/devices/' + deviceId, {}).then(
           (response: AxiosResponse<any>) => {
             resolve(response.data as Device);
           }
@@ -177,7 +144,7 @@ export class ModeAPI {
   public getDevices(homeId: number) {
     return new Promise<Device[]>(
       (resolve: (value?: Device[]) => void, reject: (reason?: any) => void) => {
-        return this.request('GET', '/devices', { homeId: homeId }).then(
+        return this.request('GET', 'https://api.tinkermode.com/devices', { homeId: homeId }).then(
           (response: AxiosResponse<any>) => {
             resolve(response.data as Device[]);
           }
@@ -186,33 +153,6 @@ export class ModeAPI {
         });
       }
     );
-  }
-
-  public getUsers(homeId: number) {
-    return new Promise<User[]>(
-      (resolve: (value?: User[]) => void, reject: (reason?: any) => void) => {
-        return this.request('GET', '/homes/' + homeId + '/members', {}).then(
-          (response: AxiosResponse<any>) => {
-            resolve(response.data as User[]);
-          }
-        ).catch((reason: any) => {
-          reject(reason);
-        });
-      }
-    );
-  }
-
-  private makeHome() {
-    if (this.makeHomePromise === null) {
-      this.makeHomePromise = this.request('POST', '/homes', {name: 'home'})
-        .then((response: any) => {
-          console.log('POST /homes success');
-          this.defaultHome = response.data;
-          return response.data;
-        });
-    }
-    
-    return this.makeHomePromise;
   }
 }
 

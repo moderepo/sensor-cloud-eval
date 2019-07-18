@@ -2,6 +2,7 @@ import React, { Component, Fragment } from 'react';
 import { NavLink, Redirect } from 'react-router-dom';
 import LoginHeader from '../components/LoginHeader';
 import { AppContext, LoginInfo } from '../controllers/AppContext';
+import handleErrors from '../utils/ErrorMessages';
 interface LoginState {
     emailState: string;
     passwordState: string;
@@ -58,26 +59,7 @@ export class Login extends Component<LoginProps, LoginState> {
             ).catch(
             (reason: any) => {
                 if (reason.response && reason.response.data && reason.response.data.reason) {
-                    let transformedErr =  '';
-                    switch (reason.response.data.reason) {
-                        case 'UNKNOWN_EMAIL':
-                            transformedErr = 'We don\'t have a user with that email.';
-                            break;
-                        case 'INVALID_EMAIL':
-                            transformedErr = 'You entered an invalid email.';
-                            break;
-                        case 'CONNECTION_ERROR':
-                            transformedErr = 'We\re having trouble processing your request.';
-                            break;
-                        case 'INVALID_TOKEN':
-                            transformedErr = 'Sorry, the link you used is invalid.';
-                            break;
-                        case 'INCORRECT_PASSWORD':
-                            transformedErr = 'Your password is incorrect.';
-                            break;
-                        default:
-                            break;
-                    }
+                    const transformedErr =  handleErrors(reason.response.data.reason);
                     this.setState(() => {
                         return {
                             error: transformedErr
