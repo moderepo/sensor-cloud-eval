@@ -53,12 +53,12 @@ export class Login extends Component<LoginProps, LoginState> {
             (loginInfo: LoginInfo) => {
                 if (loginInfo.user.verified) {
                     this.props.onLogIn();
-
                 }
             }
             ).catch(
             (reason: any) => {
                 if (reason.response && reason.response.data && reason.response.data.reason) {
+                    console.log(reason.response.data.reason);
                     const transformedErr =  handleErrors(reason.response.data.reason);
                     this.setState(() => {
                         return {

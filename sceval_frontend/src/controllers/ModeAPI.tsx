@@ -1,7 +1,8 @@
 import Axios from 'axios';
 import { AxiosRequestConfig, AxiosInstance, AxiosResponse } from 'axios';
 import Home from './Home';
-import User from './User';
+
+const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 
 export interface RequestConfig extends AxiosRequestConfig {
 }
@@ -130,7 +131,7 @@ export class ModeAPI {
   public getDevice(deviceId: number) {
     return new Promise<Device>(
       (resolve: (value?: Device) => void, reject: (reason?: any) => void) => {
-        return this.request('GET', 'https://api.tinkermode.com/devices/' + deviceId, {}).then(
+        return this.request('GET', MODE_API_BASE_URL + deviceId, {}).then(
           (response: AxiosResponse<any>) => {
             resolve(response.data as Device);
           }
@@ -144,7 +145,7 @@ export class ModeAPI {
   public getDevices(homeId: number) {
     return new Promise<Device[]>(
       (resolve: (value?: Device[]) => void, reject: (reason?: any) => void) => {
-        return this.request('GET', 'https://api.tinkermode.com/devices', { homeId: homeId }).then(
+        return this.request('GET', MODE_API_BASE_URL + 'devices', { homeId: homeId }).then(
           (response: AxiosResponse<any>) => {
             resolve(response.data as Device[]);
           }

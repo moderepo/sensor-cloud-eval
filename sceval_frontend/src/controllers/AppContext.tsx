@@ -4,6 +4,8 @@ import User from './User';
 import { ConcreteObservable } from './Observer';
 import { AxiosResponse } from 'axios';
 
+const MODE_API_BASE_URL = 'https://api.tinkermode.com';
+
 export interface UserWithPassword extends User {
   password: string;
 }
@@ -67,7 +69,7 @@ export class AppContext {
 
   public static postLoginForm(username: string, password: string) {
     return ModeAPI.postForm(
-      'https://api.tinkermode.com/auth/user',
+      MODE_API_BASE_URL + '/auth/user',
       {
         projectId: AppContext.projectId,
         appId: AppContext.appId,
@@ -89,7 +91,7 @@ export class AppContext {
 
       return ModeAPI.request<UserWithPassword>(
       'PATCH', 
-      'https://api.tinkermode.com/users/' + AppContext.loginInfo.user.id, params).then(
+      MODE_API_BASE_URL + '/users/' + AppContext.loginInfo.user.id, params).then(
         (response: AxiosResponse<UserWithPassword>) => {
           user.name = newUsername;
           AppContext.userChangeObservable.notifyAll(user);
@@ -104,7 +106,7 @@ export class AppContext {
   public static setLogin(auth: ClientAuthInfo) {
     ModeAPI.setAuthToken(auth.token);
     return new Promise<LoginInfo>(function(resolve: (loginInfo: LoginInfo) => void, reject: (reason: any) => void) {
-      ModeAPI.request('GET', 'https://api.tinkermode.com/users/' + auth.userId, {}, false)
+      ModeAPI.request('GET', MODE_API_BASE_URL + '/users/' + auth.userId, {}, false)
       .then(function (resp: any) {
         const loginInfo: LoginInfo = {
           'user': resp.data,
@@ -132,7 +134,7 @@ export class AppContext {
         if (loginInfo && loginInfo.user && loginInfo.authToken) {
           console.log('Validating saved login for', loginInfo.user);
           ModeAPI.setAuthToken(loginInfo.authToken);
-          ModeAPI.request('GET', 'https://api.tinkermode.com/users/' + loginInfo.user.id, {}, false)
+          ModeAPI.request('GET', MODE_API_BASE_URL + '/users/' + loginInfo.user.id, {}, false)
           .then(function(res: any) {
             const user = res.data as User;
             // use latest user data because it may be different

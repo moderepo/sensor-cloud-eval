@@ -214,7 +214,7 @@ export class Register extends Component<any, RegisterState> {
           <p>
             {`Already have an account? `}
             <NavLink to="/login" className="navlinks">
-              Sign Up!
+              Sign In!
             </NavLink>
           </p>
         </div>

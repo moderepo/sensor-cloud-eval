@@ -23,6 +23,17 @@ export class App extends Component<AppProps, AppState> {
     this.onLogin = this.onLogin.bind(this);
   }
 
+  componentDidMount() {
+    if (localStorage.getItem('user-login')) {
+      this.setState(() => {
+        return {
+          isLoggedIn: true,
+          isAuthenticated: true
+        };
+      });
+    }
+  }
+
   async onLogin() {
     this.setState(() => {
       return {
