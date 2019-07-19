@@ -1,7 +1,8 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import LeftNav from '../components/LeftNav';
-import AppContext from '../controllers/AppContext';
+import { AppContext } from '../controllers/AppContext';
 import { Redirect } from 'react-router';
+import modeAPI from '../controllers/ModeAPI';
 
 const email = require('../common_images/acct_email.svg');
 const name = require('../common_images/acct_name.svg');
@@ -13,10 +14,39 @@ interface HardwareProps extends React.Props<any> {
 }
 
 interface HardwareState {
-
+    userInfo: Object;
+    isEditing: boolean;
+    name: string;
+    passwordNew: string;
+    passwordConfirm: string;
+    formValid: boolean;
+    passwordUpdated: boolean;
 }
 export class MyAccount extends Component<HardwareProps, HardwareState> {
+    constructor(props: HardwareProps) {
+        super(props);
+        this.state = {
+            userInfo: {},
+            isEditing: false,
+            name: '',
+            passwordNew: '',
+            passwordConfirm: '',
+            formValid: false,
+            passwordUpdated: false
+        };
+        this.editUserInfo = this.editUserInfo.bind(this);
+        this.saveChanges = this.saveChanges.bind(this);
+        this.handleInputChange = this.handleInputChange.bind(this);
+    }
 
+    componentDidMount() {
+        const username = JSON.parse(`${localStorage.getItem('user-login')}`).value.user.name;
+        this.setState(() => {
+            return {
+                name: username
+            };
+        });
+    }
     logout() {
         AppContext.clearLogin();  
         setTimeout(
@@ -26,11 +56,72 @@ export class MyAccount extends Component<HardwareProps, HardwareState> {
             1000
         );
     }
+
+    editUserInfo(): void {
+        this.setState(() => {
+            return {
+                isEditing: !this.state.isEditing
+            };
+        });
+    }
+
+    saveChanges(): void {
+        AppContext.restoreLogin();
+        AppContext.UpdateUserInfo(this.state.name, this.state.passwordNew).then((response: any) =>  {
+            if (response.status === 204) {
+                this.setState(() => {
+                    return {
+                        passwordUpdated: true,
+                        isEditing: false
+                    };
+                });
+            }
+        });
+    }
+
+    handleInputChange(event: React.FormEvent<HTMLElement>): void {
+        const target = event.target as HTMLInputElement;
+        const input = target.value;
+        this.setState({
+            ...this.state,
+            [target.name]: input,
+        });
+        setTimeout(
+            () => {
+                if (this.state.passwordConfirm === this.state.passwordNew
+                    && this.state.passwordConfirm  !== '' &&
+                    this.state.name !== '') {
+                        this.setState(() => {
+                            return {
+                                formValid: true
+                            };
+                        });
+                    } else {
+                        this.setState(() => {
+                            return {
+                                formValid: false
+                            };
+                        });
+                    }
+            },
+            1000
+        );
+    }
+
+    convertedPass(userPass: string): string {
+        let convertedPass = '';
+        for (let i = 0; i < password.length; i++) {
+            convertedPass += '•';
+        }
+        return convertedPass;
+    }
     render() {
         if (!this.props.isLoggedIn) {
             return <Redirect to="/login" />;
         }
+
         const userInfo = JSON.parse(`${localStorage.getItem('user-login')}`);
+        
         return (
             <div>
                 <LeftNav />
@@ -39,23 +130,88 @@ export class MyAccount extends Component<HardwareProps, HardwareState> {
                         <h1>My Account</h1>
                     </div>
                     <div className="info-container">
-                        <div className="user-info-section">
+                        <div 
+                            className={!this.state.isEditing ? 
+                            'user-info-section' :
+                            'user-info-section edit-mode'
+                            }
+                        >
                             <h3>User Info 
-                                {/* <button className="edit-button">Edit</button> */}
+                                { !this.state.isEditing ?
+                                <button 
+                                    className="edit-button"
+                                    onClick={this.editUserInfo}
+                                >Edit
+                                </button>
+                                :
+                                <Fragment>
+                                    <button
+                                        onClick={this.editUserInfo}
+                                        className="cancel-button"
+                                    >Cancel
+                                    </button>
+                                    <button
+                                        onClick={this.saveChanges}
+                                        disabled={!this.state.formValid}
+                                        className="save-changes-button"
+                                    >Save Changes
+                                    </button>
+                                </Fragment>
+                                }
                             </h3>
-                            
-                            <h4><img src={name} /> Name:</h4>
-                            <div className="user-data">{userInfo.value.user.name}</div>
-                            <h4><img src={email} /> Email:</h4>
-                            <div className="user-data">{userInfo.value.user.email}</div>
+                            <img src={name} />
+                            <h4>Name:</h4>
+                            { !this.state.isEditing ?
+                                <div className="user-data">{userInfo.value.user.name}</div> :
+                                <input 
+                                    type="text" 
+                                    className="user-data edit-box"
+                                    value={this.state.name}
+                                    name="name"
+                                    onChange={event => this.handleInputChange(event)}
+                                    onBlur={event => this.handleInputChange(event)}
+                                />
+                            }
+                            <img className="mail" src={email} />
+                            <h4> Email:</h4>
+                            { !this.state.isEditing ?
+                                <div className="user-data">{userInfo.value.user.email}</div> :
+                                <input 
+                                    type="text" 
+                                    className="user-data edit-box" 
+                                    value={userInfo.value.user.email}
+                                    disabled={true}
+                                    name="email"
+                                />
+                            }
+                            <img src={password} /> 
                             <h4>
-                                <img src={password} /> 
                                 Password:
                             </h4>
-                            <div className="user-data">
-                                {/* {userInfo.value.user.password} */}
-                                ••••••••••
-                            </div>
+                            { !this.state.isEditing ?
+                                <div 
+                                    className="user-data"
+                                >•••••••••
+                                </div> :
+                                <Fragment>
+                                    <input 
+                                        type="password" 
+                                        className="user-data edit-box" 
+                                        value={this.state.passwordNew}
+                                        name="passwordNew"
+                                        onChange={event => this.handleInputChange(event)}
+                                        onBlur={event => this.handleInputChange(event)}
+                                    />
+                                    <input 
+                                        type="password" 
+                                        className="user-data edit-box" 
+                                        value={this.state.passwordConfirm}
+                                        name="passwordConfirm"
+                                        onChange={event => this.handleInputChange(event)}
+                                        onBlur={event => this.handleInputChange(event)}
+                                    />
+                                </Fragment>
+                            }
                         </div>                    
                         <div className="sign-out-section">
                             <h3>Sign Out</h3>

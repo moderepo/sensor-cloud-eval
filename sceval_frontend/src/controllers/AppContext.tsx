@@ -103,6 +103,28 @@ export class AppContext {
     }
   }
 
+  public static UpdateUserInfo(newUsername: string, newPassword: string) {
+    if (AppContext.loginInfo !== null) {
+      const params = {
+        name: newUsername,
+        password: newPassword
+      };
+      const user = AppContext.loginInfo.user;
+
+      return ModeAPI.request<UserWithPassword>(
+      'PATCH', 
+      MODE_API_BASE_URL + '/users/' + AppContext.loginInfo.user.id, params).then(
+        (response: AxiosResponse<any>) => {
+          user.name = newUsername;
+          AppContext.userChangeObservable.notifyAll(user);
+          return response;
+        }
+      );
+    } else {
+      throw new UserNameChangeException;
+    }
+  }
+
   public static setLogin(auth: ClientAuthInfo) {
     ModeAPI.setAuthToken(auth.token);
     return new Promise<LoginInfo>(function(resolve: (loginInfo: LoginInfo) => void, reject: (reason: any) => void) {
