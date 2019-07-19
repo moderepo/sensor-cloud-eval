@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="43" height="28" viewBox="0 0 43 28">
+    <defs>
+        <rect id="a" width="41" height="26" y="2" rx="2"/>
+    </defs>
+    <g fill="none" fill-rule="evenodd">
+        <use fill="#353D45" xlink:href="#a"/>
+        <rect width="38" height="23" x="1.5" y="3.5" stroke="#7FCBCF" stroke-width="3" rx="2"/>
+        <rect width="9" height="6" x="34" y="12" fill="#7FCBCF" rx="1"/>
+        <rect width="9" height="6" x="24.5" y="1.5" fill="#7FCBCF" rx="1" transform="rotate(90 29 4.5)"/>
+        <rect width="7" height="6" x="18.5" y=".5" fill="#7FCBCF" rx="1" transform="rotate(90 22 3.5)"/>
+        <path fill="#7FCBCF" d="M2 4h13v2.99c0 .558-.447 1.01-.999 1.01H2V4zM39 26H29v-5.01a1 1 0 0 1 .995-.99H39v6zM2 19h2.99c.558 0 1.01.444 1.01 1v3a1 1 0 0 1-1.01 1H2v-5z"/>
+        <rect width="2" height="12" x="10" y="11" fill="#7FCBCF" rx="1"/>
+        <rect width="2" height="12" x="14" y="11" fill="#7FCBCF" rx="1"/>
+        <path fill="#7FCBCF" d="M18 12.002c0-.553.453-1.002.997-1.002h6.006c.55 0 .997.456.997 1.002v9.996c0 .553-.453 1.002-.997 1.002h-6.006c-.55 0-.997-.456-.997-1.002v-9.996z"/>
+    </g>
+</svg>

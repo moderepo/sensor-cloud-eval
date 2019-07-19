@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Route, Redirect } from 'react-router-dom';
-import { Login, ResetPassword, Register, Hardware, EmailSent } from '../containers/index';
+import { Login, ResetPassword, Register, Hardware, EmailSent, MyAccount } from '../containers/index';
 export interface RouteDeclarationsProps {
   isSavedLoginPresent: boolean;
   isLoggedIn: boolean;
@@ -88,6 +88,21 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
           component={() => (
             <>
               <Hardware
+                isLoggedIn={this.props.isLoggedIn}
+                onLogIn={this.props.onLogin}
+              />
+            </>
+          )}
+        />
+      ),
+      (
+        <Route
+          key={RouteKeys.Home}
+          exact={true}
+          path="/my_account"
+          component={() => (
+            <>
+              <MyAccount
                 isLoggedIn={this.props.isLoggedIn}
                 onLogIn={this.props.onLogin}
               />

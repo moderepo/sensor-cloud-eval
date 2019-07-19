@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Redirect } from 'react-router';
+import { LeftNav } from '../components/LeftNav';
 
 interface HardwareProps extends React.Props<any> {
     isLoggedIn: boolean;
@@ -16,7 +17,7 @@ export class Hardware extends Component<HardwareProps, HardwareState> {
         }
         return (
             <div>
-                Hardware
+                <LeftNav />
             </div>
         );
     }

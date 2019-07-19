@@ -1,0 +1,93 @@
+@import 'variables.scss';
+
+.account-section {
+    display: inline-block;
+    width: 100%;
+    height: 101vh;
+    background-color: $section-background;
+    .page-header {
+        margin-left: 150px;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 0.4px;
+    }
+
+    h3 {
+        margin: 10px 0;
+        font-size: 25px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        color: #292e34;
+        border-bottom: 1px solid #d8d8d8;
+        padding-bottom: 10px;
+        margin-bottom: 30px;
+    }
+
+    h4 {
+        font-size: 20px;
+        letter-spacing: 0.4px;
+        color: #2a2e34;
+        margin-bottom: 40px;
+    }
+
+    .info-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: 70vh;
+        background-color: #fafbfd;
+        border-radius: 4px;
+        box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.1);
+        margin: 0 30px 30px;
+        margin-left: 150px;
+
+        .user-info-section, .sign-out-section {
+            margin: 10px 20px;
+
+            .user-data {
+                font-size: 20px;
+                letter-spacing: 0.4px;
+                color: #2a2e34;
+                margin-bottom: 40px;
+                padding-top: 5px;
+            }
+        }
+
+        .user-info-section button {
+            float: right;
+        }
+
+    }
+
+    .sign-out-section {
+        
+        .sign-out-button {
+            width: 139px;
+            border: 2px solid #353d45;
+            border-radius: 4px;
+            color: #353d45;
+            padding: 4px 12px;
+            text-decoration: none;
+        }
+    }
+
+    .footer {
+        box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background-color: #fafbfd;
+        padding: 22px;
+        margin: 0 30px 30px;
+        text-align: center;
+        font-size: 12px;
+        letter-spacing: 0.2px;
+        margin-left: 150px;
+        display: flex;
+        justify-content: center;
+        
+        a {
+            padding: 0px 10px;
+            display: inline;
+            text-decoration: none;
+            color: black;
+        }
+    }
+}
