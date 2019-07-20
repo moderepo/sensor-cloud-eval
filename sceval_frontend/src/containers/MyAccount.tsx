@@ -139,7 +139,7 @@ export class MyAccount extends Component<HardwareProps, HardwareState> {
                             <h3>User Info 
                                 { !this.state.isEditing ?
                                 <button 
-                                    className="edit-button"
+                                    className="action-button"
                                     onClick={this.editUserInfo}
                                 >Edit
                                 </button>
@@ -147,13 +147,13 @@ export class MyAccount extends Component<HardwareProps, HardwareState> {
                                 <Fragment>
                                     <button
                                         onClick={this.editUserInfo}
-                                        className="cancel-button"
+                                        className="action-button"
                                     >Cancel
                                     </button>
                                     <button
                                         onClick={this.saveChanges}
                                         disabled={!this.state.formValid}
-                                        className="save-changes-button"
+                                        className="action-button"
                                     >Save Changes
                                     </button>
                                 </Fragment>

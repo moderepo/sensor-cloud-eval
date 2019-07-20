@@ -70,22 +70,11 @@
                 padding: 10px;
             }
 
-            .edit-button, .save-changes-button, .cancel-button {
-                width: 120px;
-                border: 2px solid $base-black;
-                border-radius: 4px;
-                color: $base-black;
-                padding: 8px 8px;
-                text-decoration: none;
-                font-size: 14px !important;
-                font-weight: 600;
-            }
-
             .save-changes-button:disabled {
                 opacity: 0.5;
             }
 
-            .cancel-button {
+            .action-button {
                 margin-left: 5px;
             }
         }

@@ -1,0 +1,120 @@
+@import 'variables.scss';
+
+.hardware-section {
+    display: inline-block;
+    width: 100%;
+    background-color: $section-background;
+    .page-header {
+        margin-left: 150px;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 0.4px;
+    }
+
+    .gateways-section {
+        margin: 5px 50px 5px 150px;
+        .gateway-row {
+            background-color: #fafbfd;
+            box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.1);
+            border-radius: 2px;
+            margin-bottom: 30px;
+            padding: 0;
+            min-height: 350px;
+
+            .gateway-header {
+                color: black;
+                margin: 0;
+                border-bottom: 1px solid #d8d8d8;
+                padding: 30px 30px 30px 15px;
+
+                .gateway-info {
+                    display: inline-block;
+
+                    .gateway-id {
+                        color: $base-black;
+                        font-size: 20px;
+                        margin-top: 5px;
+                        font-weight: 700;
+                        padding-left: 15px;
+                        display: inline-block;
+                        vertical-align: top;
+                    }
+
+                    .gateway-location {
+                        padding-left: 15px;
+                        vertical-align: top;
+                        padding-right: 8px;
+                        width: 15px;
+                    }
+
+                    .gateway-name {
+                        color: $base-black;
+                        font-size: 20px;
+                        padding-left: 60px;
+
+                    }
+                    
+                }
+
+                .gateway-settings {
+                    float: right;
+                    .action-button {
+                        margin-right: 5px;
+                        min-width: 200px;
+                    }
+
+                    .settings {
+                        width: 40px;
+                        min-width: 20px!important;
+                    }
+                }
+            }
+
+            .gateway-sensor-modules {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(80px, 350px));
+                text-align: center;
+                grid-gap: 1em;
+                margin: 15px 50px;
+                padding: 20px 0px;
+                background-color: #fafbfd;
+
+                .sensor-module {
+                    min-width: 80px;
+                    min-height: 120px;
+                    border: 1px solid #d8d8d8;
+                    padding: 12px;
+                    border-radius: 2px;
+                    box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.1);
+                    cursor: pointer;
+
+                    .module-image {
+                        float: left;
+                        width: 100px;
+                    }
+
+                    .module-info {
+                        margin-left: 112px;
+                        text-align: left;
+                        .sensor-module-name {
+                            font-weight: bold;
+                            color: $base-black;
+                        }
+
+                        .sensor-module-name, .sensor-module-model {
+                            padding: 10px 0px;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                        }
+                        
+                        .sensor-type-image {
+                            margin-top: 10px;
+                            margin-right: 10px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

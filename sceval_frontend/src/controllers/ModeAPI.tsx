@@ -1,5 +1,7 @@
 import Axios from 'axios';
 import { AxiosRequestConfig, AxiosInstance, AxiosResponse } from 'axios';
+import Home from './Home';
+import User from './User';
 
 const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 
@@ -18,6 +20,8 @@ export class ModeAPI {
   private baseUrl: string;
   private authToken: string;
   private axios: AxiosInstance;
+  private makeHomePromise: Promise<any> | null = null;
+  private defaultHome: Home | null = null;
 
   public static getErrReason(resp: any): string {
     if (resp.data) {
@@ -122,6 +126,40 @@ export class ModeAPI {
     return this.axios.request<T>(config);
   }
 
+  public getHomes(userId: number) {
+    return new Promise(
+      (resolve: (homes: Home[]) => void, reject: (reason?: any) => void) => {
+        return this.request<Home[]>('GET', MODE_API_BASE_URL + 'homes', {userId: userId})
+        .then((response: AxiosResponse<any>) => {
+          resolve(response.data);
+        });
+      }
+    );
+  }
+
+  public async getHomeByHomeId(homeId: number) {
+    const response = await this.request<Home>('GET', MODE_API_BASE_URL + 'homes/' + homeId, {});
+    return response.data as Home;
+  }
+
+  public getHome(userId: number) {
+    if (this.defaultHome === null) {
+      return this.getHomes(userId).then((homes: Home[]) => {
+        console.log('GET /homes - success');
+        if (homes.length > 0) {
+          // pick the first home
+          this.defaultHome = homes[0];
+          return Promise.resolve(homes[0]);
+        } else {
+          // If no home, create "home" once.
+          return this.makeHome();
+        }
+      });
+    } else {
+      return Promise.resolve(this.defaultHome);
+    }
+  }
+
   public getDevice(deviceId: number) {
     return new Promise<Device>(
       (resolve: (value?: Device) => void, reject: (reason?: any) => void) => {
@@ -148,6 +186,19 @@ export class ModeAPI {
         });
       }
     );
+  }
+
+  private makeHome() {
+    if (this.makeHomePromise === null) {
+      this.makeHomePromise = this.request('POST', '/homes', {name: 'home'})
+        .then((response: any) => {
+          console.log('POST /homes success');
+          this.defaultHome = response.data;
+          return response.data;
+        });
+    }
+    
+    return this.makeHomePromise;
   }
 }
 
