@@ -21,7 +21,7 @@ export class LeftNav extends Component {
                     </NavLink>
                 </div>
                 <div className="hardware-container">
-                    <NavLink to="/hardware">
+                    <NavLink to="/devices">
                         <img src={hardware} className="hardware-logo" />
                         <p>Hardware</p>
                     </NavLink>

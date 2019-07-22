@@ -2,6 +2,7 @@ import { default as modeAPI } from './ModeAPI';
 import { ConcreteObservable } from './Observer';
 import Event from './Event';
 
+const MODE_API_BASE_URL = 'https://api.tinkermode.com';
 export class ModeConnection extends ConcreteObservable<Event> {
   webSocket: WebSocket | null;
 
@@ -19,10 +20,11 @@ export class ModeConnection extends ConcreteObservable<Event> {
       }
     }
 
-    const apiUrl = modeAPI.getBaseUrl() + '/userSession/websocket?authToken=' + modeAPI.getAuthToken();
+    const apiUrl = MODE_API_BASE_URL + '/userSession/websocket?authToken=' + modeAPI.getAuthToken();
     const wsUrl = apiUrl.replace(/^http/, 'ws');
 
     this.webSocket = new WebSocket(wsUrl);
+    console.log(this.webSocket);
     this.webSocket.onmessage = this.onMessage;
   }
 
@@ -32,6 +34,7 @@ export class ModeConnection extends ConcreteObservable<Event> {
     try {
       const parsedData = JSON.parse(messageData);
       this.notifyAll(parsedData);
+      console.log(parsedData);
     } catch (e) {
       console.error('Websocket message is invalid JSON:', messageData);
       return;

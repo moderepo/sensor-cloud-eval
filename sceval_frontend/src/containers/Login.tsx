@@ -75,7 +75,7 @@ export class Login extends Component<LoginProps, LoginState> {
     render() {
         if (this.props.isLoggedIn) {
             return (
-              <Redirect to="/hardware"/>
+              <Redirect to="/devices"/>
             );
         }
         return (
