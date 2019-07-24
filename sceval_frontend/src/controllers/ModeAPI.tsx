@@ -82,7 +82,8 @@ export class ModeAPI {
     const config: RequestConfig = {
       method: method,
       url: url,
-      headers: {}
+      headers: {
+      }
     };
     if (withCredentials !== undefined) {
       config.withCredentials = withCredentials;

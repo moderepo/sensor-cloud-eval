@@ -1,6 +1,7 @@
 import { default as modeAPI } from './ModeAPI';
 import { ConcreteObservable } from './Observer';
 import Event from './Event';
+import Axios from 'axios';
 
 const MODE_API_BASE_URL = 'https://api.tinkermode.com';
 export class ModeConnection extends ConcreteObservable<Event> {
@@ -41,6 +42,20 @@ export class ModeConnection extends ConcreteObservable<Event> {
     }
   }
 
+  searchForSensorModules(deviceID: string): void {
+    modeAPI.request('PUT', MODE_API_BASE_URL + '/devices/' + deviceID + '/command',
+                    { action: 'startDiscovery',
+                      parameters: {
+                        timeout: 10000
+                    }
+                  }, 
+                    true)
+                    .then((response: any) => {
+                      return response;
+                    }).catch((reason: any) => {
+                      console.log(reason);
+                    });
+  }
   getConnection() {
     return this.webSocket;
   }

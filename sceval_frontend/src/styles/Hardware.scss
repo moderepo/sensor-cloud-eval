@@ -1,6 +1,6 @@
 @import 'variables.scss';
 
-.hardware-section {
+.hardware-section, .scan-container {
     display: inline-block;
     width: 100%;
     background-color: $section-background;
@@ -63,6 +63,39 @@
                         min-width: 200px;
                     }
 
+                    .done-button {
+                        color: #fafbfd;
+                        background-color: #353d45;
+                        width: 120px;
+                        border: 2px solid $base-black;
+                        border-radius: 4px;
+                        padding: 8px 8px;
+                        text-decoration: none;
+                        font-size: 14px !important;
+                        font-weight: 700;
+                    }
+
+                    .dropdown-menu {
+                        top: 100%;
+                        left: 0;
+                        z-index: 1000;
+                        min-width: 160px;
+                        font-size: 14px;
+                        text-align: left;
+                        list-style: none;
+                        background-color: #fff;
+                        -webkit-background-clip: padding-box;
+                        background-clip: padding-box;
+                        border: 1px solid rgba(0,0,0,.15);
+                        border-radius: 4px;
+                        -webkit-box-shadow: 0 6px 12px rgba(0,0,0,.175);
+                        box-shadow: 0 6px 12px rgba(0,0,0,.175);
+                        a {
+                            text-decoration: none;
+                            color: black;
+                        }
+                    }
+
                     .settings {
                         width: 40px;
                         min-width: 20px!important;
@@ -77,10 +110,10 @@
                 grid-gap: 1em;
                 margin: 15px 50px;
                 padding: 20px 0px;
-                background-color: #fafbfd;
 
                 .sensor-module {
                     min-width: 80px;
+                    background-color: #fafbfd;
                     min-height: 120px;
                     border: 1px solid #d8d8d8;
                     padding: 12px;
@@ -101,6 +134,19 @@
                             color: $base-black;
                         }
 
+                        .x-icon {
+                            font-size: 20px;
+                            float: right;
+                            font-weight: 900;
+                            width: 20px;
+                            height: 20px;
+                            position: flex;
+                            height: 20px;
+                            top: 3px;
+                            right: 5px;
+                            color: #8d8d8d;
+                        }
+
                         .sensor-module-name, .sensor-module-model {
                             padding: 10px 0px;
                             overflow: hidden;
@@ -115,6 +161,13 @@
                     }
                 }
             }
+        }
+        .editing-gateway {
+            background-color: #ddecf8;
+            border: 2px solid #2197fd; 
+        }
+        .editing-module {
+            background-color: #ddecf8;
         }
     }
 }
