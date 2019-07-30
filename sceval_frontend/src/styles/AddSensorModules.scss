@@ -49,6 +49,10 @@
                 padding-left: 70px;
                 max-width: 300px;
                 text-align: center;
+                p {
+                    margin-top: 10px;
+                    color: $base-black;
+                }
             }
         }
 
@@ -57,7 +61,7 @@
             width: 42px;
             height: 42px;
             text-align: center;
-            line-height: 42px;
+            line-height: 32px;
             border-color: #767676;
             border-style: solid;
             border-width: 4px;
@@ -83,15 +87,23 @@
             .cancel-scan {
                 margin-right: 20px;
                 background-color: #fafbfd;
-                border: 2px solid #353d45;
-                color: #353d45;
+                border: 2px solid $base-black;
+                color: $base-black;
             }
             
-            .start-scan {
+            .start-scan, .add-sensor-module {
                 color: #fafbfd;
-                background-color: #353d45;
+                background-color: $base-black;
+            }
+
+            .add-sensor-module:disabled {
+                opacity: 0.5;
             }
 
         }
+        .progress-bar {
+            padding: 20px 100px;
+        }
     }
+    
 }

@@ -1,7 +1,7 @@
 import React, { Component, Fragment } from 'react';
 import LeftNav from '../components/LeftNav';
 import { AppContext } from '../controllers/AppContext';
-import { Redirect } from 'react-router';
+import { Redirect, withRouter, RouteComponentProps } from 'react-router';
 import modeAPI from '../controllers/ModeAPI';
 
 const email = require('../common_images/acct_email.svg');
@@ -22,8 +22,8 @@ interface HardwareState {
     formValid: boolean;
     passwordUpdated: boolean;
 }
-export class MyAccount extends Component<HardwareProps, HardwareState> {
-    constructor(props: HardwareProps) {
+export class MyAccount extends Component<HardwareProps & RouteComponentProps<any>, HardwareState> {
+    constructor(props: HardwareProps & RouteComponentProps<any>) {
         super(props);
         this.state = {
             userInfo: {},
@@ -241,4 +241,4 @@ export class MyAccount extends Component<HardwareProps, HardwareState> {
     }
 }
 
-export default MyAccount;
+export default withRouter(MyAccount);

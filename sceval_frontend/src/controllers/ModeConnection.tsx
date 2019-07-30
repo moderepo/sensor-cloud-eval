@@ -1,7 +1,6 @@
 import { default as modeAPI } from './ModeAPI';
 import { ConcreteObservable } from './Observer';
 import Event from './Event';
-import Axios from 'axios';
 
 const MODE_API_BASE_URL = 'https://api.tinkermode.com';
 export class ModeConnection extends ConcreteObservable<Event> {
@@ -25,17 +24,15 @@ export class ModeConnection extends ConcreteObservable<Event> {
     const wsUrl = apiUrl.replace(/^http/, 'ws');
 
     this.webSocket = new WebSocket(wsUrl);
-    console.log(this.webSocket);
     this.webSocket.onmessage = this.onMessage;
+    return this.webSocket;
   }
 
   onMessage(messageEvent: MessageEvent) {
     const messageData = messageEvent.data;
-
     try {
       const parsedData = JSON.parse(messageData);
       this.notifyAll(parsedData);
-      console.log(parsedData);
     } catch (e) {
       console.error('Websocket message is invalid JSON:', messageData);
       return;
@@ -43,17 +40,18 @@ export class ModeConnection extends ConcreteObservable<Event> {
   }
 
   searchForSensorModules(deviceID: string): void {
-    modeAPI.request('PUT', MODE_API_BASE_URL + '/devices/' + deviceID + '/command',
-                    { action: 'startDiscovery',
-                      parameters: {
-                        timeout: 10000
-                    }
-                  }, 
-                    true)
+    const url = MODE_API_BASE_URL + '/devices/' + deviceID + '/command';
+    const cmd = {
+      action: 'startDiscovery',
+      parameters: { timeout: 10000 }
+    };
+
+    modeAPI.request('PUT', url, cmd)
                     .then((response: any) => {
+                      console.log(response);
                       return response;
                     }).catch((reason: any) => {
-                      console.log(reason);
+                      console.error('reason', reason);
                     });
   }
   getConnection() {

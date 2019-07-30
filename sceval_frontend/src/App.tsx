@@ -43,7 +43,6 @@ export class App extends Component<AppProps, AppState> {
     });
   }
   render () {
-    
     return (
       <ContextProvider>
         <div className="App">

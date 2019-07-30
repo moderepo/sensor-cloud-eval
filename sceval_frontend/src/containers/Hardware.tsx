@@ -16,7 +16,7 @@ const sensorVibration = require('../common_images/sensors/pressure-active.svg');
 const deviceImage = require('../common_images/devices/gateway.svg');
 const deviceLocation = require('../common_images/devices/location-pin.svg');
 interface HardwareProps extends React.Props<any> {
-isLoggedIn: boolean;
+    isLoggedIn: boolean;
     onLogIn: () => void;
 }
 
