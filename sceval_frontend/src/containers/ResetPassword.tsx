@@ -5,13 +5,6 @@ import { AppContext } from '../controllers/AppContext';
 import modeAPI from '../controllers/ModeAPI';
 const emailSent = require('../common_images/email_sent.svg');
 
-export interface EmailResetPasswordState {
-    inputState: string;
-    emailValid: boolean;
-    isSent: boolean;
-    error: string;
-}
-
 const ResetPassword: React.FC = () => {
     const [input, setInput] = useState(''),
         [emailValid, setEmailValid] = useState(false),

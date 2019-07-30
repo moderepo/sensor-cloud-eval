@@ -4,13 +4,6 @@ import LoginHeader from '../components/LoginHeader';
 import { AppContext, LoginInfo } from '../controllers/AppContext';
 import handleErrors from '../utils/ErrorMessages';
 
-interface LoginState {
-    emailState: string;
-    passwordState: string;
-    emailValid: boolean;
-    error: string;
-}
-
 interface LoginProps extends React.Props<any> {
     onLogIn: () => void;
     isLoggedIn: boolean;
