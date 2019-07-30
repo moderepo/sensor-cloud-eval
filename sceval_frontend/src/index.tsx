@@ -12,8 +12,9 @@ import * as serviceWorker from './serviceWorker';
 const projectId = process.env.REACT_APP_PROJECT_ID !== undefined ?
     parseInt(process.env.REACT_APP_PROJECT_ID, 10) :
     1235;
+const appId = process.env.REACT_APP_APP_ID !== undefined ? process.env.REACT_APP_APP_ID : 'sceval_app';
 AppContext.setProjectId(projectId);
-AppContext.setAppId('sceval_app');
+AppContext.setAppId(appId);
 
 ReactDOM.render(
     <BrowserRouter>
