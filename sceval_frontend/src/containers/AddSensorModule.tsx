@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import LeftNav from '../components/LeftNav';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withRouter, RouteComponentProps, Redirect } from 'react-router-dom';
 import ModeConnection from '../controllers/ModeConnection';
 import AppContext from '../controllers/AppContext';
 import modeAPI from '../controllers/ModeAPI';
@@ -18,12 +18,16 @@ const sensorVibration = require('../common_images/sensors/pressure-active.svg');
 const addModule1 = require('../common_images/add-module-1.svg');
 const addModule2 = require('../common_images/add-module-2.svg');
 
+const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
+
 interface AddSensorModuleProps extends React.Props<any> {
     isLoggedIn: boolean;
     onLogIn: () => void;
     }
     
 interface AddSensorModuleState {
+    selectedGateway: string;
+    associatedModules: Array<any>;
     availableModules: Array<any>;
     moduleMetadata: Array<any>;
     selectedModules: Array<any>;
@@ -36,6 +40,8 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
     constructor(props: AddSensorModuleProps & RouteComponentProps) {
         super(props);
         this.state = {
+            selectedGateway: '',
+            associatedModules: [],
             availableModules: [],
             selectedModules: [],
             moduleMetadata: [],
@@ -60,10 +66,21 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
                 scanning: true
             };
         });
+
         if (ws !== undefined) {
             ws.onmessage = event => {
                 const moduleData = JSON.parse(event.data);
-                if (moduleData && moduleData.eventData.sensorModules.length > this.state.availableModules.length) {
+                if (moduleData && moduleData.eventData.sensorModules !== undefined &&
+                    moduleData.eventData.sensorModules.length > this.state.availableModules.length) {
+                    let modules = moduleData.eventData.sensorModules;
+                    this.state.associatedModules.map((associatedModule) => {
+                        console.log(associatedModule);
+                        if (modules.includes(associatedModule)) {
+                            console.log(true);
+                        } else {
+                            console.log(false);
+                        }
+                    });
                     this.setState(() => {
                         return {
                             availableModules: moduleData.eventData.sensorModules,
@@ -86,6 +103,20 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
             modeAPI.getHome(UID.user.id).then((response: any) => {
                 modeAPI.getDevices(response.id).then((deviceResponse: any) => {
                     gateway = deviceResponse[0].id;
+                    this.setState(() => {
+                        return {
+                            selectedGateway: gateway
+                        };
+                    });
+                }).then(() => {
+                    const url = MODE_API_BASE_URL + 'devices/' + this.state.selectedGateway + '/kv';
+                    modeAPI.request('GET', url, {}).then((associatedResponse: any) => {
+                        this.setState(() => {
+                            return {
+                                associatedModules: associatedResponse.data.slice(1, associatedResponse.data.length)
+                            };
+                        });
+                    });
                 });
                 let requestCount = 0;
                 let interval = setInterval(
@@ -114,8 +145,22 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
 
     addNewModules() {
         this.state.selectedModules.forEach((selectedModule, index) => {
-            console.log(selectedModule);
-            // do a KV patch here
+            const url = MODE_API_BASE_URL + 'devices/' 
+                + this.state.selectedGateway + '/kv/sensorModule' + selectedModule.sensorModuleId;
+            const params = {
+                value: {
+                    id: selectedModule.sensorModuleId,
+                    sensing: 'on',
+                    interval: '30',
+                    sensors: selectedModule.possibleSensorModules
+                }
+            };
+            modeAPI.request('PUT', url, params).then((response: any) => {
+                this.props.history.push('/devices');
+            })
+            .catch((reason: any) =>  {
+                console.log('error posting to the kv store', reason);
+            });
         });
     }
 

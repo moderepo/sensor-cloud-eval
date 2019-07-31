@@ -6,6 +6,9 @@ import ClientStorage from '../controllers/ClientStorage';
 import AppContext from '../controllers/AppContext';
 import { SensorModule } from '../containers/SensorModule';
 import AlertDialogComponent from '../components/AlertDialogComponent';
+import SensorModuleSet from '../components/entities/SensorModule';
+import { Modal } from 'antd';
+const { confirm } = Modal;
 const sensorModule = require('../common_images/sensor_modules/alps-snm3.png');
 const sensorTemp = require('../common_images/sensors/temp-active.svg');
 const sensorHumidity = require('../common_images/sensors/humidity-active.svg');
@@ -15,6 +18,8 @@ const sensorNoise = require('../common_images/sensors/noise-active.svg');
 const sensorVibration = require('../common_images/sensors/pressure-active.svg');
 const deviceImage = require('../common_images/devices/gateway.svg');
 const deviceLocation = require('../common_images/devices/location-pin.svg');
+
+const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 interface HardwareProps extends React.Props<any> {
     isLoggedIn: boolean;
     onLogIn: () => void;
@@ -22,6 +27,7 @@ interface HardwareProps extends React.Props<any> {
 
 interface HardwareState {
     devices: Array<any>;
+    linkedModules: Array<SensorModuleSet>;
     selectedDevice: string;
     displayGatewayOptions: Array<string>;
     editingGateways: Array<string>;
@@ -33,12 +39,14 @@ export class Hardware extends Component<HardwareProps & RouteComponentProps<any>
         super(props);
         this.state = {
             devices: [],
+            linkedModules: [],
             selectedDevice: '',
             displayGatewayOptions: [],
             editingGateways: [],
             targetedModule: '',
             moduleInDeleteMode: ''
         };
+        this.renderDeleteModal = this.renderDeleteModal.bind(this);
     }
 
     componentDidMount() {
@@ -47,22 +55,27 @@ export class Hardware extends Component<HardwareProps & RouteComponentProps<any>
             modeAPI.getDevices(response.id).then((deviceResponse: any) => {
                 this.setState(() => {
                     return {
-                        devices: [{
-                            id: 2002,
-                            projectId: AppContext.getProjectId(),
-                            name: 'MODE San Mateo'
-                        },
-                        {
-                            id: 2001,
-                            projectId: AppContext.getProjectId(),
-                            name: 'TYO - Golang version'
-                        },
-                        {
-                            id: 2002,
-                            projectId: AppContext.getProjectId(),
-                            name: 'Tokyo Office (Node ver. it\'s migrated to Gateway-34038)'
-                        }]
+                        devices: deviceResponse
                     };
+                });
+            })
+            .then(() => {
+                this.state.devices.forEach((device, index) => {
+                    const url = MODE_API_BASE_URL + 'devices/' + device.id + '/kv';
+                    modeAPI.request('GET', url, {}).then((sensorModules: any) => {
+                        const deviceBundle = {
+                            device: device.id,
+                            sensorModules: sensorModules.data.slice(1, sensorModules.data.length)
+                        }; 
+                        this.setState(() => {
+                            return {
+                                linkedModules: [...this.state.linkedModules, deviceBundle]
+                            };
+                        });
+                    })
+                    .catch((reason: any) =>  {
+                        console.log('error posting to the kv store', reason);
+                    });
                 });
             });
         });
@@ -77,11 +90,36 @@ export class Hardware extends Component<HardwareProps & RouteComponentProps<any>
         this.props.history.push('/sensor_modules/' + moduleID);
     }
 
-    renderDeleteModal(event: any, moduleID: string): void {
+    renderDeleteModal(event: any, moduleID: string, deviceID: string, deviceIndex: number): void {
         this.setState(() => {
             return {
                 moduleInDeleteMode: moduleID
             };
+        });
+        confirm({
+            title: `Are you sure you want to unlink #${moduleID}?`,
+            content: 
+            'Your existing data can still be accessed, but you will need to re-add your sensor module to \
+             a gateway in order to receive new data.',
+            onOk: () => this.handleOk(moduleID, deviceID, deviceIndex),
+        });
+    }
+
+    handleOk(moduleID: string, deviceID: string, deviceIndex: number) {
+        const url = MODE_API_BASE_URL + 'devices/' 
+        + deviceID + '/kv/' + moduleID;
+        modeAPI.request('DELETE', url, {}).then((response: any) => {
+          if (response.status === 204) {
+              const filteredModules = this.state.linkedModules[deviceIndex].sensorModules.filter((sensor) => {
+                return sensor.key !== moduleID;
+              });
+              this.state.linkedModules[deviceIndex].sensorModules = filteredModules;
+              this.setState(() => {
+                return {
+                    linkedModules: this.state.linkedModules
+                };
+              });
+          }
         });
     }
 
@@ -122,17 +160,10 @@ export class Hardware extends Component<HardwareProps & RouteComponentProps<any>
         return (
             <div>
                 <LeftNav />
-                {
+                {/* {
                     this.state.moduleInDeleteMode &&
-                    <AlertDialogComponent
-                        isOpen={this.state.moduleInDeleteMode !== ''}
-                        titleText={`Are you sure you want to unlink ${this.state.moduleInDeleteMode}`}
-                        contentText="Your existing data can still be accessed, but you will need to 
-                        re-add your sensor module to a gateway in order to receive new data."
-                        closeDialog={() => console.log('Closing')}
-                        onOkayClick={() => console.log('Deleting...')}
-                    />
-                }
+                    
+                } */}
                 { this.props.history.location.pathname === '/devices' ?
                 <div className="hardware-section">
                     <div className="page-header">
@@ -199,52 +230,66 @@ export class Hardware extends Component<HardwareProps & RouteComponentProps<any>
                                         className={this.state.editingGateways.includes(device.id) ?
                                         'gateway-sensor-modules editing-module' : 'gateway-sensor-modules'}
                                     >
-                                        { !this.state.editingGateways.includes(device.id) ?
-                                            [1, 2, 3, 4, 5, 6].map((value, key) => {
+                                        { !this.state.editingGateways.includes(device.id) 
+                                            && this.state.linkedModules.length > 0 ?
+                                            this.state.linkedModules[index].sensorModules.map((sensor, key) => {
                                             return (
                                                 <a 
                                                     key={key}
                                                     className="sensor-module"
                                                     onClick={event => 
-                                                        this.goToSensorModule(event, '#0107:cc63f00b4ce4')}
+                                                        this.goToSensorModule(event, sensor.key)}
                                                 >
                                                     <img className="module-image" src={sensorModule} />
                                                     <div className="module-info">
-                                                        <div className="sensor-module-name">#0107:cc63f00b4ce4</div>
+                                                        <div className="sensor-module-name">{sensor.key}</div>
                                                         <div className="sensor-module-model">
-                                                            Model:OMRON Environment Sensor BL01
+                                                            {sensor.value.id}
                                                         </div>
-                                                        <img className="sensor-type-image" src={sensorTemp} />
-                                                        <img className="sensor-type-image" src={sensorHeat} />
-                                                        <img className="sensor-type-image" src={sensorHumidity} />
-                                                        <img className="sensor-type-image" src={sensorLight} />
-                                                        <img className="sensor-type-image" src={sensorNoise} />
-                                                        <img className="sensor-type-image" src={sensorVibration} />
+                                                        {
+                                                            sensor.value.sensors.map((sensorType, sensorIndex) => {  
+                                                                // TODO: add logic for rendering sensor type images
+                                                                return (
+                                                                    <img 
+                                                                        key={sensorIndex}
+                                                                        className="sensor-type-image" 
+                                                                        src={sensorTemp}
+                                                                    />
+                                                                );
+                                                            })
+                                                        }
                                                     </div>
                                                 </a>
                                             );
                                         }) :
-                                        [1, 2, 3, 4, 5, 6].map((value, key) => {
+                                        this.state.linkedModules.length > 0 &&
+                                        this.state.linkedModules[index].sensorModules.map((sensor, key) => {
                                             return (
                                                 <a 
                                                     key={key}
                                                     className="sensor-module"
                                                     onClick={event => 
-                                                        this.renderDeleteModal(event, '#0107:cc63f00b4ce4')}
+                                                        this.renderDeleteModal(event, sensor.key, device.id, index)}
                                                 >
                                                     <img className="module-image" src={sensorModule} />
                                                     <div className="module-info">
                                                         <div className="x-icon">x</div>
-                                                        <div className="sensor-module-name">#0107:cc63f00b4ce4</div>
+                                                        <div className="sensor-module-name">{sensor.key}</div>
                                                         <div className="sensor-module-model">
-                                                            Model:OMRON Environment Sensor BL01
+                                                            {sensor.value.id}
                                                         </div>
-                                                        <img className="sensor-type-image" src={sensorTemp} />
-                                                        <img className="sensor-type-image" src={sensorHeat} />
-                                                        <img className="sensor-type-image" src={sensorHumidity} />
-                                                        <img className="sensor-type-image" src={sensorLight} />
-                                                        <img className="sensor-type-image" src={sensorNoise} />
-                                                        <img className="sensor-type-image" src={sensorVibration} />
+                                                        {
+                                                            sensor.value.sensors.map((sensorType, sensorIndex) => {  
+                                                                // TODO: add logic for rendering sensor type images
+                                                                return (
+                                                                    <img 
+                                                                        key={sensorIndex}
+                                                                        className="sensor-type-image" 
+                                                                        src={sensorTemp}
+                                                                    />
+                                                                );
+                                                            })
+                                                        }
                                                     </div>
                                                 </a>
                                             );
