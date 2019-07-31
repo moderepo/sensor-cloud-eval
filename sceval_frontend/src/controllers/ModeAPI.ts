@@ -1,4 +1,4 @@
-import Axios from 'axios';
+import Axios, { Method } from 'axios';
 import { AxiosRequestConfig, AxiosInstance, AxiosResponse } from 'axios';
 import Home from './Home';
 
@@ -71,7 +71,7 @@ export class ModeAPI {
     });
   }
 
-  public _initRequest(method: string, path: string, withCredentials?: boolean): RequestConfig {
+  public _initRequest(method: Method, path: string, withCredentials?: boolean): RequestConfig {
     var url: string;
     if (path.indexOf('://') > -1) {
       url = path;
@@ -96,7 +96,7 @@ export class ModeAPI {
   }
 
   // Make a REST request. For POST/PUT/PATCH requests, body is encoded as JSON.
-  public request<T>(method: string, path: string, data: string | Object, withCredentials?: boolean) {
+  public request<T>(method: Method, path: string, data: string | Object, withCredentials?: boolean) {
     var config = this._initRequest(method, path, withCredentials);
     if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
       config.data = data;

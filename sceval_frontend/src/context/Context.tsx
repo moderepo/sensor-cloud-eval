@@ -1,41 +1,25 @@
-import * as React from 'react';
+import React from 'react';
 
-interface ContextProviderStateBase  {
+interface ContextProviderProps extends React.Props<any> {}
 
-}
+interface ContextAction {}
 
-interface ContextAction {
-
-}
-
-export interface Context {
-
-}
+export interface Context {}
 
 const context = React.createContext<any>(null);
-
-export class ContextProvider extends React.Component<{}, ContextProviderStateBase> {
-  state: ContextProviderStateBase = {
-
-  };
-
-//   componentDidMount() {
-
-//   }
-
-  render() {
+export const ContextProvider: React.FC<ContextProviderProps> = (
+    props: ContextProviderProps
+) => {
     return (
-      <context.Provider
-        value={{
-            state: this.state,
-            actions: {
-            }
-        }}
-      > 
-      {this.props.children}
-      </context.Provider>
+        <context.Provider
+            value={{
+                state: {},
+                actions: {}
+            }}
+        >
+            {props.children}
+        </context.Provider>
     );
-  }
-}
+};
 
 export const ContextConsumer = context.Consumer;
