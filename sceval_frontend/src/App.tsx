@@ -1,63 +1,39 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import RouteDeclarations from './routes/RouteDeclarations';
 import { Route } from 'react-router-dom';
 import { ContextProvider } from './context/Context';
-import { AppContext, LoginInfo } from './controllers/AppContext';
 import './css/App.css';
 
-export interface AppState {
-  isAuthenticated: boolean;
-  isLoggedIn: boolean;
-}
+const App: React.FC = () => {
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-export interface AppProps {
-
-}
-export class App extends Component<AppProps, AppState> {
-  constructor(props: AppProps) {
-    super(props);
-    this.state = {
-      isLoggedIn: false,
-      isAuthenticated: false,
-    };
-    this.onLogin = this.onLogin.bind(this);
-  }
-
-  componentDidMount() {
-    if (localStorage.getItem('user-login')) {
-      this.setState(() => {
-        return {
-          isLoggedIn: true,
-          isAuthenticated: true
-        };
-      });
-    }
-  }
-
-  async onLogin() {
-    this.setState(() => {
-      return {
-        isLoggedIn: true,
-        isAuthenticated: true,
-      };
-    });
-  }
-  render () {
-    return (
-      <ContextProvider>
-        <div className="App">
-          <Route>
-            <RouteDeclarations
-              onLogin={this.onLogin}
-              isLoggedIn={this.state.isLoggedIn}
-              isAuthenticated={this.state.isAuthenticated}
-              isSavedLoginPresent={true}
-            />
-          </Route>
-        </div>
-      </ContextProvider>
+    useEffect(
+        () => {
+            if (localStorage.getItem('user-login')) {
+                setIsLoggedIn(true); // set login to true if user-login exists in LS.
+                setIsAuthenticated(true); // set auth to true if user-login exists in LS.
+            }
+        },
+        [isLoggedIn, isAuthenticated]
     );
-  }
-}
+    return (
+        <ContextProvider>
+            <div className="App">
+                <Route>
+                    <RouteDeclarations
+                        onLogin={() => {
+                            setIsLoggedIn(true);
+                            setIsAuthenticated(true);
+                        }}
+                        isLoggedIn={isLoggedIn}
+                        isAuthenticated={isAuthenticated}
+                        isSavedLoginPresent={true}
+                    />
+                </Route>
+            </div>
+        </ContextProvider>
+    );
+};
 
 export default App;

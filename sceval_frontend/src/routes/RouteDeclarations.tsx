@@ -64,7 +64,10 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
           path="/register"
           component={() => (
             <>
-              <Register />
+              <Register
+                isLoggedIn={this.props.isLoggedIn}
+                onLogIn={this.props.onLogin}
+              />
             </>
           )}
         />

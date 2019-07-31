@@ -1,7 +1,7 @@
 import React from 'react';
 const modeLogo = require('../common_images/mode-logo-dark.svg');
 
-export default function LoginHeader() {
+const LoginHeader = () => {
     return (
         <div className="login-header">
             <img src={modeLogo} className="login-mode-logo" />
@@ -9,4 +9,6 @@ export default function LoginHeader() {
             <hr />
         </div>
     );
-}
+};
+
+export default LoginHeader;
