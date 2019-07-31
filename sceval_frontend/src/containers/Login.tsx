@@ -50,30 +50,30 @@ const Login: React.FC<LoginProps> = (props: LoginProps) => {
     };
 
     if (props.isLoggedIn) {
-        return <Redirect to='/hardware' />;
+        return <Redirect to="/hardware" />;
     }
     return (
         <Fragment>
             <LoginHeader />
-            <div className='login-section'>
-                <h1 className='title'>Welcome Back!</h1>
-                <p id='login-text'>Your sensor data is just one log-in away</p>
-                <form className='form-group' onSubmit={handleSubmit}>
+            <div className="login-section">
+                <h1 className="title">Welcome Back!</h1>
+                <p id="login-text">Your sensor data is just one log-in away</p>
+                <form className="form-group" onSubmit={handleSubmit}>
                     <input
                         onChange={event => validateEmail(event)}
-                        type='email'
-                        className='form-control'
+                        type="email"
+                        className="form-control"
                     />
                     <input
                         onChange={event => passwordChange(event)}
-                        type='password'
-                        className='form-control'
+                        type="password"
+                        className="form-control"
                     />
                     {error !== '' && (
-                        <div className='error-message-login'>{error}</div>
+                        <div className="error-message-login">{error}</div>
                     )}
                     <button
-                        type='submit'
+                        type="submit"
                         className={
                             emailValid
                                 ? 'btn btn-primary btn-large'
@@ -84,15 +84,15 @@ const Login: React.FC<LoginProps> = (props: LoginProps) => {
                         Log In
                     </button>
                 </form>
-                <div className='dont-have-account'>
+                <div className="dont-have-account">
                     <p>
                         {`Don't have an acount yet? `}
-                        <NavLink to='/register' className='navlinks'>
+                        <NavLink to="/register" className="navlinks">
                             Sign Up!
                         </NavLink>
                     </p>
                     <p>or</p>
-                    <NavLink to='/reset_password' className='navlinks'>
+                    <NavLink to="/reset_password" className="navlinks">
                         Forgot Password?
                     </NavLink>
                 </div>

@@ -6,8 +6,8 @@ const EmailSent = () => {
     return (
         <div>
             <LoginHeader />
-            <div className='register-section'>
-                <h1 className='title'>
+            <div className="register-section">
+                <h1 className="title">
                     You're signed up! Please verify your account.
                 </h1>
                 <img src={emailSent} />

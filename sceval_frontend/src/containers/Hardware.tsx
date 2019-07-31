@@ -8,7 +8,7 @@ interface HardwareProps extends React.Props<any> {
 
 const Hardware: React.FC<HardwareProps> = (props: HardwareProps) => {
     if (!props.isLoggedIn) {
-        return <Redirect to='/login' />;
+        return <Redirect to="/login" />;
     }
     return <div>Hardware</div>;
 };

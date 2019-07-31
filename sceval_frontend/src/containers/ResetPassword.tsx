@@ -44,36 +44,36 @@ const ResetPassword: React.FC = () => {
         <Fragment>
             <LoginHeader />
             <div>
-                <div className='pass-reset-section'>
-                    <h1 className='title'>
+                <div className="pass-reset-section">
+                    <h1 className="title">
                         {!isSent ? 'Password Reset' : 'Email sent.'}
                     </h1>
                     {!isSent ? (
-                        <p id='login-text'>
+                        <p id="login-text">
                             To reset your password, enter the email address you
                             use to sign in.
                         </p>
                     ) : (
-                        <p id='login-text'>
+                        <p id="login-text">
                             We just sent an email to you. Click the link in the
                             email to reset your password.
                         </p>
                     )}
                     {!isSent ? (
-                        <form className='form-group' onSubmit={onSubmit}>
+                        <form className="form-group" onSubmit={onSubmit}>
                             <div>
                                 <input
-                                    className='form-control'
+                                    className="form-control"
                                     required={true}
-                                    type='email'
-                                    placeholder='Email address*'
+                                    type="email"
+                                    placeholder="Email address*"
                                     value={input}
                                     onChange={onTxtEmailChange}
                                 />
                             </div>
                             <div>
                                 <button
-                                    type='submit'
+                                    type="submit"
                                     className={
                                         emailValid
                                             ? 'btn btn-primary btn-large'
@@ -90,10 +90,10 @@ const ResetPassword: React.FC = () => {
                     )}
                     {!isSent && (
                         <Fragment>
-                            <NavLink to='/login' className='navlinks'>
+                            <NavLink to="/login" className="navlinks">
                                 Go Back
                             </NavLink>
-                            <div className='error'>{error}</div>
+                            <div className="error">{error}</div>
                         </Fragment>
                     )}
                 </div>

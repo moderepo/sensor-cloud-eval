@@ -68,7 +68,7 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
             } else {
                 setFormValid(false);
             }
-        }, 500);
+        },         500);
     };
     const getSubmitButtonClassName = (isValid: boolean): string => {
         return isValid
@@ -77,27 +77,27 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
     };
 
     if (props.isLoggedIn) {
-        return <Redirect to='/hardware' />;
+        return <Redirect to="/hardware" />;
     }
     if (isRedirectConfirmEmailVerification) {
-        return <Redirect to='/email_sent' />;
+        return <Redirect to="/email_sent" />;
     }
     return (
         <Fragment>
             <LoginHeader />
             <div>
-                <div className='register-section'>
-                    <h1 className='title'>
+                <div className="register-section">
+                    <h1 className="title">
                         Create an account on MODE Sensor Cloud Eval
                     </h1>
-                    <form className='form-group' onSubmit={onSubmit}>
+                    <form className="form-group" onSubmit={onSubmit}>
                         <div>
                             <input
-                                className='form-control'
+                                className="form-control"
                                 required={true}
-                                name='name'
-                                type='text'
-                                placeholder='Name'
+                                name="name"
+                                type="text"
+                                placeholder="Name"
                                 value={name}
                                 onChange={e => {
                                     setName(e.target.value);
@@ -109,11 +109,11 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
                                 }}
                             />
                             <input
-                                className='form-control'
+                                className="form-control"
                                 required={true}
-                                name='email'
-                                type='email'
-                                placeholder='Email'
+                                name="email"
+                                type="email"
+                                placeholder="Email"
                                 value={email}
                                 onChange={e => {
                                     setEmail(e.target.value);
@@ -125,11 +125,11 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
                                 }}
                             />
                             <input
-                                className='form-control'
-                                name='password'
+                                className="form-control"
+                                name="password"
                                 required={true}
-                                type='password'
-                                placeholder='Password'
+                                type="password"
+                                placeholder="Password"
                                 value={password}
                                 onChange={e => {
                                     setPassword(e.target.value);
@@ -141,11 +141,11 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
                                 }}
                             />
                             <input
-                                className='form-control'
-                                name='confirmPassword'
+                                className="form-control"
+                                name="confirmPassword"
                                 required={true}
-                                type='password'
-                                placeholder='Confirm Password'
+                                type="password"
+                                placeholder="Confirm Password"
                                 value={confirmPassword}
                                 onChange={e => {
                                     setConfirmPassword(e.target.value);
@@ -159,12 +159,12 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
                         </div>
                         <div>
                             {error !== null && (
-                                <div className='error-message-login'>
+                                <div className="error-message-login">
                                     {error}
                                 </div>
                             )}
                             <button
-                                type='submit'
+                                type="submit"
                                 className={getSubmitButtonClassName(formValid)}
                                 disabled={!formValid}
                             >
@@ -174,23 +174,23 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
                     </form>
                 </div>
                 {/* {this.getDoneElement(isSent)} */}
-                <div className='error'>{/* {getErrorChild()} */}</div>
+                <div className="error">{/* {getErrorChild()} */}</div>
             </div>
-            <div className='agreement-account-status'>
+            <div className="agreement-account-status">
                 <p>
                     {`By signing up, you indicate that you have read and agree to the `}
                     <a
-                        href='https://www.tinkermode.com/legal/tos.html'
-                        target='_blank'
-                        className='navlinks'
+                        href="https://www.tinkermode.com/legal/tos.html"
+                        target="_blank"
+                        className="navlinks"
                     >
                         Terms of Service
                     </a>
                     {` and `}
                     <a
-                        href='https://www.tinkermode.com/legal/privacy.html'
-                        target='_blank'
-                        className='navlinks'
+                        href="https://www.tinkermode.com/legal/privacy.html"
+                        target="_blank"
+                        className="navlinks"
                     >
                         Privacy Policy
                     </a>
@@ -198,7 +198,7 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
                 </p>
                 <p>
                     {`Already have an account? `}
-                    <NavLink to='/login' className='navlinks'>
+                    <NavLink to="/login" className="navlinks">
                         Sign In!
                     </NavLink>
                 </p>
