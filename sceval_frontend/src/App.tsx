@@ -11,8 +11,8 @@ const App: React.FC = () => {
 
     useEffect(() => {
         if (localStorage.getItem('user-login')) {
-            setIsLoggedIn(false);
-            setIsAuthenticated(false);
+            setIsLoggedIn(true); // set login to true if user-login exists in LS.
+            setIsAuthenticated(true); // set auth to true if user-login exists in LS.
         }
     });
 

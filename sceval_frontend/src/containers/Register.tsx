@@ -57,6 +57,8 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
             });
     };
     const setValidationTimer = () => {
+        const re = /\S+@\S+\.\S+/;
+        setEmailValid(re.test(email));
         setTimeout(() => {
             if (
                 password === confirmPassword &&

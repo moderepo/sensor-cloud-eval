@@ -17,11 +17,11 @@ const ResetPassword: React.FC = () => {
         setEmailValid(re.test(value));
     };
     const onSubmit = (event: React.FormEvent<HTMLElement>) => {
+        event.preventDefault();
         const data: { projectId: number; email: string } = {
             projectId: AppContext.getProjectId(),
             email: input
         };
-
         modeAPI
             .request<any>(
                 'POST',
@@ -36,7 +36,6 @@ const ResetPassword: React.FC = () => {
                 setError(
                     value.response.data ? value.response.data.reason : 'Error'
                 );
-                event.preventDefault();
             });
     };
 

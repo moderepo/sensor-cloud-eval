@@ -29,6 +29,7 @@ const Login: React.FC<LoginProps> = (props: LoginProps) => {
         AppContext.postLoginForm(email, password)
             .then((loginInfo: LoginInfo) => {
                 if (loginInfo.user.verified) {
+                    console.log('attempting to login');
                     props.onLogIn();
                 }
             })
@@ -48,7 +49,6 @@ const Login: React.FC<LoginProps> = (props: LoginProps) => {
                 }
             });
     };
-
     if (props.isLoggedIn) {
         return <Redirect to="/hardware" />;
     }
