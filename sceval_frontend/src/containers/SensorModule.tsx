@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import ModeConnection from '../controllers/ModeConnection';
 import AppContext from '../controllers/AppContext';
+import { AmChart } from '../components/AmChart';
 
 const enySensor = require('../common_images/sensors/eny-sensor.png');
 const backArrow = require('../common_images/navigation/back.svg');
@@ -72,7 +72,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                             </div>
                         </div>
                         <div className="graph-container">
-                            #
+                            <AmChart />
                         </div>
                         <div className="graph-info-container">
                             <div>{`Maximum: `}</div>
