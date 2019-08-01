@@ -1,7 +1,7 @@
 import React from 'react';
 const modeLogo = require('../common_images/mode-logo-dark.svg');
 
-const LoginHeader = () => {
+const LoginHeader: React.FC = () => {
     return (
         <div className="login-header">
             <img src={modeLogo} className="login-mode-logo" />

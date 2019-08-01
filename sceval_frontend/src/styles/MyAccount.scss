@@ -52,6 +52,9 @@
         margin-left: 150px;
         .edit-mode {
             display: inherit;
+            .update-account:disabled {
+                opacity: 0.5
+            }
         }
         .user-info-section, .sign-out-section {
             margin: 10px 40px;

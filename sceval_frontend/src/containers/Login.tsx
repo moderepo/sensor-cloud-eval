@@ -38,7 +38,6 @@ const Login: React.FC<LoginProps> = (props: LoginProps) => {
                     reason.response.data &&
                     reason.response.data.reason
                 ) {
-                    console.log(reason.response.data.reason);
                     const transformedErr = handleErrors(
                         reason.response.data.reason
                     );

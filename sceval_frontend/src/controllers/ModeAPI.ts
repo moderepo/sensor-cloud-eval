@@ -1,7 +1,6 @@
 import Axios, { Method } from 'axios';
 import { AxiosRequestConfig, AxiosInstance, AxiosResponse } from 'axios';
 import Home from './Home';
-import User from './User';
 
 const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 

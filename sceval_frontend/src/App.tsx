@@ -17,15 +17,18 @@ const App: React.FC = () => {
         },
         [isLoggedIn, isAuthenticated]
     );
+
+    const onLogin = () => {
+        setIsLoggedIn(true);
+        setIsAuthenticated(true);
+    };
+
     return (
         <ContextProvider>
             <div className="App">
                 <Route>
                     <RouteDeclarations
-                        onLogin={() => {
-                            setIsLoggedIn(true);
-                            setIsAuthenticated(true);
-                        }}
+                        onLogin={onLogin}
                         isLoggedIn={isLoggedIn}
                         isAuthenticated={isAuthenticated}
                         isSavedLoginPresent={true}

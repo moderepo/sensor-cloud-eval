@@ -2,7 +2,6 @@ export default interface SensorModuleSet {
     device: string;
     sensorModules: Array<SensorModule>;
 }
-
 interface SensorModule {
     key: string;
     modificationTime: string;
