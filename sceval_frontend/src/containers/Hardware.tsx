@@ -9,6 +9,7 @@ import SensorModuleSet from '../components/entities/SensorModule';
 import { Modal } from 'antd';
 const { confirm } = Modal;
 // TODO: implement image specific rendering
+const enySensor = require('../common_images/sensors/eny-sensor.png');
 const sensorModule = require('../common_images/sensor_modules/alps-snm3.png');
 const sensorTemp = require('../common_images/sensors/temp-active.svg');
 const sensorHumidity = require('../common_images/sensors/humidity-active.svg');
@@ -247,7 +248,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                                 >
                                   <img
                                     className="module-image"
-                                    src={sensorModule}
+                                    src={enySensor}
                                   />
                                   <div className="module-info">
                                     <div className="sensor-module-name">
