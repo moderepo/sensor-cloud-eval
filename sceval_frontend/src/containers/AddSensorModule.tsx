@@ -96,6 +96,7 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
             let gateway = '';
             modeAPI.getHome(UID.user.id).then((response: any) => {
                 modeAPI.getDevices(response.id).then((deviceResponse: any) => {
+                    console.log(deviceResponse);
                     gateway = deviceResponse[0].id;
                     this.setState(() => {
                         return {
