@@ -4,11 +4,14 @@ import { LeftNav } from '../components/LeftNav';
 import modeAPI from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import AppContext from '../controllers/AppContext';
-import { SensorModule } from '../containers/SensorModule';
-import SensorModuleSet from '../components/entities/SensorModule';
+import SensorModuleSet, { SensorModuleInterface } from '../components/entities/SensorModule';
 import { Modal } from 'antd';
+import { Context, ContextConsumer } from '../context/Context';
+import ModeConnection from '../controllers/ModeConnection';
+import { SensorModule } from './index';
 const { confirm } = Modal;
 // TODO: implement image specific rendering
+const loader = require('../common_images/notifications/loading_ring.svg');
 const enySensor = require('../common_images/sensors/eny-sensor.png');
 const sensorModule = require('../common_images/sensor_modules/alps-snm3.png');
 const sensorTemp = require('../common_images/sensors/temp-active.svg');
@@ -27,58 +30,67 @@ interface HardwareProps extends React.Props<any> {
 }
 
 const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [fetchComplete, setFetchComplete] = useState<boolean>(false);
   const [devices, setDevices] = useState<Array<any>>();
   const [linkedModules, setlinkedModules] = useState<Array<SensorModuleSet>>(
     []
   );
-  const [selectedDevice, setselectedDevice] = useState<string>('');
+  const [selectedDevice, setSelectedDevice] = useState<string>('');
   const [displayGatewayOptions, setdisplayGatewayOptions] = useState<
     Array<string>
   >([]);
+  const [selectedGateway, setselectedGateway] = useState<string>();
   const [editingGateways, seteditingGateways] = useState<Array<string>>([]);
-  const [targetedModule, settargetedModule] = useState<string>('');
+  const [targetedModule, setTargetedModule] = useState<string>('');
   const [moduleInDeleteMode, setmoduleInDeleteMode] = useState<string>('');
 
   useEffect(
     () => {
         AppContext.restoreLogin(); // restore user credentials and get home / associated devices
-        modeAPI
-        .getHome(ClientStorage.getItem('user-login').user.id)
+        modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
         .then((response: any) => {
             modeAPI
             .getDevices(response.id)
             .then((deviceResponse: any) => {
                 setDevices(deviceResponse);
-            })
-            .then(() => {
-                if (devices !== undefined) {
-                devices.forEach((device: any) => {
-                    const url = MODE_API_BASE_URL + 'devices/' + device.id + '/kv';
-                    modeAPI
-                    .request('GET', url, {})
-                    .then((sensorModules: any) => {
-                        const deviceBundle: SensorModuleSet = {
-                        device: device.id,
-                        sensorModules: sensorModules.data.slice(
-                            1,
-                            sensorModules.data.length
-                        )
-                        };
-                        setlinkedModules([...linkedModules, deviceBundle]);
-                    })
-                    .catch((reason: any) => {
-                        console.log('error posting to the kv store', reason);
-                    });
-                });
-                }
-            });
+                if (deviceResponse.length > 0) {
+                      let deviceBundles = linkedModules;
+                      deviceResponse.forEach((device: any, index: any) => {  // for each device, set linked modules
+                      const url = MODE_API_BASE_URL + 'devices/' + device.id + '/kv';
+                      setIsLoading(true);
+                      modeAPI
+                      .request('GET', url, {})
+                      .then((sensorModules: any) => {
+                          const filteredModules = sensorModules.data.filter((sModule: any) => {
+                            return sModule.key !== 'firmwareVersion' && sModule.key !== 'firmwareDistribution';
+                          });
+                          const deviceBundle: SensorModuleSet = { // create sensor module set
+                          device: device.id,
+                          sensorModules: filteredModules
+                          };
+                          if (!deviceBundles.includes(deviceBundle)) {
+                            deviceBundles.push(deviceBundle);
+                          }
+                          setlinkedModules([...deviceBundles]); // set linked modules
+                          if (sensorModules.status === 200 && index === deviceResponse.length - 1) {
+                            setFetchComplete(true);
+                            setIsLoading(false);
+                          }
+                      })
+                      .catch((reason: any) => {
+                          console.log('error posting to the kv store', reason);
+                      });
+                  });
+                  }
+              });
         });
     }, 
-    [devices !== undefined && devices.length, moduleInDeleteMode] // this argument outlines re-rendering dependencies
+    [moduleInDeleteMode] // this argument outlines re-rendering dependencies
     );
 
   const goToSensorModule = (event: any, moduleID: string): void => {
-    setselectedDevice(moduleID);
+    setTargetedModule(moduleID);
     props.history.push('/sensor_modules/' + moduleID);
   };
 
@@ -95,9 +107,9 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
             return sensor.key !== moduleID;
           }
         );
-        console.log(filteredModules);
-        linkedModules[deviceIndex].sensorModules = filteredModules;
-        setlinkedModules(linkedModules);
+        let updatedLinkedModules = linkedModules;
+        updatedLinkedModules[deviceIndex].sensorModules = filteredModules;
+        setlinkedModules(updatedLinkedModules);
       }
     });
   };
@@ -118,8 +130,10 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     });
   };
 
-  const addSensorModules = (event: any, gatewayID: string): void => {
+  const addSensorModules = (event: any, gatewayID: string, context: Context ): void => {
     props.history.push('/devices/' + gatewayID + '/add_sensor_modules');
+    setSelectedDevice(gatewayID);
+    context.actions.setGateway(gatewayID);
   };
 
   const showGatewayOptions = (gatewayID: string): void => {
@@ -144,194 +158,239 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     seteditingGateways(gatewaySet);
   };
 
+  const renderSensorModules = (context: Context, deviceID: string, index: number): React.ReactNode => {
+    const ws = ModeConnection.openConnection();
+    if (ws !== undefined) {
+      setTimeout(
+        () => {
+          context.actions.setWebsocket(ws);
+        },
+        2000
+        );
+    }
+    const modules = linkedModules[index].sensorModules.map(
+      (sensor, key) => {
+        ModeConnection.listSensorModules(deviceID);
+        return (
+          <Fragment key={key}>
+            { !isLoading ?
+            <a
+              key={key}
+              className="sensor-module"
+              onClick={event => {
+                sessionStorage.setItem('selectedGateway', deviceID);
+                sessionStorage.setItem('selectedModule', sensor.key.split('sensorModule')[1]);
+                goToSensorModule(event, sensor.key);
+              }}
+            >
+              <img
+                className="module-image"
+                src={enySensor}
+              />
+              <div className="module-info">
+                <div className="sensor-module-name">
+                  {sensor.key}
+                </div>
+                <div className="sensor-module-model">
+                  {sensor.value.id}
+                </div>
+                { sensor.value.sensors &&
+                  sensor.value.sensors.map(
+                  (sensorType, sensorIndex) => {
+                    // TODO: add logic for rendering sensor type images
+                    return (
+                      <img
+                        key={sensorIndex}
+                        className="sensor-type-image"
+                        src={sensorTemp}
+                      />
+                    );
+                  }
+                )}
+              </div>
+            </a> :
+            <img src={loader} />
+            }
+          </Fragment>
+        );
+      });
+    return modules;
+  };
+
   if (!props.isLoggedIn) {
     return <Redirect to="/login" />;
   }
   return (
-    <div>
-      <LeftNav />
-      {props.history.location.pathname === '/devices' ? (
-        <div className="hardware-section">
-          <div className="page-header">
-            {selectedDevice === '' ? (
-              <h1>Hardware</h1>
-            ) : (
-              <h1>Add Sensor Modules</h1>
-            )}
-          </div>
-          <div className="gateways-section">
-            {devices !== undefined &&
-              devices.map((device, index) => {
-                return (
-                  <div
-                    key={index}
-                    className={
-                      editingGateways.includes(device.id)
-                        ? 'gateway-row editing-gateway'
-                        : 'gateway-row'
-                    }
-                  >
-                    <div className="gateway-header">
-                      <div className="gateway-info">
-                        <img src={deviceImage} />
-                        <div className="gateway-id">{`Gateway-${
-                          device.id
-                        }`}</div>
-                        <div className="gateway-name">
-                          <img
-                            className="gateway-location"
-                            src={deviceLocation}
-                          />
-                          {device.name}
-                        </div>
-                      </div>
-                      <div className="gateway-settings">
-                        <Fragment>
-                          {!editingGateways.includes(device.id) ? (
-                            <>
-                              <button
-                                className="action-button"
-                                onClick={event =>
-                                  addSensorModules(event, device.id)
-                                }
-                              >
-                                + Add Sensor Modules
-                              </button>
-                              <button
-                                className="action-button settings"
-                                onClick={() => showGatewayOptions(device.id)}
-                              >
-                                ...
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                className="done-button"
-                                onClick={() => toggleEditGateway(device.id)}
-                              >
-                                Done
-                              </button>
-                            </>
-                          )}
-                        </Fragment>
-                        {displayGatewayOptions.includes(device.id) && (
-                          <ul className="dropdown-menu">
-                            <a
-                              href="#"
-                              onClick={() => toggleEditGateway(device.id)}
-                            >
-                              Unlink Sensor Modules
-                            </a>
-                          </ul>
-                        )}
-                      </div>
-                    </div>
+    <ContextConsumer>
+      {(context: Context) =>
+          context && (
+      <div>
+        <LeftNav />
+        {props.history.location.pathname === '/devices' ? ( // /devices path, render gateway set
+          <div className="hardware-section">
+            <div className="page-header">
+              {selectedDevice === '' ? (
+                <h1>Hardware</h1>
+              ) : (
+                <h1>Add Sensor Modules</h1>
+              )}
+            </div>
+            <div className="gateways-section">
+              {devices !== undefined && fetchComplete && 
+                devices.map((device, index) => { // for each gateway, render the following
+                  return (
+                    <Fragment key={index}>
+                      { !isLoading ?
                     <div
+                      key={device.id}
                       className={
                         editingGateways.includes(device.id)
-                          ? 'gateway-sensor-modules editing-module'
-                          : 'gateway-sensor-modules'
+                          ? 'gateway-row editing-gateway'
+                          : 'gateway-row'
                       }
                     >
-                      {!editingGateways.includes(device.id) &&
-                      linkedModules.length > 0
-                        ? linkedModules[index].sensorModules.map(
-                            (sensor, key) => {
-                              return (
-                                <a
-                                  key={key}
-                                  className="sensor-module"
+                      <div className="gateway-header">
+                        <div className="gateway-info">
+                          <img src={deviceImage} />
+                          <div className="gateway-id">{`Gateway-${
+                            device.id
+                          }`}</div>
+                          <div className="gateway-name">
+                            <img
+                              className="gateway-location"
+                              src={deviceLocation}
+                            />
+                            {device.name}
+                          </div>
+                        </div>
+                        <div className="gateway-settings">
+                          <Fragment>
+                            {!editingGateways.includes(device.id) ? ( 
+                            // if this gateway is not being edited, show normal setting
+                              <>
+                                <button
+                                  className="action-button"
                                   onClick={event =>
-                                    goToSensorModule(event, sensor.key)
+                                    addSensorModules(event, device.id, context)
                                   }
                                 >
-                                  <img
-                                    className="module-image"
-                                    src={enySensor}
-                                  />
-                                  <div className="module-info">
-                                    <div className="sensor-module-name">
-                                      {sensor.key}
-                                    </div>
-                                    <div className="sensor-module-model">
-                                      {sensor.value.id}
-                                    </div>
-                                    {sensor.value.sensors.map(
-                                      (sensorType, sensorIndex) => {
-                                        // TODO: add logic for rendering sensor type images
-                                        return (
-                                          <img
-                                            key={sensorIndex}
-                                            className="sensor-type-image"
-                                            src={sensorTemp}
-                                          />
-                                        );
-                                      }
-                                    )}
-                                  </div>
-                                </a>
-                              );
-                            }
-                          )
-                        : linkedModules.length > 0 &&
-                          linkedModules[index].sensorModules.map(
-                            (sensor, key) => {
-                              return (
-                                <a
-                                  key={key}
-                                  className="sensor-module"
-                                  onClick={event =>
-                                    renderDeleteModal(
-                                      event,
-                                      sensor.key,
-                                      device.id,
-                                      index
-                                    )
-                                  }
+                                  + Add Sensor Modules
+                                </button>
+                                <button
+                                  className="action-button settings"
+                                  onClick={() => showGatewayOptions(device.id)}
                                 >
-                                  <img
-                                    className="module-image"
-                                    src={sensorModule}
-                                  />
-                                  <div className="module-info">
-                                    <div className="x-icon">x</div>
-                                    <div className="sensor-module-name">
-                                      {sensor.key}
-                                    </div>
-                                    <div className="sensor-module-model">
-                                      {sensor.value.id}
-                                    </div>
-                                    {sensor.value.sensors.map(
-                                      (sensorType, sensorIndex) => {
-                                        // TODO: add logic for rendering sensor type images
-                                        return (
-                                          <img
-                                            key={sensorIndex}
-                                            className="sensor-type-image"
-                                            src={sensorTemp}
-                                          />
-                                        );
-                                      }
-                                    )}
-                                  </div>
-                                </a>
-                              );
-                            }
+                                  ...
+                                </button>
+                              </>
+                            ) : ( // if it is being edited, show done button
+                              <>
+                                <button
+                                  className="done-button"
+                                  onClick={() => toggleEditGateway(device.id)}
+                                >
+                                  Done
+                                </button>
+                              </>
+                            )}
+                          </Fragment>
+                          {displayGatewayOptions.includes(device.id) && (  
+                            // if this gateway is being edited, show drop down
+                            <ul className="dropdown-menu">
+                              <a
+                                href="#"
+                                onClick={() => toggleEditGateway(device.id)}
+                              >
+                                Unlink Sensor Modules
+                              </a>
+                            </ul>
                           )}
-                    </div>
-                  </div>
-                );
-              })}
+                        </div>
+                      </div>
+                      <div
+                        className={
+                          editingGateways.includes(device.id)
+                            ? 'gateway-sensor-modules editing-module'
+                            : 'gateway-sensor-modules'
+                        }
+                      >
+                        {!editingGateways.includes(device.id) &&
+                        linkedModules && device &&
+                        linkedModules[index] &&
+                        linkedModules[index].device === device.id &&
+                        linkedModules[index].sensorModules && !isLoading
+                         ? // if this gateway is not being edited
+                          renderSensorModules(context, device.id, index)
+                          : editingGateways.includes(device.id) && // if this gateway is not being edited
+                            linkedModules[index] && linkedModules[index].sensorModules.length > 0  &&
+                            linkedModules[index] &&
+                            linkedModules[index].device === device.id &&
+                            linkedModules[index].sensorModules.map(
+                              (sensor, key) => {
+                                return (
+                                  <a
+                                    key={key}
+                                    className="sensor-module"
+                                    onClick={event =>
+                                      renderDeleteModal(
+                                        event,
+                                        sensor.key,
+                                        device.id,
+                                        index
+                                      )
+                                    }
+                                  >
+                                    <img
+                                      className="module-image"
+                                      src={sensorModule}
+                                    />
+                                    <div className="module-info">
+                                      <div className="x-icon">x</div>
+                                      <div className="sensor-module-name">
+                                        {sensor.key}
+                                      </div>
+                                      <div className="sensor-module-model">
+                                        {sensor.value.id}
+                                      </div>
+                                      {sensor.value.sensors &&
+                                      sensor.value.sensors.map(
+                                        (sensorType, sensorIndex) => {
+                                          // TODO: add logic for rendering sensor type images
+                                          return (
+                                            <img
+                                              key={sensorIndex}
+                                              className="sensor-type-image"
+                                              src={sensorTemp}
+                                            />
+                                          );
+                                        }
+                                      )}
+                                    </div>
+                                  </a>
+                                );
+                              }
+                            )}
+                      </div>
+                    </div> :
+                    <img src={loader} />
+                      }
+                    </Fragment>
+                  );
+                })}
+            </div>
           </div>
-        </div>
-      ) : (
-        <Fragment>
-          <LeftNav />
-          <SensorModule isLoggedIn={true} />
-        </Fragment>
-      )}
-    </div>
+        ) : 
+        ( // sensor module specific path, render sensor module details
+          <Fragment>
+            <SensorModule 
+              isLoggedIn={true}
+            />
+          </Fragment>
+        )}
+      </div>
+      )
+    }
+    </ContextConsumer>
   );
 });
 

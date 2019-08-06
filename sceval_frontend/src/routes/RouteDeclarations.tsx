@@ -122,9 +122,9 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
           path="/sensor_modules/:id"
           component={() => (
             <>
-              <LeftNav />
-              <SensorModule
+              <Hardware
                 isLoggedIn={this.props.isLoggedIn}
+                onLogIn={this.props.onLogin}
               />
             </>
           )}

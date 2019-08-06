@@ -5,8 +5,10 @@ import { withRouter, RouteComponentProps } from 'react-router-dom';
 import ModeConnection from '../controllers/ModeConnection';
 import AppContext from '../controllers/AppContext';
 import modeAPI from '../controllers/ModeAPI';
+import { Context, ContextConsumer } from '../context/Context';
 import { Progress } from 'antd';
 import 'antd/dist/antd.css';
+import ClientStorage from '../controllers/ClientStorage';
 
 const enySensor = require('../common_images/sensors/eny-sensor.png');
 const sensorTemp = require('../common_images/sensors/temp-active.svg');
@@ -57,27 +59,27 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
         this.props.history.push('/devices');
     }
 
-    startScan(): void {
+    startScan(context: Context): void {
         AppContext.restoreLogin();
-        const ws = ModeConnection.openConnection();
         this.setState(() => {
             return {
                 scanning: true
             };
         });
-        if (ws !== undefined) {
-            ws.onmessage = event => {
+        if (context.state.webSocket !== undefined) {
+            context.state.webSocket.onmessage = event => {
                 const moduleData = JSON.parse(event.data);
-                if (moduleData && moduleData.eventData.sensorModules !== undefined) {
-                    let availableModules: any = [];
+                if (moduleData && moduleData.eventData.sensorModules && this.state.scanning) {
+                    let newAvailableModules: any = [];
                     moduleData.eventData.sensorModules.forEach((sensorModule: any) => {
                         if (!this.state.associatedModules.includes(sensorModule.sensorModuleId)) {
-                            availableModules.push(sensorModule);
+                            newAvailableModules.push(sensorModule);
                         }
                     });
                     this.setState(() => {
                         return {
-                            availableModules: availableModules,
+                            availableModules: this.state.availableModules.length 
+                            >= newAvailableModules.length ? this.state.availableModules : newAvailableModules,
                             moduleMetadata: moduleData
                         };
                     });
@@ -91,87 +93,81 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
                 }
             };
         }
-        const UID = AppContext.getLoginInfo();
-        if (UID !== null) {
-            let gateway = '';
-            modeAPI.getHome(UID.user.id).then((response: any) => {
-                modeAPI.getDevices(response.id).then((deviceResponse: any) => {
-                    console.log(deviceResponse);
-                    gateway = deviceResponse[0].id;
+        const url =
+        MODE_API_BASE_URL + 'devices/' + context.state.selectedGateway + '/kv';
+        modeAPI
+        .request('GET', url, {})
+        .then((associatedResponse: any) => {
+            const modules = associatedResponse.data.filter((sModule: any) => {
+                return sModule.key !== 'firmwareVersion' && sModule.key !== 'firmwareDistribution';
+              });
+            const associatedModules: any = [];
+            modules.forEach((sensor: any) => {
+                associatedModules.push(sensor.value.id);
+            });
+            this.setState(() => {
+                return {
+                    associatedModules: associatedModules
+                };
+            });
+        });
+        let requestCount = 0;
+        console.log('search command invoked...');
+        ModeConnection.searchForSensorModules(context.state.selectedGateway);
+        let interval = setInterval(
+            () => {
+                requestCount++;
+                this.setState(() => {
+                    return {
+                        scanningProgress: requestCount * 10
+                    };
+                });
+                if (requestCount > 9) {
+                    clearInterval(interval);
                     this.setState(() => {
                         return {
-                            selectedGateway: gateway
+                            scanning: false
                         };
                     });
-                })
-                .then(() => {
-                    const url =
-                    MODE_API_BASE_URL + 'devices/' + gateway + '/kv';
-                    modeAPI
-                    .request('GET', url, {})
-                    .then((associatedResponse: any) => {
-                        const modules = associatedResponse.data.slice(1, associatedResponse.data.length);
-                        const associatedModules: any = [];
-                        modules.forEach((sensor: any) => {
-                            associatedModules.push(sensor.value.id);
-                        });
-                        this.setState(() => {
-                            return {
-                                associatedModules: associatedModules
-                            };
-                        });
-                    });
-                });
-                let requestCount = 0;
-                let interval = setInterval(
-                    () => {
-                        requestCount++;
-                        this.setState(() => {
-                            return {
-                                scanningProgress: requestCount * 10
-                            };
-                        });
-                        ModeConnection.searchForSensorModules(gateway);
-                        if (requestCount > 9) {
-                            clearInterval(interval);
-                            this.setState(() => {
-                                return {
-                                    scanning: false
-                                };
-                            });
-                        }
-                    },
-                    1000
-                );
-            });
-        }
-    }
+                }
+            },
+            1000
+        );
+}
 
-    addNewModules() {
-        this.state.selectedModules.forEach((selectedModule, index) => {
-            const url =
-              MODE_API_BASE_URL +
-              'devices/' +
-              this.state.selectedGateway +
-              '/kv/sensorModule' +
-              selectedModule.sensorModuleId;
-            const params = {
-              value: {
-                id: selectedModule.sensorModuleId,
-                sensing: 'on',
-                interval: '30',
-                sensors: selectedModule.possibleSensorModules
-              }
-            };
-            modeAPI
-              .request('PUT', url, params)
-              .then((response: any) => {
-                this.props.history.push('/devices');
-              })
-              .catch((reason: any) => {
-                console.log('error posting to the kv store', reason);
+    addNewModules(context: Context) {
+        AppContext.restoreLogin(); // restore user credentials and get home / associated devices
+        modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
+        .then((homeResponse: any) => {
+            this.state.selectedModules.forEach((selectedModule, index) => {
+                const url =
+                  MODE_API_BASE_URL +
+                  'devices/' +
+                   + context.state.selectedGateway +
+                  '/kv/sensorModule' +
+                  selectedModule.sensorModuleId;
+                const params = {
+                  value: {
+                    id: selectedModule.sensorModuleId,
+                    sensing: 'on',
+                    interval: '30',
+                    sensors: selectedModule.moduleSchema
+                  }
+                };
+                ModeConnection.startSensor(homeResponse, selectedModule, context.state.selectedGateway);
+                ModeConnection.listSensorModules(this.state.selectedGateway);
+                modeAPI
+                  .request('PUT', url, params)
+                  .then((response: any) => {
+                    console.log('PUT RESPONSE', response);
+                    this.props.history.push('/devices');
+                  })
+                  .catch((reason: any) => {
+                    console.log('error posting to the kv store', reason);
+                  });
+                
               });
-          });
+        });
     }
     
     toggleModuleSelect(specificID: string) {
@@ -195,120 +191,128 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
 
     render() {
         return (
-            <Fragment>
-            <LeftNav />
-                <div className="scan-container">
-                    <div className="page-header">
-                        Add Sensor Modules
-                    </div>
-                    <div className="scan-section">
-                        { !this.state.scanning && !this.state.noModules && this.state.availableModules.length === 0 &&
-                        <>
-                            <div className="scan-header">
-                                Scan for available sensor modules
-                            </div>
-                            <div className="directions">
-                                <div className="step-1">
-                                    <span className="circled-number">1</span>
-                                    <div className="direction">
-                                        <img src={addModule1} />
-                                        <p>Turn on all sensor modules.</p>
-                                    </div>
+            <ContextConsumer>
+            {(context: Context) =>
+                context && (
+                <Fragment>
+                <LeftNav />
+                    <div className="scan-container">
+                        <div className="page-header">
+                            Add Sensor Modules
+                        </div>
+                        <div className="scan-section">
+                            { !this.state.scanning && !this.state.noModules && 
+                              this.state.availableModules.length === 0 &&
+                            <>
+                                <div className="scan-header">
+                                    Scan for available sensor modules
                                 </div>
-                                <div className="step-2">
-                                    <span className="circled-number">2</span>
-                                    <div className="direction">
-                                        <img src={addModule2} />
-                                        <p>
-                                        Place the sensor modules you want to connect to within 5 feet of the gateway.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </>
-                        }
-                        { this.state.scanning &&
-                        <>
-                            <div className="scan-header">
-                                Scanning for available sensor modules...
-                            </div>
-                            <div className="progress-bar">
-                                <Progress 
-                                    percent={this.state.scanningProgress}
-                                    showInfo={true}
-                                    strokeColor={'#7FCBCF'}
-                                    strokeWidth={20}
-                                />
-                            </div>
-                        </>
-                        }
-                        { !this.state.scanning && this.state.availableModules.length !== 0 &&
-                        <>
-                            <div className="scan-header">
-                                Sensor modules discovered. Select modules to add to your device.
-                            </div>
-                            <div className="available-sensors-section">
-                            {
-                                this.state.availableModules.map((sModule, index) => {
-                                    return (
-                                        <a 
-                                            key={index}
-                                            className={ !this.state.selectedModules.includes(sModule) ?
-                                                `sensor-module` : `sensor-module selected`
-                                            }
-                                            onClick={() => 
-                                            this.toggleModuleSelect(sModule.modelSpecificId)}
-                                        >
-                                        <img className="module-image" src={enySensor} />
-                                        { this.state.selectedModules.includes(sModule) &&
-                                            <img className="checked-module" src={checkMark} />
-                                        }
-                                        <div className="module-info">
-                                            <div className="sensor-module-model">
-                                                Model: {sModule.modelSpecificId}
-                                            </div>
-                                            <img className="sensor-type-image" src={sensorTemp} />
-                                            <img className="sensor-type-image" src={sensorHeat} />
-                                            <img className="sensor-type-image" src={sensorHumidity} />
-                                            <img className="sensor-type-image" src={sensorLight} />
-                                            <img className="sensor-type-image" src={sensorNoise} />
-                                            <img className="sensor-type-image" src={sensorVibration} />
+                                <div className="directions">
+                                    <div className="step-1">
+                                        <span className="circled-number">1</span>
+                                        <div className="direction">
+                                            <img src={addModule1} />
+                                            <p>Turn on all sensor modules.</p>
                                         </div>
-                                        </a>
-                                    );
-                                })
+                                    </div>
+                                    <div className="step-2">
+                                        <span className="circled-number">2</span>
+                                        <div className="direction">
+                                            <img src={addModule2} />
+                                            <p>
+                                            Place the sensor modules you want to 
+                                            connect to within 5 feet of the gateway.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
                             }
+                            { this.state.scanning &&
+                            <>
+                                <div className="scan-header">
+                                    Scanning for available sensor modules...
+                                </div>
+                                <div className="progress-bar">
+                                    <Progress 
+                                        percent={this.state.scanningProgress}
+                                        showInfo={true}
+                                        strokeColor={'#7FCBCF'}
+                                        strokeWidth={20}
+                                    />
+                                </div>
+                            </>
+                            }
+                            { !this.state.scanning && this.state.availableModules.length !== 0 &&
+                            <>
+                                <div className="scan-header">
+                                    Sensor modules discovered. Select modules to add to your device.
+                                </div>
+                                <div className="available-sensors-section">
+                                {
+                                    this.state.availableModules.map((sModule, index) => {
+                                        return (
+                                            <a 
+                                                key={index}
+                                                className={ !this.state.selectedModules.includes(sModule) ?
+                                                    `sensor-module` : `sensor-module selected`
+                                                }
+                                                onClick={() => 
+                                                this.toggleModuleSelect(sModule.modelSpecificId)}
+                                            >
+                                            <img className="module-image" src={enySensor} />
+                                            { this.state.selectedModules.includes(sModule) &&
+                                                <img className="checked-module" src={checkMark} />
+                                            }
+                                            <div className="module-info">
+                                                <div className="sensor-module-model">
+                                                    Model: {sModule.modelSpecificId}
+                                                </div>
+                                                <img className="sensor-type-image" src={sensorTemp} />
+                                                <img className="sensor-type-image" src={sensorHeat} />
+                                                <img className="sensor-type-image" src={sensorHumidity} />
+                                                <img className="sensor-type-image" src={sensorLight} />
+                                                <img className="sensor-type-image" src={sensorNoise} />
+                                                <img className="sensor-type-image" src={sensorVibration} />
+                                            </div>
+                                            </a>
+                                        );
+                                    })
+                                }
+                                </div>
+                            </>
+                            }
+                            { !this.state.scanning && this.state.noModules &&
+                            <div className="scan-header">
+                                No modules discovered. Make sure your sensors are on and in range.
                             </div>
-                        </>
-                        }
-                        { !this.state.scanning && this.state.noModules &&
-                        <div className="scan-header">
-                            No modules discovered. Make sure your sensors are on and in range.
-                        </div>
-                        }
-                        <div className="button-section">
-                            <button 
-                                className="cancel-scan"
-                                onClick={this.cancelScan}
-                            >Cancel
-                            </button>
-                            { !this.state.scanning && this.state.availableModules.length === 0 ?
-                            <button 
-                                className="start-scan"
-                                onClick={this.startScan}
-                            >Start Scanning
-                            </button> :
-                            <button 
-                                className="add-sensor-module"
-                                disabled={this.state.selectedModules.length === 0}
-                                onClick={this.addNewModules}
-                            >Add Sensor Modules
-                            </button>
                             }
+                            <div className="button-section">
+                                <button 
+                                    className="cancel-scan"
+                                    onClick={this.cancelScan}
+                                >Cancel
+                                </button>
+                                { !this.state.scanning && this.state.availableModules.length === 0 ?
+                                <button 
+                                    className="start-scan"
+                                    onClick={() => this.startScan(context)}
+                                >Start Scanning
+                                </button> :
+                                <button 
+                                    className="add-sensor-module"
+                                    disabled={this.state.selectedModules.length === 0}
+                                    onClick={() => this.addNewModules(context)}
+                                >Add Sensor Modules
+                                </button>
+                                }
+                            </div>
                         </div>
                     </div>
-                </div>
-            </Fragment>
+                </Fragment>
+                )
+            }
+            </ContextConsumer>
         );
     }
 }

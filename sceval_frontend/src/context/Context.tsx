@@ -1,20 +1,47 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface ContextProviderProps extends React.Props<any> {}
 
-interface ContextAction {}
+interface ContextAction {
+    setGateway: (gatewayID: string) => void;
+    setWebsocket: (websocket: WebSocket) => void;
+}
 
-export interface Context {}
+interface ContextState  {
+    selectedGateway: string;
+    webSocket: WebSocket;
+}
+export interface Context {
+    state: ContextState;
+    actions: ContextAction;
+}
 
-const context = React.createContext<any>(null);
+export const context = React.createContext<any>(null);
 export const ContextProvider: React.FC<ContextProviderProps> = (
     props: ContextProviderProps
 ) => {
+    const [selectedGateway, setSelectedGateway] = useState<string>('');
+    const [webSocket, setWebSocket] = useState();
+
+    const setGateway = (gatewayID: string) => {
+        setSelectedGateway(gatewayID);
+    };
+
+    const setWebsocket = (websocket: WebSocket) => {
+        setWebSocket(websocket);
+    };
+    const values: ContextState = {
+        selectedGateway: selectedGateway,
+        webSocket: webSocket
+    };
     return (
         <context.Provider
             value={{
-                state: {},
-                actions: {}
+                state: values,
+                actions: {
+                    setGateway: setGateway,
+                    setWebsocket: setWebsocket
+                }
             }}
         >
             {props.children}
