@@ -6,7 +6,9 @@ import { ContextConsumer, Context, ContextProvider } from '../context/Context';
 import modeAPI from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import moment from 'moment';
+import { math } from '@amcharts/amcharts4/core';
 
+const loader = require('../common_images/notifications/loading_ring.svg');
 const enySensor = require('../common_images/sensors/eny-sensor.png');
 const backArrow = require('../common_images/navigation/back.svg');
 const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
@@ -24,8 +26,8 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const [selectedGateway, setSelectedGateway] = useState<string|null>();
     const [TSDBDataFetched, setTSDBDataFetched] = useState<boolean>(false);
     const [activeSensorQuantity, setActiveSensorQuantity] = useState<number>(5);
-    const [activeSensors, setactiveSensors] = useState<any>();
-    const [sensorTypes, setSensorTypes] = useState<Array<any>>();
+    const [activeSensors, setactiveSensors] = useState<any>(); // contains RT Websocket data
+    const [sensorTypes, setSensorTypes] = useState<Array<any>>(); // contains data from TSDB fetch
     const [batteryPower, setBatteryPower] = useState<number>(0.1);
     const [sensingInterval, setSensingInterval] = useState<string>('');
     const [graphTimespan, setGraphTimespan] = useState<string>('hour');
@@ -69,18 +71,40 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             homeID = response.id;
         });
         const ws = context.state.webSocket;
-        ws.onmessage = (event: any) => {
+        ws.onmessage = (event: any) => { // receives every 5 seconds
             const moduleData = JSON.parse(event.data);
             // if app receives real time data, and it pertains to the selected Module:
             if (moduleData.eventType === 'realtimeData' 
             && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule) &&
             !moduleData.eventData.timeSeriesData[3].seriesId.includes('acceleration')) {
-                const wsData = moduleData.eventData.timeSeriesData;
                 let sensors: any = [];
-                setactiveSensors(wsData);
-                setActiveSensorQuantity(wsData.length);
+                const wsData = moduleData.eventData.timeSeriesData;
+                let rtData: any = [];
+                setActiveSensorQuantity(wsData.length); // set active sensor count
                 wsData.forEach((sensor: any, index: any) => {
-                    if (!TSDBDataFetched) {
+                    const format = sensor.seriesId.split('-')[1];
+                    const sType = format.split(':')[0];
+                    let unit = determineUnit(sType);
+                    rtData.push({
+                        seriesID: sensor.seriesId,
+                        type: sType,
+                        timestamp: sensor.timestamp,
+                        rtValue: sensor.value
+                    });
+                    if (index === wsData.length - 1) { // format realtime data 
+                        const sortedRTData = rtData.sort(function(a: any, b: any) {
+                            if (a.type < b.type) {
+                                return -1;
+                            }
+                            if (a.type > b.type) {
+                                return 1;
+                            }
+                            return 0;
+                        });
+                        setactiveSensors(sortedRTData); // set real time data
+                        
+                    }
+                    if (!TSDBDataFetched) { // if not all data  has been fetched
                     // Perform TSDB fetch for each sensor
                         const now = new Date();
                         const endTime = moment(now);
@@ -92,33 +116,44 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         modeAPI.request('GET', fetchURL, {})
                         .then((response: any) => {
                         // Add relevant UI formatted units
-                        const format = sensor.seriesId.split('-')[1];
-                        const sType = format.split(':')[0];
-                        let unit = determineUnit(sType);
                         // bundle data
-                        const sensorData = {
-                            unit: unit,
-                            type: sType,
-                            TSDBData: response.data
-                        };
-                        // push data to sensor data  
-                        sensors.push(sensorData);
-                        if (index === wsData.length - 1) {
-                            setSensorTypes(sensors);
-                        }
-                        if (sensors.length === wsData.length) { // if all of the sensor data has been populated
-                            setTSDBDataFetched(true);
-                        }
-                    });
+                            const sensorData = {
+                                seriesID: sensor.seriesId,
+                                unit: unit,
+                                type: sType,
+                                TSDBData: response.data
+                            };
+                            sensors.push(sensorData);
+                            console.log('SENSOR LENGTH HERE: ', sensors.length);
+                            if (sensors.length === wsData.length) { // if all of the sensor data has been populated
+                                const sortedTSDBData = sensors.sort(function(a: any, b: any) {
+                                    if (a.type < b.type) {
+                                        return -1;
+                                    }
+                                    if (a.type > b.type) {
+                                        return 1;
+                                    }
+                                    return 0;
+                                });
+                                setSensorTypes(sortedTSDBData);
+                                setTSDBDataFetched(true);
+                            }
+                            // if (index === wsData.length - 1) {
+                            //     const sortedTSDBData = sensors.sort(function(a: any, b: any) {
+                            //         if (a.type < b.type) {
+                            //             return -1;
+                            //         }
+                            //         if (a.type > b.type) {
+                            //             return 1;
+                            //         }
+                            //         return 0;
+                            //     });
+                            //     console.log(sensors.length, wsData.length);
+                            // }
+                        });
                     }
                 });
             }
-            // setInterval(
-            //     () => {
-            //         setTSDBDataFetched(false);
-            //     },
-            //     5000
-            // );
         };
     };
 
@@ -171,28 +206,37 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     <div
                         className="sensor-graph-container"
                     >
-                        { sensorTypes && TSDBDataFetched &&
+                        { activeSensors &&
                             activeSensors.map((activeSensor: any, index: any) => {
                             return (
                                 <div 
                                     className="sensor-container"
-                                    key={activeSensor.seriesId}
-                                >
+                                    key={activeSensor.seriesID}
+                                > 
                                     <div className="unit-rt-container">
                                         <div className="header">
-                                            {sensorTypes[index]  && sensorTypes[index].type}
+                                            {activeSensor.type}
                                         </div>
+                                        { activeSensors && sensorTypes ?
                                         <div className="unit-value">
-                                            {activeSensor.value.toFixed(1)}
-                                        <span className="unit">{sensorTypes[index]  && sensorTypes[index].unit}</span>
-                                        </div>
+                                            {TSDBDataFetched && 
+                                                activeSensors[index].rtValue.toFixed(1)}
+                                        <span className="unit">{sensorTypes[index] && sensorTypes[index].unit}</span>
+                                        </div> :
+                                        <img src={loader} />
+                                        }
                                     </div>
+                                    { sensorTypes ?
                                     <div className="graph-container">
                                         <AmChart
                                             sensorData={sensorTypes[index]}
-                                            identifier={activeSensor.seriesId}
+                                            identifier={sensorTypes[index].type}
                                         />
+                                    </div> :
+                                    <div className="graph-container">
+                                    <img src={loader} />
                                     </div>
+                                    }
                                     <div className="graph-info-container">
                                         <div>{`Maximum: `}</div>
                                         <div>{`Minimum: `}</div>
