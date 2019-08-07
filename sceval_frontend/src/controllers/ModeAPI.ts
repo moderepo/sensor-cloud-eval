@@ -1,6 +1,7 @@
 import Axios, { Method } from 'axios';
 import { AxiosRequestConfig, AxiosInstance, AxiosResponse } from 'axios';
 import Home from './Home';
+import moment from 'moment';
 
 const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 
@@ -186,6 +187,15 @@ export class ModeAPI {
         });
       }
     );
+  }
+
+  public getTSDBData(homeID: string, seriesID: string, start: string, end: string) {
+    const fetchURL = MODE_API_BASE_URL + 'homes/' + homeID + '/smartModules/tsdb/timeSeries/' + seriesID
+    + '/data?begin=' + start + '&end=' + end + '&aggregation=avg';
+    this.request('GET', fetchURL, {})
+    .then((response: any) => {
+      return response;
+    });
   }
 
   private makeHome() {

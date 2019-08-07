@@ -2,29 +2,52 @@ import React, { useEffect, useState } from 'react';
 import * as am4core from '@amcharts/amcharts4/core';
 import * as am4charts from '@amcharts/amcharts4/charts';
 import am4themes_animated from '@amcharts/amcharts4/themes/animated';
+import moment from 'moment';
 
 am4core.useTheme(am4themes_animated);
 
 interface AmChartProps extends React.Props<any> {
+    identifier: string;
+    sensorData: SensorDataBundle;
+}
 
+interface SensorDataBundle {
+    unit: string;
+    type: string;
+    TSDBData: TSDBDataBase;
+}
+
+interface TSDBDataBase {
+    aggregation: string;
+    begin: string;
+    data: Array<any>;
+    end: string;
+    resolution: string;
+    seriesId: string;
+    type: string;
+    unit: string;
 }
 export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     const [expandedMode, setExpandedMode] = useState<boolean>(false);
     const [graphHeight, setGraphHeight] = useState<string>('200px');
     useEffect(
         () => {
-            const chart =  am4core.create('amchart', am4charts.XYChart);
+            console.log('SENSORDATA FROM AMCHART component', props.sensorData);
+            const chart =  am4core.create(props.identifier, am4charts.XYChart);
             // DUMMY DATA
-            var data = [];
+            var dbData: any = [];
+            var dateArray: any = [];
             var price1 = 1000, price2 = 1200;
-            for (var i = 0; i < 360; i++) {
-            price1 += Math.round((Math.random() < 0.5 ? 1 : -1) * Math.random() * 100);
-            data.push({ date1: new Date(2015, 0, i), price1: price1 });
-            }
-            for (var y = 0; y < 360; y++) {
-            price2 += Math.round((Math.random() < 0.5 ? 1 : -1) * Math.random() * 100);
-            data.push({ date2: new Date(2017, 0, y), price2: price2 });
-            }
+            props.sensorData.TSDBData.data.map((sensorDataPoint: any) => {
+                if (!dateArray.includes(sensorDataPoint[0])) {
+                    price2 += sensorDataPoint[2];
+                    dbData.push({ date2: sensorDataPoint[0], price2: sensorDataPoint[1].toFixed(2)});
+                    dateArray.push(sensorDataPoint[0]);
+                }
+            });
+            console.log('DATE ARRAY', dateArray);
+            console.log(dbData);
+ 
             var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
             dateAxis.renderer.grid.template.location = 0;
             dateAxis.renderer.labels.template.fill = am4core.color('#7FCBCF');
@@ -46,7 +69,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
             valueAxis2.renderer.minWidth = 60;
 
             var series2 = chart.series.push(new am4charts.LineSeries());
-            series2.name = '2017';
+            series2.name = props.sensorData.type;
             series2.dataFields.dateX = 'date2';
             series2.dataFields.valueY = 'price2';
             series2.yAxis = valueAxis2;
@@ -69,7 +92,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
             dateAxis2.renderer.grid.template.strokeOpacity = 0.07;
             dateAxis.renderer.grid.template.strokeOpacity = 0.07;
             valueAxis.renderer.grid.template.strokeOpacity = 0.07;
-            chart.data = data;
+            chart.data = dbData;
             return function cleanup() {
                 if (chart) {
                     chart.dispose();
@@ -87,7 +110,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
                         setGraphHeight('500px');
                     }
                 }}
-                id="amchart" 
+                id={props.identifier}
                 style={{ width: '100%', height: graphHeight }}
             />
             { expandedMode &&
