@@ -91,7 +91,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         timestamp: sensor.timestamp,
                         rtValue: sensor.value
                     });
-                    if (index === wsData.length - 1) { // format realtime data 
+                    if (index === wsData.length - 1) { // if we have gone through all RT data:
                         const sortedRTData = rtData.sort(function(a: any, b: any) {
                             if (a.type < b.type) {
                                 return -1;
@@ -104,7 +104,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         setactiveSensors(sortedRTData); // set real time data
                         
                     }
-                    if (!TSDBDataFetched) { // if not all data  has been fetched
+                    if (!TSDBDataFetched) { // if not all TSDB data has been fetched:
                     // Perform TSDB fetch for each sensor
                         const now = new Date();
                         const endTime = moment(now);
@@ -115,16 +115,35 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         + '&aggregation=avg';
                         modeAPI.request('GET', fetchURL, {})
                         .then((response: any) => {
+                            let maxVal = 0;
+                            let minVal = Infinity;
+                            let sum = 0;
+                            response.data.data.forEach((datapoint: any, datapointIndex: any) => {
+                                sum += datapoint[1];
+                                if (datapoint[1] > maxVal) {
+                                    maxVal = datapoint[1];
+                                }
+                                if (datapoint[1] < minVal) {
+                                    minVal = datapoint[1];
+                                }
+                                if (datapointIndex === response.data.data.length - 1) {
+                                    const sensorData = {
+                                        seriesID: sensor.seriesId,
+                                        unit: unit,
+                                        type: sType,
+                                        TSDBData: response.data,
+                                        avgVal: sType !== 'uv' ? 
+                                            (sum / datapointIndex).toFixed(1) : (sum / datapointIndex).toFixed(3),
+                                        maxVal: sType !== 'uv' ?
+                                            maxVal.toFixed(1) : maxVal.toFixed(3),
+                                        minVal: sType !== 'uv' ?
+                                            minVal.toFixed(1) : minVal.toFixed(3)
+                                    };
+                                    sensors.push(sensorData);
+                                }
+                            });
                         // Add relevant UI formatted units
                         // bundle data
-                            const sensorData = {
-                                seriesID: sensor.seriesId,
-                                unit: unit,
-                                type: sType,
-                                TSDBData: response.data
-                            };
-                            sensors.push(sensorData);
-                            console.log('SENSOR LENGTH HERE: ', sensors.length);
                             if (sensors.length === wsData.length) { // if all of the sensor data has been populated
                                 const sortedTSDBData = sensors.sort(function(a: any, b: any) {
                                     if (a.type < b.type) {
@@ -138,18 +157,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                 setSensorTypes(sortedTSDBData);
                                 setTSDBDataFetched(true);
                             }
-                            // if (index === wsData.length - 1) {
-                            //     const sortedTSDBData = sensors.sort(function(a: any, b: any) {
-                            //         if (a.type < b.type) {
-                            //             return -1;
-                            //         }
-                            //         if (a.type > b.type) {
-                            //             return 1;
-                            //         }
-                            //         return 0;
-                            //     });
-                            //     console.log(sensors.length, wsData.length);
-                            // }
                         });
                     }
                 });
@@ -227,21 +234,24 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                         }
                                     </div>
                                     { sensorTypes ?
-                                    <div className="graph-container">
-                                        <AmChart
-                                            sensorData={sensorTypes[index]}
-                                            identifier={sensorTypes[index].type}
-                                        />
-                                    </div> :
+                                    <Fragment>
+                                        <div className="graph-container">
+                                            <AmChart
+                                                sensorData={sensorTypes[index]}
+                                                identifier={sensorTypes[index].type}
+                                            />
+                                        </div> 
+                                        <div className="graph-info-container">
+                                            <div>Maximum: <strong>{sensorTypes[index].maxVal}</strong></div>
+                                            <div>Minimum: <strong>{sensorTypes[index].minVal}</strong></div>
+                                            <div>Average: <strong>{sensorTypes[index].avgVal}</strong></div>
+                                        </div>
+                                    </Fragment>
+                                    :
                                     <div className="graph-container">
                                     <img src={loader} />
                                     </div>
                                     }
-                                    <div className="graph-info-container">
-                                        <div>{`Maximum: `}</div>
-                                        <div>{`Minimum: `}</div>
-                                        <div>{`Average: `}</div>
-                                    </div>
                                 </div>
                             );
                         })

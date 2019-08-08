@@ -39,13 +39,13 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
             if (props.sensorData) {
                 props.sensorData.TSDBData.data.map((sensorDataPoint: any) => {
                     if (!dateArray.includes(sensorDataPoint[0])) {
+                        console.log('SENSORDATAPOINT: ', sensorDataPoint);
                         value += sensorDataPoint[2];
                         dbData.push({ date: moment(sensorDataPoint[0]).toISOString(),
                         value: sensorDataPoint[1].toFixed(2)});
                         dateArray.push(sensorDataPoint[0]);
                     }
                 });
-                console.log(dbData);
             }
             
             // push  new x-value axis
