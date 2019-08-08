@@ -108,7 +108,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     // Perform TSDB fetch for each sensor
                         const now = new Date();
                         const endTime = moment(now);
-                        const startTime = moment(now).subtract(30, 'minutes');
+                        const startTime = moment(now).subtract(10, 'days');
                         const fetchURL = 
                         MODE_API_BASE_URL + 'homes/' + homeID + '/smartModules/tsdb/timeSeries/' + sensor.seriesId
                         + '/data?begin=' + startTime.toISOString() + '&end=' + endTime.toISOString() 

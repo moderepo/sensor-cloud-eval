@@ -40,23 +40,25 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
                 props.sensorData.TSDBData.data.map((sensorDataPoint: any) => {
                     if (!dateArray.includes(sensorDataPoint[0])) {
                         value += sensorDataPoint[2];
-                        console.log(moment(sensorDataPoint[0]).format('MMMM Do YYYY, h:mm:ss a'));
-                        dbData.push({ date: moment(sensorDataPoint[0]).format('MMMM Do YYYY, h:mm:ss a'),
+                        dbData.push({ date: moment(sensorDataPoint[0]).toISOString(),
                         value: sensorDataPoint[1].toFixed(2)});
                         dateArray.push(sensorDataPoint[0]);
                     }
                 });
+                console.log(dbData);
             }
             
             // push  new x-value axis
             let dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+            dateAxis.renderer.minGridDistance = 30;
             dateAxis.title.text = 'Timeframe';
             dateAxis.renderer.grid.template.location = 0;
             dateAxis.renderer.labels.template.fill = am4core.color('#7FCBCF');
             // format chart x axis
             dateAxis.dateFormatter = new am4core.DateFormatter();
-            dateAxis.dateFormatter.dateFormat = 'MMMM Do YYYY, h:mm:ss a';
-
+            // dateAxis.dateFormats.setKey('second', '');
+            chart.dateFormatter.dateFormat = 'i';
+            chart.dateFormatter.inputDateFormat = 'i';
             // push new y-value axis
             let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
             valueAxis.renderer.labels.template.fill = am4core.color('#7FCBCF');
