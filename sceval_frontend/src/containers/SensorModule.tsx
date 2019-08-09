@@ -30,8 +30,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const [activeSensors, setactiveSensors] = useState<any>(); // contains RT Websocket data
     const [sensorTypes, setSensorTypes] = useState<Array<any>>(); // contains data from TSDB fetch
     const [batteryPower, setBatteryPower] = useState<number>(0.1);
-    const [sensingInterval, setSensingInterval] = useState<string>('');
-    // const [timespanToggled, setTimespanToggled] = useState<boolean>(false);
+    const [sensingInterval, setSensingInterval] = useState<string>('2s');
     const [graphTimespanNumeric, setGraphTimespanNumeric] = useState<any>(7);
     const [graphTimespan, setGraphTimespan] = useState<string>('days');
     const [mounted, setMounted] = useState(false);
@@ -179,7 +178,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
 
     const toggleGraphTimespan = (quantity: number, timespan: string): void => {
         setTSDBDataFetched(false);
-        // setTimespanToggled(true);
         AppContext.restoreLogin();
         modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
         .then((response: any) => {
@@ -188,6 +186,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             setGraphTimespan(timespan);
             if (sensorTypes !== undefined) {
                 activeSensors.map((sensor: any, index: any) => {
+                    console.log(`performing fetch  ${index} times`);
                     performTSDBFetch(
                     homeID, [], sensor, sensor.type, sensor.seriesID,
                     sensorTypes[index].unit, activeSensors);
@@ -279,14 +278,13 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         <div className="data-col">
                             <div className="data-name">Graph Timespan</div>
                             {renderGraphTimespanToggle()}
-                            <div className="data-value">{sensingInterval}</div>
                         </div>
                     </div>
                     
                     <div
                         className="sensor-graph-container"
                     >
-                        { activeSensors &&
+                        { activeSensors ?
                             activeSensors.map((activeSensor: any, index: any) => {
                             return (
                                 <div 
@@ -299,7 +297,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                         </div>
                                         { activeSensors && sensorTypes ?
                                         <div className="unit-value">
-                                            {TSDBDataFetched && activeSensors[index] ?
+                                            {activeSensors[index] ?
                                                 activeSensors[index].rtValue.toFixed(1) :
                                                 <img src={loader} />
                                             }
@@ -329,7 +327,10 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                     }
                                 </div>
                             );
-                        })
+                        }) :
+                        <div className="sensor-data-loader">
+                            <img src={loader} />
+                        </div>
                         }
                     </div>
                 </div>
