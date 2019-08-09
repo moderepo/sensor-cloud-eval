@@ -1,12 +1,13 @@
-import React, { useEffect, useState, useContext, Fragment } from 'react';
+import React, { useEffect, useState, Fragment } from 'react';
 import { NavLink } from 'react-router-dom';
 import AppContext from '../controllers/AppContext';
 import { AmChart } from '../components/AmChart';
-import { ContextConsumer, Context, ContextProvider } from '../context/Context';
+import { ContextConsumer, Context } from '../context/Context';
 import modeAPI from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import moment from 'moment';
-import { math } from '@amcharts/amcharts4/core';
+import { Menu, Dropdown, Icon } from 'antd';
+import { number } from '@amcharts/amcharts4/core';
 
 const loader = require('../common_images/notifications/loading_ring.svg');
 const enySensor = require('../common_images/sensors/eny-sensor.png');
@@ -30,7 +31,9 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const [sensorTypes, setSensorTypes] = useState<Array<any>>(); // contains data from TSDB fetch
     const [batteryPower, setBatteryPower] = useState<number>(0.1);
     const [sensingInterval, setSensingInterval] = useState<string>('');
-    const [graphTimespan, setGraphTimespan] = useState<string>('hour');
+    // const [timespanToggled, setTimespanToggled] = useState<boolean>(false);
+    const [graphTimespanNumeric, setGraphTimespanNumeric] = useState<any>(7);
+    const [graphTimespan, setGraphTimespan] = useState<string>('days');
     const [mounted, setMounted] = useState(false);
 
     useEffect(
@@ -64,6 +67,65 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 return;
         }
     };
+
+    const performTSDBFetch =  
+    (homeID: string, sensors: any, sensor: any, 
+     sType: string, seriesID: string, unit: string, wsData: any ) => {
+        const now = new Date();
+        const endTime = moment(now);
+        const startTime = moment(now).subtract(graphTimespanNumeric, graphTimespan);
+        const fetchURL = 
+        MODE_API_BASE_URL + 'homes/' + homeID + '/smartModules/tsdb/timeSeries/' + seriesID
+        + '/data?begin=' + startTime.toISOString() + '&end=' + endTime.toISOString() 
+        + '&aggregation=avg';
+        modeAPI.request('GET', fetchURL, {})
+        .then((response: any) => {
+            let maxVal = 0;
+            let minVal = Infinity;
+            let sum = 0;
+            response.data.data.forEach((datapoint: any, datapointIndex: any) => {
+                sum += datapoint[1];
+                if (datapoint[1] > maxVal) {
+                    maxVal = datapoint[1];
+                }
+                if (datapoint[1] < minVal) {
+                    minVal = datapoint[1];
+                }
+                if (datapointIndex === response.data.data.length - 1) {
+                    const sensorData = {
+                        seriesID: sensor.seriesId,
+                        unit: unit,
+                        type: sType,
+                        TSDBData: response.data,
+                        avgVal: sType !== 'uv' ? 
+                            (sum / datapointIndex).toFixed(1) : (sum / datapointIndex).toFixed(3),
+                        maxVal: sType !== 'uv' ?
+                            maxVal.toFixed(1) : maxVal.toFixed(3),
+                        minVal: sType !== 'uv' ?
+                            minVal.toFixed(1) : minVal.toFixed(3)
+                    };
+                    sensors.push(sensorData);
+                }
+                // Add relevant UI formatted units
+                // bundle data
+                if (sensors.length === wsData.length) { 
+                // if all of the sensor data has been populated
+                    const sortedTSDBData = sensors.sort(function(a: any, b: any) {
+                        if (a.type < b.type) {
+                            return -1;
+                        }
+                        if (a.type > b.type) {
+                            return 1;
+                        }
+                        return 0;
+                    });
+                    setSensorTypes(sortedTSDBData);
+                    setTSDBDataFetched(true);
+                }
+            });
+        });
+    };
+
     const updateModuleData = (context: Context) => {
         let homeID = '';
         modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
@@ -77,10 +139,10 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             if (moduleData.eventType === 'realtimeData' 
             && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule) &&
             !moduleData.eventData.timeSeriesData[3].seriesId.includes('acceleration')) {
-                let sensors: any = [];
                 const wsData = moduleData.eventData.timeSeriesData;
-                let rtData: any = [];
                 setActiveSensorQuantity(wsData.length); // set active sensor count
+                let sensors: any = [];
+                let rtData: any = [];
                 wsData.forEach((sensor: any, index: any) => {
                     const format = sensor.seriesId.split('-')[1];
                     const sType = format.split(':')[0];
@@ -105,63 +167,69 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         
                     }
                     if (!TSDBDataFetched) { // if not all TSDB data has been fetched:
-                    // Perform TSDB fetch for each sensor
-                        const now = new Date();
-                        const endTime = moment(now);
-                        const startTime = moment(now).subtract(10, 'days');
-                        const fetchURL = 
-                        MODE_API_BASE_URL + 'homes/' + homeID + '/smartModules/tsdb/timeSeries/' + sensor.seriesId
-                        + '/data?begin=' + startTime.toISOString() + '&end=' + endTime.toISOString() 
-                        + '&aggregation=avg';
-                        modeAPI.request('GET', fetchURL, {})
-                        .then((response: any) => {
-                            let maxVal = 0;
-                            let minVal = Infinity;
-                            let sum = 0;
-                            response.data.data.forEach((datapoint: any, datapointIndex: any) => {
-                                sum += datapoint[1];
-                                if (datapoint[1] > maxVal) {
-                                    maxVal = datapoint[1];
-                                }
-                                if (datapoint[1] < minVal) {
-                                    minVal = datapoint[1];
-                                }
-                                if (datapointIndex === response.data.data.length - 1) {
-                                    const sensorData = {
-                                        seriesID: sensor.seriesId,
-                                        unit: unit,
-                                        type: sType,
-                                        TSDBData: response.data,
-                                        avgVal: sType !== 'uv' ? 
-                                            (sum / datapointIndex).toFixed(1) : (sum / datapointIndex).toFixed(3),
-                                        maxVal: sType !== 'uv' ?
-                                            maxVal.toFixed(1) : maxVal.toFixed(3),
-                                        minVal: sType !== 'uv' ?
-                                            minVal.toFixed(1) : minVal.toFixed(3)
-                                    };
-                                    sensors.push(sensorData);
-                                }
-                            });
-                        // Add relevant UI formatted units
-                        // bundle data
-                            if (sensors.length === wsData.length) { // if all of the sensor data has been populated
-                                const sortedTSDBData = sensors.sort(function(a: any, b: any) {
-                                    if (a.type < b.type) {
-                                        return -1;
-                                    }
-                                    if (a.type > b.type) {
-                                        return 1;
-                                    }
-                                    return 0;
-                                });
-                                setSensorTypes(sortedTSDBData);
-                                setTSDBDataFetched(true);
-                            }
-                        });
+                        // Perform TSDB fetch for each sensor
+                        if (unit !== undefined) {
+                            performTSDBFetch(homeID, sensors, sensor, sType, sensor.seriesId, unit, wsData);
+                        }
                     }
                 });
             }
         };
+    };
+
+    const toggleGraphTimespan = (quantity: number, timespan: string): void => {
+        setTSDBDataFetched(false);
+        // setTimespanToggled(true);
+        AppContext.restoreLogin();
+        modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
+        .then((response: any) => {
+            const homeID = response.id;
+            setGraphTimespanNumeric(quantity);
+            setGraphTimespan(timespan);
+            if (sensorTypes !== undefined) {
+                activeSensors.map((sensor: any, index: any) => {
+                    performTSDBFetch(
+                    homeID, [], sensor, sensor.type, sensor.seriesID,
+                    sensorTypes[index].unit, activeSensors);
+                });
+            }
+        });
+    };
+
+    const renderGraphTimespanToggle = (): React.ReactNode => {
+        const timespanSet = [];
+        timespanSet.push({ quantity: 15, unit: 'minutes'});
+        timespanSet.push({ quantity: 1, unit: 'hour'});
+        timespanSet.push({ quantity: 8, unit: 'hours'});
+        timespanSet.push({ quantity: 24, unit: 'hours'});
+        timespanSet.push({ quantity: 7, unit: 'days'});
+        timespanSet.push({ quantity: 30, unit: 'days'});
+
+        const menu = (
+            <Menu>
+                {   timespanSet.map((timespan: any, index: any) => {
+                        return (
+                            <Menu.Item key={index}>
+                                <option 
+                                    value={timespan.quantity}
+                                    onClick={() => toggleGraphTimespan(timespan.quantity, timespan.unit)}
+                                >
+                                {`${timespan.quantity} ${timespan.unit}`}
+                                </option>
+                            </Menu.Item>
+                        );
+                    })
+                }
+            </Menu>
+        );
+        return (
+            <Dropdown overlay={menu} className="dropdown">
+                <a className="ant-dropdown-link">
+                    {`${graphTimespanNumeric} ${graphTimespan}`}
+                    <Icon type="down" />
+                </a>
+            </Dropdown>
+        );
     };
 
     return (
@@ -208,6 +276,11 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                             <div className="data-name">Sensing Interval</div>
                             <div className="data-value">{sensingInterval}</div>
                         </div>
+                        <div className="data-col">
+                            <div className="data-name">Graph Timespan</div>
+                            {renderGraphTimespanToggle()}
+                            <div className="data-value">{sensingInterval}</div>
+                        </div>
                     </div>
                     
                     <div
@@ -226,14 +299,16 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                         </div>
                                         { activeSensors && sensorTypes ?
                                         <div className="unit-value">
-                                            {TSDBDataFetched && 
-                                                activeSensors[index].rtValue.toFixed(1)}
+                                            {TSDBDataFetched && activeSensors[index] ?
+                                                activeSensors[index].rtValue.toFixed(1) :
+                                                <img src={loader} />
+                                            }
                                         <span className="unit">{sensorTypes[index] && sensorTypes[index].unit}</span>
                                         </div> :
                                         <img src={loader} />
                                         }
                                     </div>
-                                    { sensorTypes ?
+                                    { sensorTypes && TSDBDataFetched ?
                                     <Fragment>
                                         <div className="graph-container">
                                             <AmChart

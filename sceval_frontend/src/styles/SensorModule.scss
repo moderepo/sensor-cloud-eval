@@ -92,13 +92,13 @@
                 height: 135px;
                 padding: 18px 15px;
                 text-align: center;
-
                 .data-name {
                     font-size: 12px;
                     font-weight: 300;
                     color: black;
                     border-bottom: 1px solid #b5c0d8;
                     padding-bottom: 16px;
+                    margin-bottom: 18px;
                 }
                 .data-value {
                     padding-top: 16px;
@@ -174,4 +174,15 @@
             }
         }
     }
+}
+
+// ANT OVERRIDES
+.dropdown {
+    border: 0 none;
+    width: 100%;
+    text-align: left;
+    font-size: 18px;
+    font-weight: 600;
+    color: black;
+    text-decoration: none;
 }
