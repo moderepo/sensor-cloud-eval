@@ -6,9 +6,7 @@ import { ContextConsumer, Context } from '../context/Context';
 import modeAPI from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import moment from 'moment';
-import { Menu, Dropdown, Icon } from 'antd';
-import { number } from '@amcharts/amcharts4/core';
-
+import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
 const loader = require('../common_images/notifications/loading_ring.svg');
 const enySensor = require('../common_images/sensors/eny-sensor.png');
 const backArrow = require('../common_images/navigation/back.svg');
@@ -18,22 +16,21 @@ interface SensorModuleProps extends React.Props<any> {
     isLoggedIn: boolean;
 }
 
-interface RealTimeData {
-
-}
-
 export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModuleProps) => {
     const [selectedModule, setSelectedModule] = useState<string|null>();
     const [selectedGateway, setSelectedGateway] = useState<string|null>();
     const [TSDBDataFetched, setTSDBDataFetched] = useState<boolean>(false);
     const [activeSensorQuantity, setActiveSensorQuantity] = useState<number>(5);
     const [activeSensors, setactiveSensors] = useState<any>(); // contains RT Websocket data
+    const [newWebsocketData, setnewWebsocketData] = useState<boolean>(false);
     const [sensorTypes, setSensorTypes] = useState<Array<any>>(); // contains data from TSDB fetch
     const [batteryPower, setBatteryPower] = useState<number>(0.1);
     const [sensingInterval, setSensingInterval] = useState<string>('2s');
     const [graphTimespanNumeric, setGraphTimespanNumeric] = useState<any>(7);
     const [graphTimespan, setGraphTimespan] = useState<string>('days');
     const [mounted, setMounted] = useState(false);
+    const [modalVisible, setModalVisible] = useState<boolean>(false);
+    const [moduleSettingsVisible, setModuleSettingsVisible] = useState<boolean>(false);
 
     useEffect(
         () => {
@@ -41,7 +38,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             setMounted(true);
             setSelectedModule(sessionStorage.getItem('selectedModule'));
             setSelectedGateway(sessionStorage.getItem('selectedGateway'));
-
     },  []);
 
     const determineUnit = (sensorType: string) => {
@@ -65,6 +61,25 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             default:
                 return;
         }
+    };
+
+    const toggleModalVisibility = () => {
+        if (modalVisible) {
+            setModuleSettingsVisible(false);
+        }
+        setModalVisible(!modalVisible);
+    };
+    
+    const handleOk = (event: any) => {
+    setModalVisible(false);
+    };
+
+    const toggleSensorModuleSettingsVisible = () => {
+        setModuleSettingsVisible(!moduleSettingsVisible);
+    };
+
+    const onChange = (checkedValues: any) => {
+        console.log('checked = ', checkedValues);
     };
 
     const performTSDBFetch =  
@@ -134,6 +149,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
         const ws = context.state.webSocket;
         ws.onmessage = (event: any) => { // receives every 5 seconds
             const moduleData = JSON.parse(event.data);
+            setnewWebsocketData(true);
             // if app receives real time data, and it pertains to the selected Module:
             if (moduleData.eventType === 'realtimeData' 
             && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule) &&
@@ -186,7 +202,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             setGraphTimespan(timespan);
             if (sensorTypes !== undefined) {
                 activeSensors.map((sensor: any, index: any) => {
-                    console.log(`performing fetch  ${index} times`);
                     performTSDBFetch(
                     homeID, [], sensor, sensor.type, sensor.seriesID,
                     sensorTypes[index].unit, activeSensors);
@@ -197,6 +212,8 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
 
     const renderGraphTimespanToggle = (): React.ReactNode => {
         const timespanSet = [];
+        timespanSet.push({ quantity: 30, unit: 'seconds'});
+        timespanSet.push({ quantity: 1, unit: 'minute'});
         timespanSet.push({ quantity: 15, unit: 'minutes'});
         timespanSet.push({ quantity: 1, unit: 'hour'});
         timespanSet.push({ quantity: 8, unit: 'hours'});
@@ -223,7 +240,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
         );
         return (
             <Dropdown overlay={menu} className="dropdown">
-                <a className="ant-dropdown-link">
+                <a className="default-timespan-value">
                     {`${graphTimespanNumeric} ${graphTimespan}`}
                     <Icon type="down" />
                 </a>
@@ -261,7 +278,61 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                 <div className="gateway-name">Gateway name: {selectedGateway}</div>
                                 <div className="sensor-model">Sensor model: {selectedModule} </div>
                             </div>
-                            <button>•••</button>
+                            <button
+                                onClick={toggleSensorModuleSettingsVisible}
+                            >
+                                •••
+                            </button>
+                            {
+                                moduleSettingsVisible &&
+                                <ul className="dropdown-menu">
+                                <a
+                                    href="#"
+                                    onClick={toggleModalVisibility}
+                                >
+                                    Edit Settings
+                                </a>
+                                </ul>
+                            }
+                            {
+                                modalVisible &&
+                                <Modal
+                                    title="Sensor Module Settings"
+                                    visible={modalVisible}
+                                    onOk={handleOk}
+                                    onCancel={toggleModalVisibility}
+                                >
+                                <div className="sensor-module-form">
+                                    <div className="sensor-module-name">
+                                        <label className="label-title">Sensor Module Name</label>
+                                        <Input
+                                            value={selectedModule ? selectedModule : ''}
+                                            placeholder={selectedModule ? selectedModule : ''}
+                                        />
+                                    </div>
+                                    <div className="sensor-types">
+                                        <label className="label-title">Select Types of Data to Collect</label>
+                                        <Checkbox.Group 
+                                            style={{ width: '100%' }} 
+                                            onChange={onChange}
+                                        >
+                                        {
+                                            sensorTypes &&
+                                            sensorTypes.map((sensorType: any)  => {
+                                                return (
+                                                    <Checkbox 
+                                                        key={sensorType.seriesID}
+                                                        value={sensorType.type}
+                                                    >{sensorType.type}
+                                                    </Checkbox>
+                                                );
+                                            })
+                                        }
+                                        </Checkbox.Group>
+                                    </div>
+                                </div>
+                                </Modal>
+                            }
                         </div>
                         <div className="data-col">
                             <div className="data-name">Sensors Active</div>
@@ -271,12 +342,14 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                             <div className="data-name">Battery</div>
                             <div className="data-value">{batteryPower}</div>
                         </div>
+                        { selectedModule && selectedModule.split(':')[0] === '0101' &&
                         <div className="data-col">
                             <div className="data-name">Sensing Interval</div>
                             <div className="data-value">{sensingInterval}</div>
                         </div>
+                        }
                         <div className="data-col">
-                            <div className="data-name">Graph Timespan</div>
+                            <div className="data-name col-dropdown">Graph Timespan</div>
                             {renderGraphTimespanToggle()}
                         </div>
                     </div>
@@ -296,13 +369,25 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                             {activeSensor.type}
                                         </div>
                                         { activeSensors && sensorTypes ?
-                                        <div className="unit-value">
-                                            {activeSensors[index] ?
-                                                activeSensors[index].rtValue.toFixed(1) :
-                                                <img src={loader} />
-                                            }
-                                        <span className="unit">{sensorTypes[index] && sensorTypes[index].unit}</span>
-                                        </div> :
+                                        <Fragment>
+                                            <div className="unit-value">
+                                                {activeSensors[index] ?
+                                                    activeSensors[index].rtValue.toFixed(1) :
+                                                    <img src={loader} />
+                                                }
+                                                <span className="unit">{sensorTypes[index] && 
+                                                    sensorTypes[index].unit}</span>
+                                            </div>
+                                            <div className="graph-info-container">
+                                                <div className="sensor-insight">
+                                                    Maximum: <strong>{sensorTypes[index].maxVal}</strong></div>
+                                                <div className="sensor-insight">
+                                                    Minimum: <strong>{sensorTypes[index].minVal}</strong></div>
+                                                <div className="sensor-insight">
+                                                    Average: <strong>{sensorTypes[index].avgVal}</strong></div>
+                                            </div>
+                                        </Fragment>
+                                        :
                                         <img src={loader} />
                                         }
                                     </div>
@@ -310,15 +395,14 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                     <Fragment>
                                         <div className="graph-container">
                                             <AmChart
-                                                sensorData={sensorTypes[index]}
+                                                TSDB={sensorTypes[index]}
+                                                newWebsocketData={(value: boolean) => setnewWebsocketData(value)}
+                                                websocketRT={activeSensors[index]}
                                                 identifier={sensorTypes[index].type}
+                                                timespanNumeric={graphTimespanNumeric}
+                                                timespan={graphTimespan}
                                             />
                                         </div> 
-                                        <div className="graph-info-container">
-                                            <div>Maximum: <strong>{sensorTypes[index].maxVal}</strong></div>
-                                            <div>Minimum: <strong>{sensorTypes[index].minVal}</strong></div>
-                                            <div>Average: <strong>{sensorTypes[index].avgVal}</strong></div>
-                                        </div>
                                     </Fragment>
                                     :
                                     <div className="graph-container">

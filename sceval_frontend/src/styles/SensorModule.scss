@@ -45,6 +45,24 @@
                 border-radius: 2px;
                 min-width: 500px;
                 margin-right: 20px;
+
+                .dropdown-menu {
+                    margin-right: 10px;
+                    padding: 2px 8px;
+                    float: right;
+                    text-align: center;
+                    background-color: #fff;
+                    -webkit-background-clip: padding-box;
+                    background-clip: padding-box;
+                    border: 1px solid rgba(0,0,0,.15);
+                    border-radius: 4px;
+                    -webkit-box-shadow: 0 6px 12px rgba(0,0,0,.175);
+                    box-shadow: 0 6px 12px rgba(0,0,0,.175);
+                    a {
+                        color: black;
+                    }
+
+                }
                 img {
                     float: left;
                     padding: 20px;
@@ -71,7 +89,7 @@
                 }
 
                 button {
-                    margin: 20px;
+                    margin: 20px 13px 0px 20px;
                     display: absolute;
                     float: right;
                     border: 2px solid #353d45;
@@ -98,11 +116,10 @@
                     color: black;
                     border-bottom: 1px solid #b5c0d8;
                     padding-bottom: 16px;
-                    margin-bottom: 18px;
                 }
                 .data-value {
                     padding-top: 16px;
-                    font-size: 30px;
+                    font-size: 25px;
                     font-family: "ProximaNova", "Helvetica Neue", Helvetica, Arial, sans-serif;
                     font-weight: 800; 
                 }
@@ -123,12 +140,11 @@
             border-radius: 2px;
             border: solid 1px #d8d8d8;
             display: flex;
-            .unit-rt-container, .graph-container, .graph-info-container {
+            .unit-rt-container, .graph-container {
                 width: 175px;
                 margin: 20px;
             }
-
-            .graph-container, .graph-info-container {
+            .graph-container {
                 background-color: white;
                 border: solid 1px #b5c0d8;
                 border-radius: 2px;
@@ -163,15 +179,16 @@
                 }
             }
             .graph-container {
-                width: 750px;
+                width: 950px;
                 left: 0px;
                 top: -1px;
                 text-align: center;
             }
             .graph-info-container {
+                margin-top: 15px;
+                color: white;
                 text-align: center;
                 height: auto;
-                padding: 12px 19px;
                 font-size: 14px;
                 font-weight: 400;
             }
@@ -184,8 +201,52 @@
     border: 0 none;
     width: 100%;
     text-align: left;
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 600;
-    color: black;
+    color: #353d45;
+    font-family: "ProximaNova", "Helvetica Neue", Helvetica, Arial, sans-serif;
     text-decoration: none;
+}
+
+.col-dropdown {
+    margin-bottom: 20px;
+}
+.ant-modal-content {
+    .ant-modal-header {
+        border-bottom: none;
+        padding: 50px 20px;
+        .ant-modal-title {
+            text-align: center;
+            font-size: 26px;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            color: #292e34;
+        }
+    }
+    .sensor-module-form {
+        text-align: center;
+        .label-title {
+            color: #292e34;
+            font-weight: 600;
+        }
+
+        .ant-input {
+            text-align: center;
+            margin-bottom: 20px;
+            input {
+                display: block;
+                margin-top: 5px;
+                margin-bottom: 20px;
+                width: auto;
+            }
+        }
+    
+        .ant-checkbox-wrapper {
+            margin: 5px;
+        }
+    } 
+    .ant-modal-footer {
+        text-align: center;
+    }
+    
 }
