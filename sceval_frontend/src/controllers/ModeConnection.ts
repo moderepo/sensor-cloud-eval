@@ -1,7 +1,6 @@
 import { default as modeAPI } from './ModeAPI';
 import { ConcreteObservable } from './Observer';
 import Event from './Event';
-import { SensorModuleInterface } from '../components/entities/SensorModule';
 
 const MODE_API_BASE_URL = 'https://api.tinkermode.com';
 export class ModeConnection extends ConcreteObservable<Event> {
@@ -62,7 +61,6 @@ export class ModeConnection extends ConcreteObservable<Event> {
     };
     modeAPI.request('PUT', enableURL, cmd)
                     .then((response: any) => {
-                      console.log(response);
                       return response;
                     }).catch((reason: any) => {
                       console.error('reason', reason);
@@ -77,7 +75,6 @@ export class ModeConnection extends ConcreteObservable<Event> {
 
     modeAPI.request('PUT', url, cmd)
                     .then((response: any) => {
-                      console.log(response);
                       return response;
                     }).catch((reason: any) => {
                       console.error('reason', reason);
@@ -100,7 +97,6 @@ export class ModeConnection extends ConcreteObservable<Event> {
   }
 
   listSensorModules(deviceID: string): void {
-    console.log(deviceID);
     const url = MODE_API_BASE_URL + '/devices/' + deviceID + '/command';
     const cmd = {
       action: 'listSensorModules',
@@ -109,7 +105,6 @@ export class ModeConnection extends ConcreteObservable<Event> {
 
     modeAPI.request('PUT', url, cmd)
                     .then((response: any) => {
-                      console.log(response);
                       return response;
                     }).catch((reason: any) => {
                       console.error('reason', reason);

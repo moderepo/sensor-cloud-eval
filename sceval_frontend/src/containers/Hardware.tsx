@@ -4,7 +4,7 @@ import { LeftNav } from '../components/LeftNav';
 import modeAPI from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import AppContext from '../controllers/AppContext';
-import SensorModuleSet, { SensorModuleInterface } from '../components/entities/SensorModule';
+import SensorModuleSet from '../components/entities/SensorModule';
 import { Modal } from 'antd';
 import { Context, ContextConsumer } from '../context/Context';
 import ModeConnection from '../controllers/ModeConnection';
@@ -12,14 +12,15 @@ import { SensorModule } from './index';
 const { confirm } = Modal;
 // TODO: implement image specific rendering
 const loader = require('../common_images/notifications/loading_ring.svg');
-const enySensor = require('../common_images/sensors/eny-sensor.png');
-const sensorModule = require('../common_images/sensor_modules/alps-snm3.png');
-const sensorTemp = require('../common_images/sensors/temp-active.svg');
+const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
+
 const sensorHumidity = require('../common_images/sensors/humidity-active.svg');
 const sensorLight = require('../common_images/sensors/uv-active.svg');
-const sensorHeat = require('../common_images/sensors/heatstroke-active.svg');
-const sensorNoise = require('../common_images/sensors/noise-active.svg');
-const sensorVibration = require('../common_images/sensors/pressure-active.svg');
+const sensorUV = require('../common_images/sensors/uv-active.svg');
+const sensorPressure = require('../common_images/sensors/pressure-active.svg');
+const sensorTemp = require('../common_images/sensors/temp-active.svg');
+const sensorCount = require('../common_images/sensors/count-active.svg');
+const sensorMagnetic = require('../common_images/sensors/battery-active.svg');
 const deviceImage = require('../common_images/devices/gateway.svg');
 const deviceLocation = require('../common_images/devices/location-pin.svg');
 
@@ -158,6 +159,34 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     seteditingGateways(gatewaySet);
   };
 
+  const evaluateSensorTypes = (sensorType: any): string | undefined => {
+    switch (sensorType) {
+      case 'TEMPERATURE':
+        return sensorTemp;
+      case 'HUMIDITY':
+        return sensorHumidity;
+      case 'AMBIENT':
+        return sensorLight;
+      case 'UV':
+        return sensorUV;
+      case 'PRESSURE':
+        return sensorPressure;
+      case 'MAGNETIC_X':
+        return sensorMagnetic;
+      case 'COUNT':
+        return sensorCount;
+      case 'ENY_CH_NO':
+        return sensorCount;
+      case 'ENY_SEQ_NO':
+        return sensorCount;
+      case 'ENY_CUM_NO':
+        return sensorCount;
+      default:
+        console.log(sensorType);
+        return;
+    }
+  };
+
   const renderSensorModules = (context: Context, deviceID: string, index: number): React.ReactNode => {
     const ws = ModeConnection.openConnection();
     if (ws !== undefined) {
@@ -195,7 +224,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
               >
                 <img
                   className="module-image"
-                  src={enySensor}
+                  src={sensorGeneral}
                 />
                 <div className="module-info">
                   <div className="sensor-module-name">
@@ -207,12 +236,12 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                   { sensor.value.sensors &&
                     sensor.value.sensors.map(
                     (sensorType, sensorIndex) => {
-                      // TODO: add logic for rendering sensor type images
+                      const type = sensorType.split(':')[0];
                       return (
                         <img
                           key={sensorIndex}
                           className="sensor-type-image"
-                          src={sensorTemp}
+                          src={evaluateSensorTypes(type)}
                         />
                       );
                     }
@@ -353,7 +382,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                                   >
                                     <img
                                       className="module-image"
-                                      src={sensorModule}
+                                      src={sensorGeneral}
                                     />
                                     <div className="module-info">
                                       <div className="x-icon">x</div>
@@ -367,11 +396,12 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                                       sensor.value.sensors.map(
                                         (sensorType, sensorIndex) => {
                                           // TODO: add logic for rendering sensor type images
+                                          const type = sensorType.split(':')[0];
                                           return (
                                             <img
                                               key={sensorIndex}
                                               className="sensor-type-image"
-                                              src={sensorTemp}
+                                              src={evaluateSensorTypes(type)}
                                             />
                                           );
                                         }

@@ -32,18 +32,19 @@
         }
 
         .directions {
-            display: grid;
+            display: flex;
+            justify-content: center;
+            margin-right: 200px;
             grid-template-columns: repeat(auto-fit, minmax(300px,400px));
             text-align: center;
-            grid-gap: 4em;
-            margin: 15px 150px;
-            padding: 20px 10px;
             background-color: #fafbfd;
+            text-align: center;
 
         }
         .step-1, .step-2 {
             display: block;
             text-align: center;
+            margin-left: 100px;
 
             .direction {
                 padding-left: 70px;

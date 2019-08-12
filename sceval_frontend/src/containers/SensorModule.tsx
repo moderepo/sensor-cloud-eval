@@ -7,9 +7,12 @@ import modeAPI from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import moment from 'moment';
 import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
+import ModeConnection  from '../controllers/ModeConnection';
+
 const loader = require('../common_images/notifications/loading_ring.svg');
 const enySensor = require('../common_images/sensors/eny-sensor.png');
 const backArrow = require('../common_images/navigation/back.svg');
+
 const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 
 interface SensorModuleProps extends React.Props<any> {
@@ -21,6 +24,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const [selectedGateway, setSelectedGateway] = useState<string|null>();
     const [TSDBDataFetched, setTSDBDataFetched] = useState<boolean>(false);
     const [activeSensorQuantity, setActiveSensorQuantity] = useState<number>(5);
+    const [sensorModuleConnectedStatus, setSensorModuleConnectedStatus] = useState();
     const [activeSensors, setactiveSensors] = useState<any>(); // contains RT Websocket data
     const [newWebsocketData, setnewWebsocketData] = useState<boolean>(false);
     const [sensorTypes, setSensorTypes] = useState<Array<any>>(); // contains data from TSDB fetch
@@ -36,8 +40,12 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
         () => {
             AppContext.restoreLogin();
             setMounted(true);
+            const gateway = sessionStorage.getItem('selectedGateway');
             setSelectedModule(sessionStorage.getItem('selectedModule'));
-            setSelectedGateway(sessionStorage.getItem('selectedGateway'));
+            setSelectedGateway(gateway);
+            if (gateway !== null) {
+                ModeConnection.listSensorModules(gateway);
+            }
     },  []);
 
     const determineUnit = (sensorType: string) => {
@@ -150,6 +158,9 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
         ws.onmessage = (event: any) => { // receives every 5 seconds
             const moduleData = JSON.parse(event.data);
             setnewWebsocketData(true);
+            if (moduleData.eventType === 'sensorModuleList') {
+                setSensorModuleConnectedStatus(moduleData.eventData.sensorModules);
+            }
             // if app receives real time data, and it pertains to the selected Module:
             if (moduleData.eventType === 'realtimeData' 
             && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule) &&
@@ -254,8 +265,8 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
           context && (
         <Fragment>
             {
-                mounted && context.state.webSocket &&
-                updateModuleData(context)
+                mounted && context.state.webSocket && 
+                    updateModuleData(context)
             }
             <div className="module-section">
                 <NavLink 
@@ -323,6 +334,9 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                                     <Checkbox 
                                                         key={sensorType.seriesID}
                                                         value={sensorType.type}
+                                                        // defaultChecked={
+                                                        //     sensorModuleConnectedStatus[index].
+                                                        // }
                                                     >{sensorType.type}
                                                     </Checkbox>
                                                 );

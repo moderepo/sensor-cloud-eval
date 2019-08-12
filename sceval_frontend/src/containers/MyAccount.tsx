@@ -2,7 +2,6 @@ import React, { Fragment, useState, useEffect } from 'react';
 import LeftNav from '../components/LeftNav';
 import { AppContext } from '../controllers/AppContext';
 import { Redirect, withRouter, RouteComponentProps } from 'react-router';
-import { Modal } from 'antd';
 
 const email = require('../common_images/acct_email.svg');
 const name = require('../common_images/acct_name.svg');
@@ -71,8 +70,7 @@ const MyAccount = withRouter((props: HardwareProps & RouteComponentProps<any>) =
       default:
         break;
     }
-    // setTimeout(
-    //     () => {
+
     if (
         passwordConfirm === passwordNew &&
         passwordConfirm !== '' &&
@@ -82,8 +80,6 @@ const MyAccount = withRouter((props: HardwareProps & RouteComponentProps<any>) =
     } else {
         setFormValid(false);
     }
-        // }, 
-        // 500);
   };
 
   if (!props.isLoggedIn) {

@@ -32,7 +32,7 @@ interface TSDBDataBase {
 
 export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     const [expandedMode, setExpandedMode] = useState<boolean>(false);
-    const [graphHeight, setGraphHeight] = useState<string>('200px');
+    const [graphHeight, setGraphHeight] = useState<string>('300px');
     const [graphData, setGraphData] = useState([]);
 
     const evaluateInterval = (timespan: string) => {
@@ -171,7 +171,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
             <button
                 className="compress-button"
                 onClick={() => {
-                    setGraphHeight('200px');
+                    setGraphHeight('300px');
                     setExpandedMode(false);
                 }}
             >

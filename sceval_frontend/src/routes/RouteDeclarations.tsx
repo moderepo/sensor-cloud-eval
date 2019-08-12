@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { Route, Redirect } from 'react-router-dom';
 import { Login, ResetPassword, Register, Hardware, 
-  EmailSent, MyAccount, SensorModule, AddSensorModule } from '../containers/index';
-import LeftNav from '../components/LeftNav';
+  EmailSent, MyAccount, AddSensorModule } from '../containers/index';
 export interface RouteDeclarationsProps {
   isSavedLoginPresent: boolean;
   isLoggedIn: boolean;
