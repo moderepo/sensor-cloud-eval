@@ -8,9 +8,9 @@ import ClientStorage from '../controllers/ClientStorage';
 import moment from 'moment';
 import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
 import ModeConnection  from '../controllers/ModeConnection';
-
+import determinUnit from '../utils/SensorTypes';
 const loader = require('../common_images/notifications/loading_ring.svg');
-const enySensor = require('../common_images/sensors/eny-sensor.png');
+const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const backArrow = require('../common_images/navigation/back.svg');
 
 const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
@@ -47,29 +47,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 ModeConnection.listSensorModules(gateway);
             }
     },  []);
-
-    const determineUnit = (sensorType: string) => {
-        switch (sensorType) {
-            case 'pressure':
-                return 'hPa'; 
-            case 'temperature':
-                return '°C';
-            case 'humidity':
-                return '%';
-            case 'ambient':
-                return 'Lx';
-            case 'uv':
-                return 'mW/cm²';
-            case 'sound':
-                return 'dB';
-            case 'omron_discomfort':
-                return '';
-            case 'omron_heatstroke':
-                return '';
-            default:
-                return;
-        }
-    };
 
     const toggleModalVisibility = () => {
         if (modalVisible) {
@@ -172,7 +149,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 wsData.forEach((sensor: any, index: any) => {
                     const format = sensor.seriesId.split('-')[1];
                     const sType = format.split(':')[0];
-                    let unit = determineUnit(sType);
+                    let unit = determinUnit(sType);
                     rtData.push({
                         seriesID: sensor.seriesId,
                         type: sType,
@@ -283,7 +260,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 <div className="module-container">
                     <div className="module-details">
                         <div className="module-left-container">
-                            <img src={enySensor} />
+                            <img src={sensorGeneral} />
                             <div className="info-section">
                                 <div className="device-name">{selectedModule}</div>
                                 <div className="gateway-name">Gateway name: {selectedGateway}</div>

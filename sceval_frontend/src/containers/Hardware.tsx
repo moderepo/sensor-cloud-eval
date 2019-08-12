@@ -5,6 +5,7 @@ import modeAPI from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import AppContext from '../controllers/AppContext';
 import SensorModuleSet from '../components/entities/SensorModule';
+import { evaluateSensorTypes } from '../utils/SensorTypes';
 import { Modal } from 'antd';
 import { Context, ContextConsumer } from '../context/Context';
 import ModeConnection from '../controllers/ModeConnection';
@@ -14,13 +15,6 @@ const { confirm } = Modal;
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 
-const sensorHumidity = require('../common_images/sensors/humidity-active.svg');
-const sensorLight = require('../common_images/sensors/uv-active.svg');
-const sensorUV = require('../common_images/sensors/uv-active.svg');
-const sensorPressure = require('../common_images/sensors/pressure-active.svg');
-const sensorTemp = require('../common_images/sensors/temp-active.svg');
-const sensorCount = require('../common_images/sensors/count-active.svg');
-const sensorMagnetic = require('../common_images/sensors/battery-active.svg');
 const deviceImage = require('../common_images/devices/gateway.svg');
 const deviceLocation = require('../common_images/devices/location-pin.svg');
 
@@ -157,34 +151,6 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
       showGatewayOptions(gatewayID);
     }
     seteditingGateways(gatewaySet);
-  };
-
-  const evaluateSensorTypes = (sensorType: any): string | undefined => {
-    switch (sensorType) {
-      case 'TEMPERATURE':
-        return sensorTemp;
-      case 'HUMIDITY':
-        return sensorHumidity;
-      case 'AMBIENT':
-        return sensorLight;
-      case 'UV':
-        return sensorUV;
-      case 'PRESSURE':
-        return sensorPressure;
-      case 'MAGNETIC_X':
-        return sensorMagnetic;
-      case 'COUNT':
-        return sensorCount;
-      case 'ENY_CH_NO':
-        return sensorCount;
-      case 'ENY_SEQ_NO':
-        return sensorCount;
-      case 'ENY_CUM_NO':
-        return sensorCount;
-      default:
-        console.log(sensorType);
-        return;
-    }
   };
 
   const renderSensorModules = (context: Context, deviceID: string, index: number): React.ReactNode => {

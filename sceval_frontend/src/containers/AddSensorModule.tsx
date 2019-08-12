@@ -9,15 +9,10 @@ import { Context, ContextConsumer } from '../context/Context';
 import { Progress } from 'antd';
 import 'antd/dist/antd.css';
 import ClientStorage from '../controllers/ClientStorage';
+import { evaluateSensorTypes } from '../utils/SensorTypes';
 
-const enySensor = require('../common_images/sensors/eny-sensor.png');
-const sensorTemp = require('../common_images/sensors/temp-active.svg');
+const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const checkMark = require('../common_images/notifications/check-1.svg');
-const sensorHumidity = require('../common_images/sensors/humidity-active.svg');
-const sensorLight = require('../common_images/sensors/uv-active.svg');
-const sensorHeat = require('../common_images/sensors/heatstroke-active.svg');
-const sensorNoise = require('../common_images/sensors/noise-active.svg');
-const sensorVibration = require('../common_images/sensors/pressure-active.svg');
 const addModule1 = require('../common_images/add-module-1.svg');
 const addModule2 = require('../common_images/add-module-2.svg');
 const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
@@ -258,7 +253,7 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
                                                 onClick={() => 
                                                 this.toggleModuleSelect(sModule.modelSpecificId)}
                                             >
-                                            <img className="module-image" src={enySensor} />
+                                            <img className="module-image" src={sensorGeneral} />
                                             { this.state.selectedModules.includes(sModule) &&
                                                 <img className="checked-module" src={checkMark} />
                                             }
@@ -266,12 +261,18 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
                                                 <div className="sensor-module-model">
                                                     Model: {sModule.modelSpecificId}
                                                 </div>
-                                                <img className="sensor-type-image" src={sensorTemp} />
-                                                <img className="sensor-type-image" src={sensorHeat} />
-                                                <img className="sensor-type-image" src={sensorHumidity} />
-                                                <img className="sensor-type-image" src={sensorLight} />
-                                                <img className="sensor-type-image" src={sensorNoise} />
-                                                <img className="sensor-type-image" src={sensorVibration} />
+                                                {
+                                                    sModule.moduleSchema.map((sensorType: any, sIndex: any) =>  {
+                                                        const type = evaluateSensorTypes(sensorType.split(':')[0]);
+                                                        return (
+                                                            <img 
+                                                                key={sIndex}
+                                                                className="sensor-type-image" 
+                                                                src={type}
+                                                            />
+                                                        );
+                                                    })
+                                                }
                                             </div>
                                             </a>
                                         );
