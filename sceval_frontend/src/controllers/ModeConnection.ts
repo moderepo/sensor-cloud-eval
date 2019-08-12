@@ -12,6 +12,12 @@ export class ModeConnection extends ConcreteObservable<Event> {
     this.onMessage = this.onMessage.bind(this);
   }
 
+  closeConnection() {
+    if (this.webSocket !== null) {
+      this.webSocket.close();
+    }
+  }
+
   openConnection() {
     if (this.webSocket !== null) {
       if (this.webSocket.readyState !== WebSocket.CLOSED) {
@@ -33,27 +39,78 @@ export class ModeConnection extends ConcreteObservable<Event> {
     try {
       const parsedData = JSON.parse(messageData);
       this.notifyAll(parsedData);
+      return parsedData;
     } catch (e) {
       console.error('Websocket message is invalid JSON:', messageData);
       return;
     }
   }
 
-  searchForSensorModules(deviceID: string): void {
-    const url = MODE_API_BASE_URL + '/devices/' + deviceID + '/command';
+  startSensor(home: any, sensor: any, deviceID: string): void {
+    const enableURL = MODE_API_BASE_URL + '/homes/' + home.id + '/kv/' + sensor.sensorModuleId;
     const cmd = {
-      action: 'startDiscovery',
-      parameters: { timeout: 10000 }
+      value: {
+        gatewayID: deviceID,
+        id: sensor.modelSpecificId,
+        interval: 15,
+        modelId: sensor.modelId,
+        note: home.name,
+        sensing: 'on',
+        sensors: sensor.moduleSchema
+      }
     };
-
-    modeAPI.request('PUT', url, cmd)
+    modeAPI.request('PUT', enableURL, cmd)
                     .then((response: any) => {
-                      console.log(response);
                       return response;
                     }).catch((reason: any) => {
                       console.error('reason', reason);
                     });
   }
+
+  getSensorData(deviceID: string): void {
+    const url = MODE_API_BASE_URL + '/devices/' + deviceID + '/command';
+    const cmd = {
+      action: 'timeSeriesData',
+    };
+
+    modeAPI.request('PUT', url, cmd)
+                    .then((response: any) => {
+                      return response;
+                    }).catch((reason: any) => {
+                      console.error('reason', reason);
+                    });
+  }
+
+  searchForSensorModules(deviceID: string): void {
+    const url = MODE_API_BASE_URL + '/devices/' + deviceID + '/command';
+    const cmd = {
+      action: 'startDiscovery',
+      parameters: { timeout: 1000 }
+    };
+
+    modeAPI.request('PUT', url, cmd)
+                    .then((response: any) => {
+                      return response;
+                    }).catch((reason: any) => {
+                      console.error('reason', reason);
+                    });
+  }
+
+  listSensorModules(deviceID: string): void {
+    const url = MODE_API_BASE_URL + '/devices/' + deviceID + '/command';
+    const cmd = {
+      action: 'listSensorModules',
+      parameters: { timeout: 1000 }
+    };
+
+    modeAPI.request('PUT', url, cmd)
+                    .then((response: any) => {
+                      return response;
+                    }).catch((reason: any) => {
+                      console.error('reason', reason);
+                    });
+  }
+
   getConnection() {
     return this.webSocket;
   }

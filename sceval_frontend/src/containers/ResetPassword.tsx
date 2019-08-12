@@ -3,7 +3,10 @@ import LoginHeader from '../components/LoginHeader';
 import { NavLink } from 'react-router-dom';
 import { AppContext } from '../controllers/AppContext';
 import modeAPI from '../controllers/ModeAPI';
+
 const emailSent = require('../common_images/email_sent.svg');
+
+const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 
 const ResetPassword: React.FC = () => {
     const [input, setInput] = useState(''),
@@ -25,7 +28,7 @@ const ResetPassword: React.FC = () => {
         modeAPI
             .request<any>(
                 'POST',
-                'https://api.tinkermode.com/auth/user/passwordReset/start',
+                MODE_API_BASE_URL + 'auth/user/passwordReset/start',
                 data
             )
             .then(() => {

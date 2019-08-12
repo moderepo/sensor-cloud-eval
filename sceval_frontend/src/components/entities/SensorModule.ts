@@ -1,8 +1,8 @@
 export default interface SensorModuleSet {
     device: string;
-    sensorModules: Array<SensorModule>;
+    sensorModules: Array<SensorModuleInterface>;
 }
-interface SensorModule {
+export interface SensorModuleInterface {
     key: string;
     modificationTime: string;
     value: {
