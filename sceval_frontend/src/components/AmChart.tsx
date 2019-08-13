@@ -3,6 +3,7 @@ import * as am4core from '@amcharts/amcharts4/core';
 import * as am4charts from '@amcharts/amcharts4/charts';
 import am4themes_animated from '@amcharts/amcharts4/themes/animated';
 import moment from 'moment';
+import { ContextConsumer, Context } from '../context/Context';
 am4core.useTheme(am4themes_animated);
 
 interface AmChartProps extends React.Props<any> {
@@ -34,31 +35,31 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     const [expandedMode, setExpandedMode] = useState<boolean>(false);
     const [graphHeight, setGraphHeight] = useState<string>('300px');
     const [graphData, setGraphData] = useState([]);
-
-    const evaluateInterval = (timespan: string) => {
-        switch (timespan) {
-            case 'seconds':
-                return 2000;
-            case 'minute':
-                return 2000 * 30;
-            case 'minutes':
-                return 2000 * 30;
-            case 'hour':
-                return 2000 * 1800;
-            case 'hours': 
-                return 2000 * 1800;
-            case 'day':
-                return 2000 * 21600;
-            case 'days':
-                return 2000 * 21600;
-            default:
-                return;
-        }
+    const [latestRTVal, setlatestRTVal] = useState();
+    const [latestDate, setlatestDate] = useState();
+    const [sensorChart, setSensorChart] = useState<am4charts.XYChart>();
+    
+    const AddRTData = (chart: am4charts.XYChart, context: Context): void => {
+        let update = true;
+        setInterval(
+            () => {
+                const sData = context.state.rtValues.filter((sensor: any) => {
+                    return sensor.type === props.TSDB.type;
+                });
+                if (update) {
+                    chart.addData({date: moment().toISOString(), 
+                        value: sData[0].val.toFixed(2)});
+                    update = false;
+                }
+            },
+            2000
+        );
     };
 
     useEffect(
         () => {
             const chart = am4core.create(props.identifier, am4charts.XYChart);
+            setSensorChart(chart);
             var dbData: any = [];
             var dateArray: any = [];
             let value = 0;
@@ -73,18 +74,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
                     if (index === props.TSDB.TSDBData.data.length - 1) {
                         setGraphData(dbData);
                         chart.data = dbData;
-                        let interval = evaluateInterval(props.timespan);
-                        setInterval(
-                            // if user is selecting a time on the order of seconds or minutes:
-                            // update graph in real time.
-                            () => {
-                                chart.removeData(1);
-                                chart.addData({date: moment(new Date().toISOString()), 
-                                    value: props.websocketRT.rtValue});
-                                props.newWebsocketData(false);
-                            },
-                            interval
-                        );
                     }
                 });
             }
@@ -105,6 +94,13 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
             valueAxis.renderer.labels.template.fill = am4core.color('#7FCBCF');
             valueAxis.renderer.minWidth = 60;
             valueAxis.title.text = props.TSDB.unit;
+            valueAxis.extraMin = 0.1;
+            if (props.timespan === 'minute') {
+                valueAxis.extraMax = 1.0; 
+                valueAxis.extraMin = 1.0; 
+            } else {
+                valueAxis.extraMax = 0.2; 
+            }
 
             // format data series:
             let series = chart.series.push(new am4charts.LineSeries());
@@ -126,23 +122,15 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
             var gradient = new am4core.LinearGradient();
             gradient.addColor(chart.colors.getIndex(0), 0.5);
             gradient.addColor(chart.colors.getIndex(0), 0);
+            gradient.rotation = 90;
             series.fill = gradient;
-
             // format cursor:
             chart.cursor = new am4charts.XYCursor();
             let scrollbarX = new am4charts.XYChartScrollbar();
             chart.scrollbarX = scrollbarX;
-            // if (chart.cursor.tooltip) {
-            //     chart.cursor.tooltip.getFillFromObject = false;
-            //     chart.cursor.tooltip.background.fill = am4core.color('#7FCBCF');
-            // }
 
-            // format legend (currently hiding):
-            // chart.legend = new am4charts.Legend();
-            // chart.legend.parent = chart.plotContainer;
-            // chart.legend.zIndex = 100;
-
-            // format stroke opacity:
+            // graph smoothness
+            series.tensionX = 0.77;
             dateAxis.renderer.grid.template.strokeOpacity = 0.07;
             valueAxis.renderer.grid.template.strokeOpacity = 0.07;
             return function cleanup() {
@@ -156,7 +144,14 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     );
 
     return (
+        <ContextConsumer>
+        {(context: Context) =>
+          context && (
         <div>
+            {
+                sensorChart && props.timespan === 'real-time' &&  // add real time  data if on real-time scale
+                    AddRTData(sensorChart, context)
+            }
             <div 
                 onClick={() => {
                     if (!expandedMode) {
@@ -179,6 +174,9 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
             </button>
             }
         </div>
+        )
+    }
+    </ContextConsumer>
     );
 };
 
