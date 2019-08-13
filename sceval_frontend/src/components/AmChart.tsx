@@ -47,6 +47,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
                     return sensor.type === props.TSDB.type;
                 });
                 if (update) {
+                    chart.removeData(1);
                     chart.addData({date: moment().toISOString(), 
                         value: sData[0].val.toFixed(2)});
                     update = false;
