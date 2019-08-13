@@ -64,7 +64,8 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
         if (context.state.webSocket !== undefined) {
             context.state.webSocket.onmessage = event => {
                 const moduleData = JSON.parse(event.data);
-                if (moduleData && moduleData.eventData.sensorModules && this.state.scanning) {
+                if (moduleData && moduleData.eventData.sensorModules && this.state.scanning &&
+                    this.state.availableModules) {
                     let newAvailableModules: any = [];
                     moduleData.eventData.sensorModules.forEach((sensorModule: any) => {
                         if (!this.state.associatedModules.includes(sensorModule.sensorModuleId)) {
@@ -78,7 +79,30 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
                             moduleMetadata: moduleData
                         };
                     });
-                    if (!event.data || this.state.availableModules.length === 0) {
+                }
+            };
+        }
+        let associatedModules: any = [];
+        context.state.devices.map((device: any, index: any) => {
+            // get already-associated modules
+            const url =
+            MODE_API_BASE_URL + 'devices/' + device.id + '/kv';
+            modeAPI
+            .request('GET', url, {})
+            .then((associatedResponse: any) => {
+                const modules = associatedResponse.data.filter((sModule: any) => {
+                    return sModule.key !== 'firmwareVersion' && sModule.key !== 'firmwareDistribution';
+                });
+                modules.forEach((sensor: any) => {
+                    associatedModules.push(sensor.value.id);
+                });
+                if (index === context.state.devices.length - 1) {
+                    this.setState(() => {
+                        return {
+                            associatedModules: associatedModules
+                        };
+                    });
+                    if (associatedModules.length === 0) {
                         this.setState(() => {
                             return {
                                 noModules: true
@@ -86,47 +110,29 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
                         });
                     }
                 }
-            };
-        }
-        const url =
-        MODE_API_BASE_URL + 'devices/' + context.state.selectedGateway + '/kv';
-        modeAPI
-        .request('GET', url, {})
-        .then((associatedResponse: any) => {
-            const modules = associatedResponse.data.filter((sModule: any) => {
-                return sModule.key !== 'firmwareVersion' && sModule.key !== 'firmwareDistribution';
-              });
-            const associatedModules: any = [];
-            modules.forEach((sensor: any) => {
-                associatedModules.push(sensor.value.id);
             });
-            this.setState(() => {
-                return {
-                    associatedModules: associatedModules
-                };
-            });
-        });
-        let requestCount = 0;
-        ModeConnection.searchForSensorModules(context.state.selectedGateway);
-        let interval = setInterval(
-            () => {
-                requestCount++;
-                this.setState(() => {
-                    return {
-                        scanningProgress: requestCount * 10
-                    };
-                });
-                if (requestCount > 9) {
-                    clearInterval(interval);
+            ModeConnection.searchForSensorModules(device.id); // send command to search for modules
+            let requestCount = 0;
+            let interval = setInterval(
+                () => {
+                    requestCount++;
                     this.setState(() => {
                         return {
-                            scanning: false
+                            scanningProgress: requestCount * 10
                         };
                     });
-                }
-            },
-            1000
-        );
+                    if (requestCount > 9) {
+                        clearInterval(interval);
+                        this.setState(() => {
+                            return {
+                                scanning: false
+                            };
+                        });
+                    }
+                },
+                1000
+            );
+        });
 }
 
     addNewModules(context: Context) {
