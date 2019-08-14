@@ -82,7 +82,6 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
                 }
             };
         }
-        let associatedModules: any = [];
         context.state.devices.map((device: any, index: any) => {
             // get already-associated modules
             const url =
@@ -90,12 +89,9 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
             modeAPI
             .request('GET', url, {})
             .then((associatedResponse: any) => {
-                const modules = associatedResponse.data.filter((sModule: any) => {
+                const associatedModules = associatedResponse.data.filter((sModule: any) => {
                     return sModule.key !== 'firmwareVersion' && sModule.key !== 'firmwareDistribution';
-                });
-                modules.forEach((sensor: any) => {
-                    associatedModules.push(sensor.value.id);
-                });
+                }).map((sensor: any) => sensor.value.id);
                 if (index === context.state.devices.length - 1) {
                     this.setState(() => {
                         return {
