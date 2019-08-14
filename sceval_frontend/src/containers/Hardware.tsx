@@ -80,6 +80,48 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                   }
               });
         });
+        
+        // Listen to sensorModuleStateChange change event from the web socket and reload the sensor module
+        // data for the module that triggered the event.
+        const messageHandler: any = {
+          notify: (message: any): void => {
+            if (message.eventType === 'sensorModuleStateChange' && linkedModules !== undefined) {
+              // the key of the sensor module that triggered the state change event
+              const sensorModuleKey: string = `sensorModule${message.eventData.sensorModuleId}`;
+
+              // Find the linked module that has a sensor module with the same key
+              linkedModules.find((lnkModule: any): boolean => {
+
+                // linkedModule has a list of sensorModule, find the sensor module that has the same key as
+                // the sensor module that triggered the event
+                return lnkModule.sensorModules.find((module: any): boolean => {
+
+                  if (module.key === sensorModuleKey) {
+
+                    // We found the sensor module, now reload the KV for the module and update the module's value
+                    const url = `${MODE_API_BASE_URL}devices/${lnkModule.device}/kv/${sensorModuleKey}`;
+                    modeAPI.request('GET', url, {}).then((response: any): void => {
+                      if (response && response.data) {
+                        Object.assign(module, response.data); // update the module's data with data from response
+                        setlinkedModules([...linkedModules]); // set linked modules
+                      }
+                    });
+
+                    return true;
+                  }
+
+                  return false;
+                }) !== null;
+              });
+            }
+          }
+        };
+
+        ModeConnection.addObserver(messageHandler);
+
+        return function cleanup(): void {
+          ModeConnection.removeObserver(messageHandler);
+        };
     }, 
     [moduleInDeleteMode] // this argument outlines re-rendering dependencies
     );
@@ -181,7 +223,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
               { !isLoading ?
               <a
                 key={key}
-                className="sensor-module"
+                className={`sensor-module ${sensor.value.sensing}`}
                 onClick={event => {
                   sessionStorage.setItem('selectedGateway', deviceID);
                   sessionStorage.setItem('selectedModule', sensor.key.split('sensorModule')[1]);
