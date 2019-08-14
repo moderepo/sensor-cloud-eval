@@ -43,14 +43,16 @@ export const ContextProvider: React.FC<ContextProviderProps> = (
     useEffect(
         () => {
             AppContext.restoreLogin(); // restore user credentials and get home / associated devices
-            modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
-            .then((response: any) => {
-                modeAPI
-                .getDevices(response.id)
-                .then((deviceResponse: any) => {
-                    setDevices(deviceResponse);
-            });
-        });
+            if (ClientStorage.getItem('user-login')) {
+                modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
+                .then((response: any) => {
+                    modeAPI
+                    .getDevices(response.id)
+                    .then((deviceResponse: any) => {
+                        setDevices(deviceResponse);
+                });
+            }); 
+        }
     },
         []);
 
