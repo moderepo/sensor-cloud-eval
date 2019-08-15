@@ -12,22 +12,18 @@ export const LeftNav: React.FC = () => {
         <img src={modeLogo} className="nav-logo" />
         <hr />
       </div>
-      <div className="avatar-container">
-        <NavLink to="/my_account">
-          <img src={profile} className="avatar" />
-          <p>
-            {
-              JSON.parse(`${localStorage.getItem('user-login')}`).value.user
-                .name}
-          </p>
-        </NavLink>
-      </div>
-      <div className="hardware-container">
-        <NavLink to="/devices">
-          <img src={hardware} className="hardware-logo" />
-          <p>Hardware</p>
-        </NavLink>
-      </div>
+      <NavLink className="navigation-item account" to="/my_account">
+        <img src={profile} className="icon avatar" />
+        <p>
+          {
+            JSON.parse(`${localStorage.getItem('user-login')}`).value.user
+              .name}
+        </p>
+      </NavLink>
+      <NavLink className="navigation-item hardware" to="/devices">
+        <img src={hardware} className="icon hardware-logo" />
+        <p>Hardware</p>
+      </NavLink>
     </div>
   );
 };

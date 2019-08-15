@@ -123,7 +123,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
             var gradient = new am4core.LinearGradient();
             gradient.addColor(chart.colors.getIndex(0), 0.5);
             gradient.addColor(chart.colors.getIndex(0), 0);
-            gradient.rotation = 90;
+            // gradient.rotation = 90;
             series.fill = gradient;
             // format cursor:
             chart.cursor = new am4charts.XYCursor();

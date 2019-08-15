@@ -122,8 +122,10 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         }
                         return 0;
                     });
-                    setSensorTypes(sortedTSDBData);
-                    setTSDBDataFetched(true);
+                    if (!TSDBDataFetched) {
+                        setSensorTypes(sortedTSDBData);
+                        setTSDBDataFetched(true);
+                    }
                 }
             });
         });
@@ -143,9 +145,10 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 setSensorModuleConnectedStatus(moduleData.eventData.sensorModules);
             }
             // if app receives real time data, and it pertains to the selected Module:
+            
             if (moduleData.eventType === 'realtimeData' 
             && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule) &&
-            !moduleData.eventData.timeSeriesData[3].seriesId.includes('acceleration')) {
+            !moduleData.eventData.timeSeriesData[0].seriesId.includes('magnetic')) {
                 const wsData = moduleData.eventData.timeSeriesData;
                 setActiveSensorQuantity(wsData.length); // set active sensor count
                 let sensors: any = [];
@@ -383,6 +386,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                                 <span className="unit">{sensorTypes[index] && 
                                                     sensorTypes[index].unit}</span>
                                             </div>
+                                            { sensorTypes[index] &&
                                             <div className="graph-info-container">
                                                 <div className="sensor-insight">
                                                     Maximum: <strong>{sensorTypes[index].maxVal}</strong></div>
@@ -391,12 +395,13 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                                 <div className="sensor-insight">
                                                     Average: <strong>{sensorTypes[index].avgVal}</strong></div>
                                             </div>
+                                            }
                                         </Fragment>
                                         :
                                         <img src={loader} />
                                         }
                                     </div>
-                                    { sensorTypes && TSDBDataFetched ?
+                                    { sensorTypes && sensorTypes[index] && TSDBDataFetched ?
                                     <Fragment>
                                         <div className="graph-container">
                                             <AmChart
