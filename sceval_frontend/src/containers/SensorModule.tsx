@@ -72,7 +72,11 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
      sType: string, seriesID: string, unit: string, wsData: any ) => {
         const now = new Date();
         const endTime = moment(now);
-        const startTime = moment(now).subtract(graphTimespanNumeric, graphTimespan);
+        const startTime = moment(now).subtract(
+            graphTimespanNumeric === '' ?
+                1 : graphTimespanNumeric, 
+            graphTimespan === 'real-time' ?
+                'minute' : graphTimespan);
         const fetchURL = 
         MODE_API_BASE_URL + 'homes/' + homeID + '/smartModules/tsdb/timeSeries/' + seriesID
         + '/data?begin=' + startTime.toISOString() + '&end=' + endTime.toISOString() 
@@ -118,8 +122,10 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         }
                         return 0;
                     });
-                    setSensorTypes(sortedTSDBData);
-                    setTSDBDataFetched(true);
+                    if (!TSDBDataFetched) {
+                        setSensorTypes(sortedTSDBData);
+                        setTSDBDataFetched(true);
+                    }
                 }
             });
         });
@@ -139,13 +145,15 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 setSensorModuleConnectedStatus(moduleData.eventData.sensorModules);
             }
             // if app receives real time data, and it pertains to the selected Module:
+            
             if (moduleData.eventType === 'realtimeData' 
             && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule) &&
-            !moduleData.eventData.timeSeriesData[3].seriesId.includes('acceleration')) {
+            !moduleData.eventData.timeSeriesData[0].seriesId.includes('magnetic')) {
                 const wsData = moduleData.eventData.timeSeriesData;
                 setActiveSensorQuantity(wsData.length); // set active sensor count
                 let sensors: any = [];
                 let rtData: any = [];
+                let rtNumbers: any = [];
                 wsData.forEach((sensor: any, index: any) => {
                     const format = sensor.seriesId.split('-')[1];
                     const sType = format.split(':')[0];
@@ -155,6 +163,10 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         type: sType,
                         timestamp: sensor.timestamp,
                         rtValue: sensor.value
+                    });
+                    rtNumbers.push({
+                        type: sType,
+                        val: sensor.value
                     });
                     if (index === wsData.length - 1) { // if we have gone through all RT data:
                         const sortedRTData = rtData.sort(function(a: any, b: any) {
@@ -166,6 +178,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                             }
                             return 0;
                         });
+                        context.actions.setRTValues(rtNumbers);
                         setactiveSensors(sortedRTData); // set real time data
                         
                     }
@@ -200,7 +213,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
 
     const renderGraphTimespanToggle = (): React.ReactNode => {
         const timespanSet = [];
-        timespanSet.push({ quantity: 30, unit: 'seconds'});
         timespanSet.push({ quantity: 1, unit: 'minute'});
         timespanSet.push({ quantity: 15, unit: 'minutes'});
         timespanSet.push({ quantity: 1, unit: 'hour'});
@@ -216,9 +228,14 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                             <Menu.Item key={index}>
                                 <option 
                                     value={timespan.quantity}
-                                    onClick={() => toggleGraphTimespan(timespan.quantity, timespan.unit)}
+                                    onClick={() => toggleGraphTimespan(
+                                        timespan.unit === 'minute' ?
+                                            '' : timespan.quantity, 
+                                        timespan.unit === 'minute' ?
+                                        'real-time' : timespan.unit)}
                                 >
-                                {`${timespan.quantity} ${timespan.unit}`}
+                                {timespan.unit === 'minute' ?
+                                    'real-time' : `${timespan.quantity} ${timespan.unit}`}
                                 </option>
                             </Menu.Item>
                         );
@@ -357,7 +374,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                 > 
                                     <div className="unit-rt-container">
                                         <div className="header">
-                                            {activeSensor.type}
+                                            {activeSensor.type.toUpperCase()}
                                         </div>
                                         { activeSensors && sensorTypes ?
                                         <Fragment>
@@ -369,6 +386,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                                 <span className="unit">{sensorTypes[index] && 
                                                     sensorTypes[index].unit}</span>
                                             </div>
+                                            { sensorTypes[index] &&
                                             <div className="graph-info-container">
                                                 <div className="sensor-insight">
                                                     Maximum: <strong>{sensorTypes[index].maxVal}</strong></div>
@@ -377,12 +395,13 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                                 <div className="sensor-insight">
                                                     Average: <strong>{sensorTypes[index].avgVal}</strong></div>
                                             </div>
+                                            }
                                         </Fragment>
                                         :
                                         <img src={loader} />
                                         }
                                     </div>
-                                    { sensorTypes && TSDBDataFetched ?
+                                    { sensorTypes && sensorTypes[index] && TSDBDataFetched ?
                                     <Fragment>
                                         <div className="graph-container">
                                             <AmChart
