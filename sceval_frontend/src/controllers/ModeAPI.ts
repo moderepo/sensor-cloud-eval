@@ -1,6 +1,7 @@
 import Axios, { Method } from 'axios';
 import { AxiosRequestConfig, AxiosInstance, AxiosResponse } from 'axios';
 import Home from './Home';
+import moment from 'moment';
 
 const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 
@@ -43,7 +44,6 @@ export class ModeAPI {
   constructor() {
     this.baseUrl = '';
     this.authToken = '';
-    this.defaultHome = null;
     this.axios = Axios.create();
   }
 
@@ -82,16 +82,15 @@ export class ModeAPI {
     const config: RequestConfig = {
       method: method,
       url: url,
-      headers: {}
+      headers: {
+      }
     };
     if (withCredentials !== undefined) {
       config.withCredentials = withCredentials;
     }
-
     if (this.authToken) {
       config.headers.Authorization = 'ModeCloud ' + this.authToken;
     }
-
     return config;
   }
 
@@ -128,6 +127,40 @@ export class ModeAPI {
     return this.axios.request<T>(config);
   }
 
+  public getHomes(userId: number) {
+    return new Promise(
+      (resolve: (homes: Home[]) => void, reject: (reason?: any) => void) => {
+        return this.request<Home[]>('GET', MODE_API_BASE_URL + 'homes', {userId: userId})
+        .then((response: AxiosResponse<any>) => {
+          resolve(response.data);
+        });
+      }
+    );
+  }
+
+  public async getHomeByHomeId(homeId: number) {
+    const response = await this.request<Home>('GET', MODE_API_BASE_URL + 'homes/' + homeId, {});
+    return response.data as Home;
+  }
+
+  public getHome(userId: number) {
+    if (this.defaultHome === null) {
+      return this.getHomes(userId).then((homes: Home[]) => {
+        console.log('GET /homes - success');
+        if (homes.length > 0) {
+          // pick the first home
+          this.defaultHome = homes[0];
+          return Promise.resolve(homes[0]);
+        } else {
+          // If no home, create "home" once.
+          return this.makeHome();
+        }
+      });
+    } else {
+      return Promise.resolve(this.defaultHome);
+    }
+  }
+
   public getDevice(deviceId: number) {
     return new Promise<Device>(
       (resolve: (value?: Device) => void, reject: (reason?: any) => void) => {
@@ -154,6 +187,28 @@ export class ModeAPI {
         });
       }
     );
+  }
+
+  public getTSDBData(homeID: string, seriesID: string, start: string, end: string) {
+    const fetchURL = MODE_API_BASE_URL + 'homes/' + homeID + '/smartModules/tsdb/timeSeries/' + seriesID
+    + '/data?begin=' + start + '&end=' + end + '&aggregation=avg';
+    this.request('GET', fetchURL, {})
+    .then((response: any) => {
+      return response;
+    });
+  }
+
+  private makeHome() {
+    if (this.makeHomePromise === null) {
+      this.makeHomePromise = this.request('POST', '/homes', {name: 'home'})
+        .then((response: any) => {
+          console.log('POST /homes success');
+          this.defaultHome = response.data;
+          return response.data;
+        });
+    }
+    
+    return this.makeHomePromise;
   }
 }
 

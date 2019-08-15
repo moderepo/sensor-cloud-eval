@@ -12,13 +12,13 @@ interface LoginProps extends React.Props<any> {
 const Login: React.FC<LoginProps> = (props: LoginProps) => {
     const [email, setEmail] = useState(''),
         [password, setPassword] = useState(''),
-        [emailValid, setEmailValie] = useState(false),
+        [emailValid, setEmailValid] = useState(false),
         [error, setError] = useState('');
     const validateEmail = (event: React.ChangeEvent<HTMLInputElement>) => {
         const input = event.target.value;
         const re = /\S+@\S+\.\S+/;
         setEmail(input);
-        setEmailValie(re.test(input));
+        setEmailValid(re.test(input));
     };
     const passwordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const input = event.target.value;
@@ -29,7 +29,6 @@ const Login: React.FC<LoginProps> = (props: LoginProps) => {
         AppContext.postLoginForm(email, password)
             .then((loginInfo: LoginInfo) => {
                 if (loginInfo.user.verified) {
-                    console.log('attempting to login');
                     props.onLogIn();
                 }
             })
@@ -39,7 +38,6 @@ const Login: React.FC<LoginProps> = (props: LoginProps) => {
                     reason.response.data &&
                     reason.response.data.reason
                 ) {
-                    console.log(reason.response.data.reason);
                     const transformedErr = handleErrors(
                         reason.response.data.reason
                     );
@@ -50,7 +48,7 @@ const Login: React.FC<LoginProps> = (props: LoginProps) => {
             });
     };
     if (props.isLoggedIn) {
-        return <Redirect to="/hardware" />;
+        return <Redirect to="/devices" />;
     }
     return (
         <Fragment>

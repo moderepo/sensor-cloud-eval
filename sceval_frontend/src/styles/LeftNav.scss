@@ -1,0 +1,81 @@
+@import 'variables.scss';
+
+.navigation-bar {
+    width: 120px;
+    position: fixed;
+    border-right: 1px solid #d8d8d8;
+    height: 100%;
+    min-height: 340px;
+    background-color: #292e34;
+    user-select: none;
+    -webkit-user-select: none;
+
+    .sidebar-head {
+        margin-top: 0;
+        padding-top: 26px;
+        padding-bottom: 20px;
+
+        .nav-logo {
+            width: 51px;
+            display: block;
+            margin: 0 auto;
+            border: 0;
+        }
+    }
+
+    hr {
+        margin: 0 20px 24px;
+        border: none;
+        border-top: 1px solid rgba(154, 201, 207, 0.2);
+        margin-top: 20px;
+        margin-bottom: 10px;
+        border: 0;
+        border-top: 1px solid #eee;
+    }
+
+    
+    .navigation-item {
+        display: block;
+        padding: 15px 10px;
+        margin: 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 600;
+        color: #7fcbcf;
+        text-align: center;
+
+        .icon {
+            height: 35px;
+        }
+
+        p {
+            padding-top: 10px;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        &.account {
+            .icon {
+                border-radius: 50%;
+                border: 3px solid #292e34;
+                box-shadow: 0px 0px 0px 4px #7fcbcf;
+                width: 35px;
+                background-size: 35px;
+                background-position: center;
+                display: inline-block;
+            }
+        }
+
+        &:hover {
+            background: #4b4b4b;
+        }
+
+        &.active {
+            background: #191c1f;
+            color: #ffffff;
+        }
+
+    }
+}

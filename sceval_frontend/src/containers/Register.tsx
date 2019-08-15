@@ -1,7 +1,6 @@
 import React, { Fragment, useState } from 'react';
 import LoginHeader from '../components/LoginHeader';
 import { NavLink, Redirect } from 'react-router-dom';
-import { AxiosRequestConfig, AxiosInstance } from 'axios';
 import modeAPI from '../controllers/ModeAPI';
 import AppContext from '../controllers/AppContext';
 import handleErrors from '../utils/ErrorMessages';
