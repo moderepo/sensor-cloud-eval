@@ -82,7 +82,7 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
                 }
             };
         }
-        context.state.devices.map((device: any, index: any) => {
+        context.state.devices.forEach((device: any, index: any) => {
             // get already-associated modules
             const url =
             MODE_API_BASE_URL + 'devices/' + device.id + '/kv';
