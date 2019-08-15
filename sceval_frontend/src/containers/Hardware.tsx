@@ -4,7 +4,7 @@ import { LeftNav } from '../components/LeftNav';
 import modeAPI from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import AppContext from '../controllers/AppContext';
-import SensorModuleSet from '../components/entities/SensorModule';
+import SensorModuleSet, { SensorModuleInterface } from '../components/entities/SensorModule';
 import { evaluateSensorTypes } from '../utils/SensorTypes';
 import { Modal } from 'antd';
 import { Context, ContextConsumer } from '../context/Context';
@@ -95,35 +95,36 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
           // the key of the sensor module that triggered the state change event
           const sensorModuleKey: string = `sensorModule${message.eventData.sensorModuleId}`;
 
-          let deviceId: string | null = null;
-          let moduleToBeUpdated: any | null = null;
-
           // Find the linked module that has a sensor module with the same key and at the same time, find the deviceId
           // of the device the module is connected to because we need the deviceId to make an API call to load the
           // module data
-          linkedModules.find((lnkModule: any): boolean => {
+          interface Findable {
+            deviceId: string;
+            sensorModule: SensorModuleInterface;
+          }
 
-            // linkedModule contains a list of sensorModule, find the sensor module that has the same key as
-            // the sensor module that triggered the event
-            return lnkModule.sensorModules !== null && lnkModule.sensorModules.find((module: any): boolean => {
-
-              if (module.key === sensorModuleKey) {
-                deviceId = lnkModule.device;
-                moduleToBeUpdated = module;
-                return true;
-              }
-
-              return false;
+          // First, build an array of Findable and then find the sensor module that has the same
+          // key as the module that triggered the event
+          const result = linkedModules.reduce(
+            (prevValue: Findable[], currValue: SensorModuleSet): Findable[] => {
+              return [...prevValue, ...currValue.sensorModules.map((module: SensorModuleInterface): Findable => {
+                return {
+                  deviceId: currValue.device,
+                  sensorModule: module,
+                };
+              })];
+            },
+            []).find((findable: Findable): boolean => {
+              return findable.sensorModule.key === sensorModuleKey;
             });
-          });
 
-          if (deviceId && moduleToBeUpdated) {
+          if (result) {
             // Found the sensor module, now reload the KV for the module and update the module's value
-            const url = `${MODE_API_BASE_URL}devices/${deviceId}/kv/${sensorModuleKey}`;
+            const url = `${MODE_API_BASE_URL}devices/${result.deviceId}/kv/${sensorModuleKey}`;
             modeAPI.request('GET', url, {}).then((response: any): void => {
               if (response && response.data) {
                 // update the module's data with data from response but this won't trigger a re-render
-                Object.assign(moduleToBeUpdated, response.data);
+                Object.assign(result.sensorModule, response.data);
                 setlinkedModules([...linkedModules]); // copy the linkedModules and set it to trigger re-render
               }
             });
