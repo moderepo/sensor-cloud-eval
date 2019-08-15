@@ -94,7 +94,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
 
                 // linkedModule has a list of sensorModule, find the sensor module that has the same key as
                 // the sensor module that triggered the event
-                return lnkModule.sensorModules.find((module: any): boolean => {
+                return lnkModule.sensorModules !== null && lnkModule.sensorModules.find((module: any): boolean => {
 
                   if (module.key === sensorModuleKey) {
 
@@ -111,7 +111,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                   }
 
                   return false;
-                }) !== null;
+                });
               });
             }
           }
