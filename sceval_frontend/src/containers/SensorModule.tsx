@@ -197,7 +197,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             return (): void => {
                 ModeConnection.removeObserver(webSocketMessageHandler);
             };
-    },  [selectedGateway, selectedModule]);
+    },  [selectedGateway, selectedModule, TSDBDataFetched, graphTimespan, graphTimespanNumeric]);
 
     const toggleGraphTimespan = (quantity: number, timespan: string): void => {
         setTSDBDataFetched(false);
