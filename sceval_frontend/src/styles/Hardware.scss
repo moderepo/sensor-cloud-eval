@@ -172,6 +172,12 @@
                 margin-right: 10px;
             }
         }
+
+        &.off {
+            opacity: 0.5;
+            filter: grayscale(1);
+        }
+
     }
     .selected {
         border: 2px solid $base-black;
