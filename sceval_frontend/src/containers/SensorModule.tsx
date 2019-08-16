@@ -130,6 +130,10 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             if (gateway !== null) {
                 ModeConnection.listSensorModules(gateway);
             }
+    },  []);
+
+    useEffect(
+        () => {
 
             let homeID = '';
             modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
@@ -202,19 +206,8 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const toggleGraphTimespan = (quantity: number, timespan: string): void => {
         setTSDBDataFetched(false);
         AppContext.restoreLogin();
-        modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
-        .then((response: any) => {
-            const homeID = response.id;
-            setGraphTimespanNumeric(quantity);
-            setGraphTimespan(timespan);
-            if (sensorTypes !== undefined) {
-                activeSensors.map((sensor: any, index: any) => {
-                    performTSDBFetch(
-                    homeID, [], sensor, sensor.type, sensor.seriesID,
-                    sensorTypes[index].unit, activeSensors);
-                });
-            }
-        });
+        setGraphTimespanNumeric(quantity);
+        setGraphTimespan(timespan);
     };
 
     const renderGraphTimespanToggle = (): React.ReactNode => {
