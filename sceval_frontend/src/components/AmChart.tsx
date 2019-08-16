@@ -38,7 +38,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     const [latestRTVal, setlatestRTVal] = useState();
     const [latestDate, setlatestDate] = useState();
     const [sensorChart, setSensorChart] = useState<am4charts.XYChart>();
-    const theContext: Context = useContext(context);
+    const sensorContext: Context = useContext(context);
 
     useEffect(
         () => {
@@ -131,14 +131,14 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
         () => {
             // Listen to the sensorChart, timespan, and rtValues changes and update the chart
             // data but only for real-time data view
-            if (props.timespan === 'real-time' && sensorChart && theContext.state.rtValues) {
-                const sData = theContext.state.rtValues.filter((sensor: any) => {
+            if (props.timespan === 'real-time' && sensorChart && sensorContext.state.rtValues) {
+                const sData = sensorContext.state.rtValues.filter((sensor: any) => {
                     return sensor.type === props.TSDB.type;
                 });
                 sensorChart.removeData(1);
                 sensorChart.addData({date: moment().toISOString(), value: sData[0].val.toFixed(2)});
             }
-    },  [sensorChart, props.timespan, theContext.state.rtValues]);
+    },  [sensorChart, props.timespan, sensorContext.state.rtValues]);
 
     return (
         <div>
