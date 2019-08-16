@@ -35,7 +35,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const [mounted, setMounted] = useState(false);
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [moduleSettingsVisible, setModuleSettingsVisible] = useState<boolean>(false);
-    const theContext: Context = useContext(context);
+    const sensorContext: Context = useContext(context);
 
     const toggleModalVisibility = () => {
         if (modalVisible) {
@@ -181,7 +181,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                     }
                                     return 0;
                                 });
-                                theContext.actions.setRTValues(rtNumbers);
+                                sensorContext.actions.setRTValues(rtNumbers);
                                 setactiveSensors(sortedRTData); // set real time data
                                 
                             }
