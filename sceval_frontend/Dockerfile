@@ -1,20 +1,17 @@
 # base image
-FROM node
+FROM node as build
 
 # set working directory
 WORKDIR /
 
 # copy files
-COPY build/ /build
-COPY package.json ./
-COPY server.js ./
-COPY app_config.js ./
-COPY .env ./
-COPY views/index.mustache ./views/
-
+COPY . /
 # install and cache app dependencies
 RUN npm install --production
+# run build script
+RUN npm run-script build:production
 # start app
-CMD ["npm", "start"]
-ENTRYPOINT BRAND_ID=$BRAND_ID RELEASE=$RELEASE node server.js
-EXPOSE 8080
+FROM nginx:1.16.0
+COPY --from=build /build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
