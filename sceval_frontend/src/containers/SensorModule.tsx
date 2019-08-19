@@ -12,7 +12,9 @@ import determinUnit from '../utils/SensorTypes';
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const backArrow = require('../common_images/navigation/back.svg');
-
+const fullALPsList = ['TEMPERATURE', 'HUMIDITY', 'UV', 'PRESSURE', 'AMBIENT', 
+    'MAGNETIC X', 'ACCELERATION Y', 'ACCELERATION Z', 'MAGNETICY ', 
+    'MAGNETIC Z', 'ACCELERATION_X'];
 const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 
 interface SensorModuleProps extends React.Props<any> {
@@ -32,6 +34,8 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const [sensingInterval, setSensingInterval] = useState<string>('2s');
     const [graphTimespanNumeric, setGraphTimespanNumeric] = useState<any>(7);
     const [graphTimespan, setGraphTimespan] = useState<string>('days');
+    const [fullSensorList, setFullSensorList] = useState([]);
+    const [offlineSensors, setOfflineSensors] = useState<Array<any>>([]);
     const [mounted, setMounted] = useState(false);
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [moduleSettingsVisible, setModuleSettingsVisible] = useState<boolean>(false);
@@ -56,15 +60,66 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     };
     
     const handleOk = (event: any) => {
-    setModalVisible(false);
+        let filteredActiveSensors: any = [];
+        fullSensorList.map((onlineSensor: any, index: any) => {
+            if (!offlineSensors.includes(onlineSensor)) {
+                filteredActiveSensors.push(onlineSensor); // keep online
+            }
+            if (index === fullSensorList.length - 1) {
+                // perform kv updates
+                const sensorModule = sessionStorage.getItem('selectedModule');
+                const device = sessionStorage.getItem('selectedGateway');
+                if (device && sensorModule) {
+                    const params = {
+                        value: {
+                            gatewayID: device, 
+                            id: sensorModule,
+                            interval: 30,
+                            modelId: '0101',
+                            sensing: 'on',
+                            sensors: filteredActiveSensors
+                        }
+                    };
+                    const deviceURL = MODE_API_BASE_URL + 'devices/' + device + '/kv/sensorModule' + sensorModule;
+                    modeAPI.request('PUT', deviceURL, params)
+                    .then((deviceResponse: any) => {
+                        return deviceResponse;
+                    }).catch((reason: any) => {
+                      console.error('reason', reason);
+                    });
+                    modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
+                    .then((response: any) => {
+                        const homeURL = MODE_API_BASE_URL + 'homes/' + response.id + '/kv/sensorModule' + sensorModule;
+                        modeAPI.request('PUT', homeURL, params)
+                        .then((homeResponse: any) => {
+                            return homeResponse;
+                        }).catch((reason: any) => {
+                        console.error('reason', reason);
+                    });
+                });
+                }
+            }
+        });
+        setModalVisible(false);
+    };
+
+    const adjustOfflineSensors = (sensorType: string) => {
+        if (offlineSensors) {
+            if (offlineSensors.includes(sensorType.toUpperCase())) {
+                const removedSet = offlineSensors.filter((sensor: any) => {
+                    return sensor !== sensorType.toUpperCase() + ':0';
+                });
+                setOfflineSensors(removedSet);                                   
+            } else {
+                const addedSet: any = offlineSensors;
+                addedSet.push(sensorType.toUpperCase() + ':0');
+                setOfflineSensors(addedSet);
+            }
+        }
     };
 
     const toggleSensorModuleSettingsVisible = () => {
         setModuleSettingsVisible(!moduleSettingsVisible);
-    };
-
-    const onChange = (checkedValues: any) => {
-        console.log('checked = ', checkedValues);
     };
 
     const performTSDBFetch =  
@@ -317,29 +372,24 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                     </div>
                                     <div className="sensor-types">
                                         <label className="label-title">Select Types of Data to Collect</label>
-                                        <Checkbox.Group 
-                                            style={{ width: '100%' }} 
-                                            onChange={onChange}
-                                        >
                                         {
-                                            sensorTypes &&
-                                            sensorTypes.map((sensorType: any)  => {
+                                            sensorTypes && 
+                                            fullALPsList.map((sensorType: any, index: any)  => {
                                                 return (
                                                     <Checkbox 
-                                                        key={sensorType.seriesID}
-                                                        value={sensorType.type}
-                                                        // defaultChecked={
-                                                        //     sensorModuleConnectedStatus[index].
-                                                        // }
-                                                    >{sensorType.type}
+                                                        key={sensorType}
+                                                        value={sensorType}
+                                                        onClick={() => adjustOfflineSensors(sensorType)}
+                                                        defaultChecked={true}
+                                                    >{sensorType}
                                                     </Checkbox>
                                                 );
                                             })
                                         }
-                                        </Checkbox.Group>
                                     </div>
                                 </div>
                                 </Modal>
+
                             }
                         </div>
                         <div className="data-col">
