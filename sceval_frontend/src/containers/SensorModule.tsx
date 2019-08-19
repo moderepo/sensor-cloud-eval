@@ -9,12 +9,13 @@ import moment from 'moment';
 import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
 import ModeConnection  from '../controllers/ModeConnection';
 import determinUnit from '../utils/SensorTypes';
+
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const backArrow = require('../common_images/navigation/back.svg');
-const fullALPsList = ['TEMPERATURE', 'HUMIDITY', 'UV', 'PRESSURE', 'AMBIENT', 
-    'MAGNETIC X', 'ACCELERATION Y', 'ACCELERATION Z', 'MAGNETICY ', 
-    'MAGNETIC Z', 'ACCELERATION_X'];
+const fullALPsList = ['TEMPERATURE:0', 'HUMIDITY:0', 'UV:0', 'PRESSURE:0', 'AMBIENT:0', 
+    'MAGNETIC_X:0', 'ACCELERATION_Y:0', 'ACCELERATION_Z:0', 'MAGNETIC_Y:0', 
+    'MAGNETIC_Z:0', 'ACCELERATION_X:0'];
 const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 
 interface SensorModuleProps extends React.Props<any> {
@@ -23,10 +24,10 @@ interface SensorModuleProps extends React.Props<any> {
 
 export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModuleProps) => {
     const [selectedModule, setSelectedModule] = useState<string|null>();
+    const [sensorModuleName, setSensorModuleName] = useState<string>();
     const [selectedGateway, setSelectedGateway] = useState<string|null>();
     const [TSDBDataFetched, setTSDBDataFetched] = useState<boolean>(false);
-    const [activeSensorQuantity, setActiveSensorQuantity] = useState<number>(5);
-    const [sensorModuleConnectedStatus, setSensorModuleConnectedStatus] = useState();
+    const [activeSensorQuantity, setActiveSensorQuantity] = useState<number>(0);
     const [activeSensors, setactiveSensors] = useState<any>(); // contains RT Websocket data
     const [newWebsocketData, setnewWebsocketData] = useState<boolean>(false);
     const [sensorTypes, setSensorTypes] = useState<Array<any>>(); // contains data from TSDB fetch
@@ -34,7 +35,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const [sensingInterval, setSensingInterval] = useState<string>('2s');
     const [graphTimespanNumeric, setGraphTimespanNumeric] = useState<any>(7);
     const [graphTimespan, setGraphTimespan] = useState<string>('days');
-    const [fullSensorList, setFullSensorList] = useState([]);
+    const [fullSensorList, setFullSensorList] = useState();
     const [offlineSensors, setOfflineSensors] = useState<Array<any>>([]);
     const [mounted, setMounted] = useState(false);
     const [modalVisible, setModalVisible] = useState<boolean>(false);
@@ -45,10 +46,35 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             AppContext.restoreLogin();
             setMounted(true);
             const gateway = sessionStorage.getItem('selectedGateway');
-            setSelectedModule(sessionStorage.getItem('selectedModule'));
+            const sensorModule = sessionStorage.getItem('selectedModule');
+            setSelectedModule(sensorModule);
             setSelectedGateway(gateway);
             if (gateway !== null) {
-                ModeConnection.listSensorModules(gateway);
+                setTimeout(
+                    () => {
+                        ModeConnection.listSensorModules(gateway);
+                    },
+                    1000
+                );
+            }
+            if (sensorModule) {
+                setSensorModuleName(sensorModule);
+                const deviceURL = MODE_API_BASE_URL + 'devices/' + gateway + '/kv/sensorModule' + sensorModule;
+                modeAPI.request('GET', deviceURL, {})
+                .then((response: any) => {
+                    const moduleSensors = response.data.value.sensors;
+                    setFullSensorList(moduleSensors);
+                    setActiveSensorQuantity(moduleSensors.length);
+                    let sensorsOffline: any = [];
+                    fullALPsList.map((sensor: any, index: any) => {
+                        if (!response.data.value.sensors.includes(sensor)) {
+                            sensorsOffline.push(sensor);
+                        }
+                        if (index === fullALPsList.length - 1) {
+                            setOfflineSensors(sensorsOffline);
+                        }
+                    });
+                });
             }
     },  []);
 
@@ -59,12 +85,20 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
         setModalVisible(!modalVisible);
     };
     
+    const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        event.preventDefault();
+        setSensorModuleName(event.target.value);
+    };
     const handleOk = (event: any) => {
         let filteredActiveSensors: any = [];
-        fullSensorList.map((onlineSensor: any, index: any) => {
-            if (!offlineSensors.includes(onlineSensor)) {
-                filteredActiveSensors.push(onlineSensor); // keep online
+        // go through all sensors that are currently connected
+        fullALPsList.map((sensor: any, index: any) => {
+            // if the user does not request the sensor to be turned off
+            if (!offlineSensors.includes(sensor)) {
+                // keep online and push to filtered sensors
+                filteredActiveSensors.push(sensor);
             }
+            // once through full list
             if (index === fullSensorList.length - 1) {
                 // perform kv updates
                 const sensorModule = sessionStorage.getItem('selectedModule');
@@ -72,6 +106,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 if (device && sensorModule) {
                     const params = {
                         value: {
+                            name: sensorModuleName,
                             gatewayID: device, 
                             id: sensorModule,
                             interval: 30,
@@ -89,7 +124,8 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     });
                     modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
                     .then((response: any) => {
-                        const homeURL = MODE_API_BASE_URL + 'homes/' + response.id + '/kv/sensorModule' + sensorModule;
+                        const homeURL = MODE_API_BASE_URL + 
+                            'homes/' + response.id + '/kv/sensorModule' + sensorModule;
                         modeAPI.request('PUT', homeURL, params)
                         .then((homeResponse: any) => {
                             return homeResponse;
@@ -104,17 +140,18 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     };
 
     const adjustOfflineSensors = (sensorType: string) => {
-        if (offlineSensors) {
-            if (offlineSensors.includes(sensorType.toUpperCase())) {
-                const removedSet = offlineSensors.filter((sensor: any) => {
-                    return sensor !== sensorType.toUpperCase() + ':0';
-                });
-                setOfflineSensors(removedSet);                                   
-            } else {
-                const addedSet: any = offlineSensors;
-                addedSet.push(sensorType.toUpperCase() + ':0');
-                setOfflineSensors(addedSet);
-            }
+        // if offline sensors includes toggled sensor:
+        if (offlineSensors.includes(sensorType)) {
+            // remove it from offline sensors
+            const removedSet = offlineSensors.filter((sensor: any) => {
+                return sensor !== sensorType;
+            });
+            setOfflineSensors(removedSet);     
+        } else {
+            // if it doesn't, add it to offline sensors
+            const addedSet: any = offlineSensors;
+            addedSet.push(sensorType);
+            setOfflineSensors(addedSet);
         }
     };
 
@@ -197,15 +234,16 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             const moduleData = JSON.parse(event.data);
             setnewWebsocketData(true);
             if (moduleData.eventType === 'sensorModuleList') {
-                setSensorModuleConnectedStatus(moduleData.eventData.sensorModules);
+                if (selectedModule && moduleData.eventData.sensorModules[selectedModule]) {
+                    const sensorList = moduleData.eventData.sensorModules[selectedModule].sensors;
+                    setFullSensorList(sensorList);
+                }
             }
             // if app receives real time data, and it pertains to the selected Module:
-            
             if (moduleData.eventType === 'realtimeData' 
             && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule) &&
             !moduleData.eventData.timeSeriesData[0].seriesId.includes('magnetic')) {
                 const wsData = moduleData.eventData.timeSeriesData;
-                setActiveSensorQuantity(wsData.length); // set active sensor count
                 let sensors: any = [];
                 let rtData: any = [];
                 let rtNumbers: any = [];
@@ -366,22 +404,27 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                     <div className="sensor-module-name">
                                         <label className="label-title">Sensor Module Name</label>
                                         <Input
-                                            value={selectedModule ? selectedModule : ''}
-                                            placeholder={selectedModule ? selectedModule : ''}
+                                            value={sensorModuleName}
+                                            onChange={handleNameChange}
+                                            placeholder={
+                                                sensorModuleName ? sensorModuleName :
+                                                selectedModule ? selectedModule : '' 
+                                            }
                                         />
                                     </div>
                                     <div className="sensor-types">
                                         <label className="label-title">Select Types of Data to Collect</label>
                                         {
-                                            sensorTypes && 
+                                            sensorTypes && fullSensorList && 
                                             fullALPsList.map((sensorType: any, index: any)  => {
+                                                const displayed = sensorType.split(':')[0];
                                                 return (
                                                     <Checkbox 
                                                         key={sensorType}
-                                                        value={sensorType}
+                                                        value={displayed}
                                                         onClick={() => adjustOfflineSensors(sensorType)}
-                                                        defaultChecked={true}
-                                                    >{sensorType}
+                                                        defaultChecked={fullSensorList.includes(sensorType)}
+                                                    >{displayed.replace(/_/g, ' ')}
                                                     </Checkbox>
                                                 );
                                             })
