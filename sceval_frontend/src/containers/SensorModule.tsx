@@ -28,8 +28,8 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const [selectedGateway, setSelectedGateway] = useState<string|null>();
     const [TSDBDataFetched, setTSDBDataFetched] = useState<boolean>(false);
     const [activeSensorQuantity, setActiveSensorQuantity] = useState<number>(0);
-    const [activeSensors, setactiveSensors] = useState<any>(); // contains RT Websocket data
-    const [newWebsocketData, setnewWebsocketData] = useState<boolean>(false);
+    const [activeSensors, setActiveSensors] = useState<any>(); // contains RT Websocket data
+    const [newWebsocketData, setNewWebsocketData] = useState<boolean>(false);
     const [sensorTypes, setSensorTypes] = useState<Array<any>>(); // contains data from TSDB fetch
     const [batteryPower, setBatteryPower] = useState<number>(0.1);
     const [sensingInterval, setSensingInterval] = useState<string>('2s');
@@ -64,8 +64,10 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 // fetch module data from KV store
                 const deviceURL = MODE_API_BASE_URL + 'devices/' + gateway + '/kv/sensorModule' + sensorModule;
                 modeAPI.request('GET', deviceURL, {})
-                .then((response: any) => {
+                .then((response: any) => {                    
                     const moduleSensors = response.data.value.sensors;
+                    // set name of sensor
+                    setSensorModuleName(response.data.value.name);
                     // set full sensor list and quantity
                     setFullSensorList(moduleSensors);
                     setActiveSensorQuantity(moduleSensors.length);
@@ -144,8 +146,9 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 }
             }
         });
-        setEditingModuleSettings(false);
-        setModalVisible(false);
+        setEditingModuleSettings(false); // re-render changes
+        setModuleSettingsVisible(false); // hide module settings
+        setModalVisible(false); // hide modal
     };
 
     const adjustOfflineSensors = (sensorType: string) => {
@@ -241,7 +244,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
         const ws = context.state.webSocket;
         ws.onmessage = (event: any) => { // receives every 5 seconds
             const moduleData = JSON.parse(event.data);
-            setnewWebsocketData(true);
+            setNewWebsocketData(true);
             if (moduleData.eventType === 'sensorModuleList') {
                 if (selectedModule && moduleData.eventData.sensorModules[selectedModule]) {
                     const sensorList = moduleData.eventData.sensorModules[selectedModule].sensors;
@@ -284,7 +287,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                 return 0;
                             });
                             context.actions.setRTValues(rtNumbers);                        
-                            setactiveSensors(sortedRTData); // set real time data
+                            setActiveSensors(sortedRTData); // set real time data
                             
                         }
                         if (!TSDBDataFetched) { // if not all TSDB data has been fetched:
@@ -516,7 +519,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                         <div className="graph-container">
                                             <AmChart
                                                 TSDB={sensorTypes[index]}
-                                                newWebsocketData={(value: boolean) => setnewWebsocketData(value)}
+                                                newWebsocketData={(value: boolean) => setNewWebsocketData(value)}
                                                 websocketRT={activeSensors[index]}
                                                 identifier={sensorTypes[index].type}
                                                 timespanNumeric={graphTimespanNumeric}
