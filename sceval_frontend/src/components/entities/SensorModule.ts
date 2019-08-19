@@ -7,7 +7,7 @@ export interface SensorModuleInterface {
     modificationTime: string;
     value: {
         id: string;
-        interval: string;
+        interval: number;
         sensing: string;
         sensors: Array<any>;
     };

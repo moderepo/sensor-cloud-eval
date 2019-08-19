@@ -3,12 +3,13 @@ import { NavLink } from 'react-router-dom';
 import AppContext from '../controllers/AppContext';
 import { AmChart } from '../components/AmChart';
 import { ContextConsumer, Context, context } from '../context/Context';
-import modeAPI from '../controllers/ModeAPI';
+import modeAPI, { KeyValue } from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import moment from 'moment';
 import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
 import ModeConnection  from '../controllers/ModeConnection';
 import determinUnit from '../utils/SensorTypes';
+import { SensorModuleInterface } from '../components/entities/SensorModule';
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const backArrow = require('../common_images/navigation/back.svg');
@@ -22,6 +23,7 @@ interface SensorModuleProps extends React.Props<any> {
 export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModuleProps) => {
     const [selectedModule, setSelectedModule] = useState<string|null>();
     const [selectedGateway, setSelectedGateway] = useState<string|null>();
+    const [selectedModuleObj, setSelectedModuleObj] = useState<SensorModuleInterface|null>();
     const [TSDBDataFetched, setTSDBDataFetched] = useState<boolean>(false);
     const [activeSensorQuantity, setActiveSensorQuantity] = useState<number>(5);
     const [sensorModuleConnectedStatus, setSensorModuleConnectedStatus] = useState();
@@ -29,7 +31,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const [newWebsocketData, setnewWebsocketData] = useState<boolean>(false);
     const [sensorTypes, setSensorTypes] = useState<Array<any>>(); // contains data from TSDB fetch
     const [batteryPower, setBatteryPower] = useState<number>(0.1);
-    const [sensingInterval, setSensingInterval] = useState<string>('2s');
     const [graphTimespanNumeric, setGraphTimespanNumeric] = useState<any>(7);
     const [graphTimespan, setGraphTimespan] = useState<string>('days');
     const [mounted, setMounted] = useState(false);
@@ -131,6 +132,17 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 ModeConnection.listSensorModules(gateway);
             }
     },  []);
+
+    useEffect(
+        () => {
+            // Load sensor module data for the selected module
+            if (selectedGateway && selectedModule) {
+                modeAPI.getDeviceKeyValue(selectedGateway, `sensorModule${selectedModule}`)
+                    .then((keyValue: KeyValue): void => {
+                        setSelectedModuleObj(keyValue as SensorModuleInterface);
+                });
+            }
+    },  [selectedGateway, selectedModule]);
 
     useEffect(
         () => {
@@ -252,6 +264,57 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
         );
     };
 
+    const setSensingInterval = (sensorModuleObj: SensorModuleInterface | null | undefined, interval: number): void => {
+        if (selectedGateway && sensorModuleObj && interval > 0 && sensorModuleObj.value.interval !== interval) {
+            const updatedSensorModuleObj: any = Object.assign({}, sensorModuleObj);
+            updatedSensorModuleObj.value.interval = interval;
+            modeAPI.setDeviceKeyValue(selectedGateway, sensorModuleObj.key, updatedSensorModuleObj.value).then(
+                (response: any): void => {
+                // now update the state
+                setSelectedModuleObj(updatedSensorModuleObj);
+            },  (error: any): void => {
+                alert('Unable to update interval');
+                console.log('Unable to update interval', error);
+            });
+        }
+    };
+
+    const renderSensingIntervalOptions = (sensorModuleObj: SensorModuleInterface|null|undefined): React.ReactNode => {
+        const intervalSet = [];
+        intervalSet.push({ value: 2, unit: 'Seconds'});
+        intervalSet.push({ value: 5, unit: 'Seconds'});
+        intervalSet.push({ value: 10, unit: 'Seconds'});
+        intervalSet.push({ value: 15, unit: 'Seconds'});
+        intervalSet.push({ value: 30, unit: 'Seconds'});
+        intervalSet.push({ value: 60, unit: 'Seconds'});
+
+        const menu = (
+            <Menu>
+                {   intervalSet.map((interval: any, index: any) => {
+                        return (
+                            <Menu.Item key={index}>
+                                <option 
+                                    value={interval.value}
+                                    onClick={() => setSensingInterval(sensorModuleObj, interval.value)}
+                                >
+                                    {interval.value} {interval.unit}
+                                </option>
+                            </Menu.Item>
+                        );
+                    })
+                }
+            </Menu>
+        );
+        return (
+            <Dropdown overlay={menu} className="dropdown">
+                <a className="default-timespan-value">
+                    {sensorModuleObj ? sensorModuleObj.value.interval : 30}s
+                    <Icon type="down" />
+                </a>
+            </Dropdown>
+        );
+    };
+
     return (
         <Fragment>
             <div className="module-section">
@@ -345,7 +408,9 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         { selectedModule && selectedModule.split(':')[0] === '0101' &&
                         <div className="data-col">
                             <div className="data-name">Sensing Interval</div>
-                            <div className="data-value">{sensingInterval}</div>
+                            <div className="data-value">
+                                {renderSensingIntervalOptions(selectedModuleObj)}
+                            </div>
                         </div>
                         }
                         <div className="data-col">
