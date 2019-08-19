@@ -40,6 +40,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const [mounted, setMounted] = useState(false);
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [moduleSettingsVisible, setModuleSettingsVisible] = useState<boolean>(false);
+    const [editingModuleSettings, setEditingModuleSettings] = useState(false);
 
     useEffect(
         () => {
@@ -58,13 +59,17 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 );
             }
             if (sensorModule) {
+                // for now, setting sensor module name to ID
                 setSensorModuleName(sensorModule);
+                // fetch module data from KV store
                 const deviceURL = MODE_API_BASE_URL + 'devices/' + gateway + '/kv/sensorModule' + sensorModule;
                 modeAPI.request('GET', deviceURL, {})
                 .then((response: any) => {
                     const moduleSensors = response.data.value.sensors;
+                    // set full sensor list and quantity
                     setFullSensorList(moduleSensors);
                     setActiveSensorQuantity(moduleSensors.length);
+                    // determine offline sensors
                     let sensorsOffline: any = [];
                     fullALPsList.map((sensor: any, index: any) => {
                         if (!response.data.value.sensors.includes(sensor)) {
@@ -76,7 +81,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     });
                 });
             }
-    },  []);
+    },  [editingModuleSettings]);
 
     const toggleModalVisibility = () => {
         if (modalVisible) {
@@ -115,6 +120,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                             sensors: filteredActiveSensors
                         }
                     };
+                    // update KV store for device + module
                     const deviceURL = MODE_API_BASE_URL + 'devices/' + device + '/kv/sensorModule' + sensorModule;
                     modeAPI.request('PUT', deviceURL, params)
                     .then((deviceResponse: any) => {
@@ -122,12 +128,14 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     }).catch((reason: any) => {
                       console.error('reason', reason);
                     });
+                    // update KV store for home + module
                     modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
                     .then((response: any) => {
                         const homeURL = MODE_API_BASE_URL + 
                             'homes/' + response.id + '/kv/sensorModule' + sensorModule;
                         modeAPI.request('PUT', homeURL, params)
                         .then((homeResponse: any) => {
+                            setEditingModuleSettings(true);
                             return homeResponse;
                         }).catch((reason: any) => {
                         console.error('reason', reason);
@@ -136,6 +144,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 }
             }
         });
+        setEditingModuleSettings(false);
         setModalVisible(false);
     };
 
@@ -243,42 +252,46 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             if (moduleData.eventType === 'realtimeData' 
             && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule) &&
             !moduleData.eventData.timeSeriesData[0].seriesId.includes('magnetic')) {
+
                 const wsData = moduleData.eventData.timeSeriesData;
                 let sensors: any = [];
                 let rtData: any = [];
                 let rtNumbers: any = [];
                 wsData.forEach((sensor: any, index: any) => {
                     const format = sensor.seriesId.split('-')[1];
-                    const sType = format.split(':')[0];
-                    let unit = determinUnit(sType);
-                    rtData.push({
-                        seriesID: sensor.seriesId,
-                        type: sType,
-                        timestamp: sensor.timestamp,
-                        rtValue: sensor.value
-                    });
-                    rtNumbers.push({
-                        type: sType,
-                        val: sensor.value
-                    });
-                    if (index === wsData.length - 1) { // if we have gone through all RT data:
-                        const sortedRTData = rtData.sort(function(a: any, b: any) {
-                            if (a.type < b.type) {
-                                return -1;
-                            }
-                            if (a.type > b.type) {
-                                return 1;
-                            }
-                            return 0;
+                    // IMPORTANT: if user is choosing to view data from this sensor:
+                    if (!offlineSensors.includes(format.toUpperCase())) {
+                        const sType = format.split(':')[0];
+                        let unit = determinUnit(sType);
+                        rtData.push({
+                            seriesID: sensor.seriesId,
+                            type: sType,
+                            timestamp: sensor.timestamp,
+                            rtValue: sensor.value
                         });
-                        context.actions.setRTValues(rtNumbers);
-                        setactiveSensors(sortedRTData); // set real time data
-                        
-                    }
-                    if (!TSDBDataFetched) { // if not all TSDB data has been fetched:
-                        // Perform TSDB fetch for each sensor
-                        if (unit !== undefined) {
-                            performTSDBFetch(homeID, sensors, sensor, sType, sensor.seriesId, unit, wsData);
+                        rtNumbers.push({
+                            type: sType,
+                            val: sensor.value
+                        });
+                        if (index === wsData.length - 1) { // if we have gone through all RT data:
+                            const sortedRTData = rtData.sort(function(a: any, b: any) {
+                                if (a.type < b.type) {
+                                    return -1;
+                                }
+                                if (a.type > b.type) {
+                                    return 1;
+                                }
+                                return 0;
+                            });
+                            context.actions.setRTValues(rtNumbers);                        
+                            setactiveSensors(sortedRTData); // set real time data
+                            
+                        }
+                        if (!TSDBDataFetched) { // if not all TSDB data has been fetched:
+                            // Perform TSDB fetch for each sensor
+                            if (unit !== undefined) {
+                                performTSDBFetch(homeID, sensors, sensor, sType, sensor.seriesId, unit, wsData);
+                            }
                         }
                     }
                 });
@@ -287,6 +300,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     };
 
     const toggleGraphTimespan = (quantity: number, timespan: string): void => {
+        // set TSDB data flag to false
         setTSDBDataFetched(false);
         AppContext.restoreLogin();
         modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
@@ -295,6 +309,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             setGraphTimespanNumeric(quantity);
             setGraphTimespan(timespan);
             if (sensorTypes !== undefined) {
+                // map through active sensors and perform fetch
                 activeSensors.map((sensor: any, index: any) => {
                     performTSDBFetch(
                     homeID, [], sensor, sensor.type, sensor.seriesID,
@@ -372,7 +387,9 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         <div className="module-left-container">
                             <img src={sensorGeneral} />
                             <div className="info-section">
-                                <div className="device-name">{selectedModule}</div>
+                                <div className="device-name">
+                                {sensorModuleName ? sensorModuleName : selectedModule}
+                                </div>
                                 <div className="gateway-name">Gateway name: {selectedGateway}</div>
                                 <div className="sensor-model">Sensor model: {selectedModule} </div>
                             </div>
