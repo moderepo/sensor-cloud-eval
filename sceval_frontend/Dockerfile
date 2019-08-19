@@ -1,17 +1,14 @@
 # base image
-FROM node as build
+FROM node:latest
 
+RUN mkdir -p /usr/src/sceval
 # set working directory
-WORKDIR /
-
+WORKDIR /usr/src/sceval
 # copy files
-COPY . /
+COPY . /usr/src/sceval
 # install and cache app dependencies
 RUN npm install --production
-# run build script
+# create production build
 RUN npm run-script build:production
 # start app
-FROM nginx:1.16.0
-COPY --from=build /build /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["npm", "start"]
