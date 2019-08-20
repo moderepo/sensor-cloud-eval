@@ -49,7 +49,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
             let deviceBundles = linkedModules;
             deviceResponse.forEach((device: any, index: any) => {
               // for each device, set linked modules
-              const url = MODE_API_BASE_URL + 'devices/' + device.id + '/kv';
+              const url = MODE_API_BASE_URL + 'devices/' + device.id + '/kv?keyPrefix=sensorModule';
               setIsLoading(true);
               modeAPI
                 .request('GET', url, {})
@@ -255,7 +255,8 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                 >
                   <img className="module-image" src={sensorGeneral} />
                   <div className="module-info">
-                    <div className="sensor-module-name">{sensor.key}</div>
+                    <div className="sensor-module-name">
+                    {sensor.value.name ? sensor.value.name : sensor.key}</div>
                     <div className="sensor-module-model">{sensor.value.id}</div>
                     {sensor.value.sensors &&
                       sensor.value.sensors.map((sensorType, sensorIndex) => {

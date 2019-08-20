@@ -10,5 +10,6 @@ export interface SensorModuleInterface {
         interval: string;
         sensing: string;
         sensors: Array<any>;
+        name?: string;
     };
 }
