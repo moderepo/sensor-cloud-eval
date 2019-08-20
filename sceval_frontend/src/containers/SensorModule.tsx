@@ -2,7 +2,7 @@ import React, { useEffect, useState, Fragment, useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import AppContext from '../controllers/AppContext';
 import { AmChart } from '../components/AmChart';
-import { ContextConsumer, Context, context } from '../context/Context';
+import { Context, context } from '../context/Context';
 import modeAPI from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import moment from 'moment';
@@ -46,22 +46,27 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const performTSDBFetch =  
     (homeID: string, sensors: any, 
      sType: string, seriesID: string, unit: string, wsData: any ) => {
+        //  set now as reference point
         const now = new Date();
         const endTime = moment(now);
+        // determine start time
         const startTime = moment(now).subtract(
             graphTimespanNumeric === '' ?
                 1 : graphTimespanNumeric, 
             graphTimespan === 'real-time' ?
                 'minute' : graphTimespan);
+        // set fetch url
         const fetchURL = 
         MODE_API_BASE_URL + 'homes/' + homeID + '/smartModules/tsdb/timeSeries/' + seriesID
         + '/data?begin=' + startTime.toISOString() + '&end=' + endTime.toISOString() 
         + '&aggregation=avg';
+        // perform fetch
         modeAPI.request('GET', fetchURL, {})
         .then((response: any) => {
             let maxVal = 0;
             let minVal = Infinity;
             let sum = 0;
+            // for each set of TSDB data, perform a calculation
             response.data.data.forEach((datapoint: any, datapointIndex: any) => {
                 sum += datapoint[1];
                 if (datapoint[1] > maxVal) {
@@ -83,28 +88,27 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         minVal: sType !== 'uv' ?
                             minVal.toFixed(1) : minVal.toFixed(3)
                     };
+                    // push that data to sensorData
                     sensors.push(sensorData);
                 }
-                // Add relevant UI formatted units
-                // bundle data
-                if (sensors.length !== undefined) {
-                    if (sensors.length === wsData.length) { 
-                        // if all of the sensor data has been populated
-                            const sortedTSDBData = sensors.sort(function(a: any, b: any) {
-                                if (a.type < b.type) {
-                                    return -1;
-                                }
-                                if (a.type > b.type) {
-                                    return 1;
-                                }
-                                return 0;
-                            });
-                            if (!TSDBDataFetched) {
-                                setSensorTypes(sortedTSDBData);
-                                setTSDBDataFetched(true);
+                // bundle data after going through sensor set
+                if (sensors.length === wsData.length) { 
+                        // if all of the sensor data has been populated, sort it alphabetically by type
+                        const sortedTSDBData = sensors.sort(function(a: any, b: any) {
+                            if (a.type < b.type) {
+                                return -1;
                             }
+                            if (a.type > b.type) {
+                                return 1;
+                            }
+                            return 0;
+                        });
+                        // set TSDB values
+                        if (!TSDBDataFetched) {
+                            setSensorTypes(sortedTSDBData);
+                            setTSDBDataFetched(true);
                         }
-                }
+                    }
             });
         });
     };
@@ -156,15 +160,18 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     const TSDBURL = MODE_API_BASE_URL + 'homes/' + homeID + '/smartModules/tsdb/timeSeries';
                     modeAPI.request('GET', TSDBURL, {})
                     .then((tsdbResponse: any) => {  
+                        // filter response initially by selected module
                         let filteredTSDBData: any = tsdbResponse.data.filter((tsdbData: any): boolean => {
                             return tsdbData.id.includes(selectedModule);
                         });
+                        // filter again for online sensors
                         let onlineTSDBData: any = filteredTSDBData.filter((filteredData: any): boolean => {
                             const sensorType = filteredData.id.split('-')[1].toUpperCase();
                             return moduleSensors.includes(sensorType) && 
                             !sensorType.includes('ACCELERATION') && !sensorType.includes('MAGNETIC');
                         });
                         let sensors: any = [];
+                        // for online sensors, perform TSDB fetch
                         onlineTSDBData.forEach((sensor: any, index: any) => {
                             if (onlineTSDBData.length > 0 && !TSDBDataFetched) {
                                 const format = sensor.id.split('-')[1];
@@ -194,7 +201,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule) &&
                     !moduleData.eventData.timeSeriesData[0].seriesId.includes('magnetic')) {
                         const wsData = moduleData.eventData.timeSeriesData;
-                        let sensors: any = [];
                         let rtData: any = [];
                         let rtNumbers: any = [];
                         wsData.forEach((sensor: any, index: any) => {
@@ -232,7 +238,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 }
             };
             ModeConnection.addObserver(webSocketMessageHandler);
-
             // Return cleanup function to be called when the component is unmounted
             return (): void => {
                 ModeConnection.removeObserver(webSocketMessageHandler);
