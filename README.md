@@ -11,10 +11,10 @@ Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be u
 - [Mode API Reference](https://dev.tinkermode.com/docs/api/)
 - [API Examples](#api-examples)
   - [Using REST Endpoints (GET, POST, PUT, PATCH, DELETE)](#using-rest-endpoints)
-    - [Updating User Informaiton](#updating-user-info)
+    - [Updating User Informaiton](#updating-user-information)
     - [Linking / Unlinking Sensor Modules => Gateway](#linking-unlinking-sensor-modules)
     - [Sending Device Commands](#sending-device-commands)
-  - [Receiving Device Events (Websocket)](#receiving-device-commands)
+  - [Receiving Device Events (Websocket)](#receiving-device-events)
 
 ## Installation
 
@@ -106,7 +106,7 @@ name: {newName},
 password: {newPassword}
 ```
 
-#### Linking & Unlinking Sensor Modules
+#### Linking / Unlinking Sensor Modules
 
 `/devices/{deviceId}/kv/{sensorModuleId}`
 MODE stores key-value pairs in a given home to manage kinds of data, including sensor data. One can associate or disassociate sensor modules to/from a particular gateway by using a PUT or DELETE request and the following payload parameters. It's worth mentioning that the `arrayOfSensorsActive` can be used to enable/disable sensing of particular sensors within a given sensor module.
