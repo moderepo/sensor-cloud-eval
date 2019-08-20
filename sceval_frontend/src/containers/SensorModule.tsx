@@ -1,8 +1,8 @@
-import React, { useEffect, useState, Fragment } from 'react';
+import React, { useEffect, useState, Fragment, useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import AppContext from '../controllers/AppContext';
 import { AmChart } from '../components/AmChart';
-import { ContextConsumer, Context } from '../context/Context';
+import { ContextConsumer, Context, context } from '../context/Context';
 import modeAPI from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import moment from 'moment';
@@ -35,18 +35,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const [mounted, setMounted] = useState(false);
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [moduleSettingsVisible, setModuleSettingsVisible] = useState<boolean>(false);
-
-    useEffect(
-        () => {
-            AppContext.restoreLogin();
-            setMounted(true);
-            const gateway = sessionStorage.getItem('selectedGateway');
-            setSelectedModule(sessionStorage.getItem('selectedModule'));
-            setSelectedGateway(gateway);
-            if (gateway !== null) {
-                ModeConnection.listSensorModules(gateway);
-            }
-    },  []);
+    const sensorContext: Context = useContext(context);
 
     const toggleModalVisibility = () => {
         if (modalVisible) {
@@ -131,84 +120,94 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
         });
     };
 
-    const updateModuleData = (context: Context) => {
-        let homeID = '';
-        modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
-        .then((response: any) => {
-            homeID = response.id;
-        });
-        const ws = context.state.webSocket;
-        ws.onmessage = (event: any) => { // receives every 5 seconds
-            const moduleData = JSON.parse(event.data);
-            setnewWebsocketData(true);
-            if (moduleData.eventType === 'sensorModuleList') {
-                setSensorModuleConnectedStatus(moduleData.eventData.sensorModules);
+    useEffect(
+        () => {
+            AppContext.restoreLogin();
+            setMounted(true);
+            const gateway = sessionStorage.getItem('selectedGateway');
+            setSelectedModule(sessionStorage.getItem('selectedModule'));
+            setSelectedGateway(gateway);
+            if (gateway !== null) {
+                ModeConnection.listSensorModules(gateway);
             }
-            // if app receives real time data, and it pertains to the selected Module:
-            
-            if (moduleData.eventType === 'realtimeData' 
-            && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule) &&
-            !moduleData.eventData.timeSeriesData[0].seriesId.includes('magnetic')) {
-                const wsData = moduleData.eventData.timeSeriesData;
-                setActiveSensorQuantity(wsData.length); // set active sensor count
-                let sensors: any = [];
-                let rtData: any = [];
-                let rtNumbers: any = [];
-                wsData.forEach((sensor: any, index: any) => {
-                    const format = sensor.seriesId.split('-')[1];
-                    const sType = format.split(':')[0];
-                    let unit = determinUnit(sType);
-                    rtData.push({
-                        seriesID: sensor.seriesId,
-                        type: sType,
-                        timestamp: sensor.timestamp,
-                        rtValue: sensor.value
-                    });
-                    rtNumbers.push({
-                        type: sType,
-                        val: sensor.value
-                    });
-                    if (index === wsData.length - 1) { // if we have gone through all RT data:
-                        const sortedRTData = rtData.sort(function(a: any, b: any) {
-                            if (a.type < b.type) {
-                                return -1;
+    },  []);
+
+    useEffect(
+        () => {
+
+            let homeID = '';
+            modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
+            .then((response: any) => {
+                homeID = response.id;
+            });
+
+            const webSocketMessageHandler: any = {
+                notify: (message: any): void => {
+                    const moduleData = message;
+                    setnewWebsocketData(true);
+                    if (moduleData.eventType === 'sensorModuleList') {
+                        setSensorModuleConnectedStatus(moduleData.eventData.sensorModules);
+                    }
+                    // if app receives real time data, and it pertains to the selected Module:
+                    if (homeID && moduleData.eventType === 'realtimeData' 
+                    && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule) &&
+                    !moduleData.eventData.timeSeriesData[0].seriesId.includes('magnetic')) {
+                        const wsData = moduleData.eventData.timeSeriesData;
+                        setActiveSensorQuantity(wsData.length); // set active sensor count
+                        let sensors: any = [];
+                        let rtData: any = [];
+                        let rtNumbers: any = [];
+                        wsData.forEach((sensor: any, index: any) => {
+                            const format = sensor.seriesId.split('-')[1];
+                            const sType = format.split(':')[0];
+                            let unit = determinUnit(sType);
+                            rtData.push({
+                                seriesID: sensor.seriesId,
+                                type: sType,
+                                timestamp: sensor.timestamp,
+                                rtValue: sensor.value
+                            });
+                            rtNumbers.push({
+                                type: sType,
+                                val: sensor.value
+                            });
+                            if (index === wsData.length - 1) { // if we have gone through all RT data:
+                                const sortedRTData = rtData.sort(function(a: any, b: any) {
+                                    if (a.type < b.type) {
+                                        return -1;
+                                    }
+                                    if (a.type > b.type) {
+                                        return 1;
+                                    }
+                                    return 0;
+                                });
+                                sensorContext.actions.setRTValues(rtNumbers);
+                                setactiveSensors(sortedRTData); // set real time data
+                                
                             }
-                            if (a.type > b.type) {
-                                return 1;
+                            if (!TSDBDataFetched) { // if not all TSDB data has been fetched:
+                                // Perform TSDB fetch for each sensor
+                                if (unit !== undefined) {
+                                    performTSDBFetch(homeID, sensors, sensor, sType, sensor.seriesId, unit, wsData);
+                                }
                             }
-                            return 0;
                         });
-                        context.actions.setRTValues(rtNumbers);
-                        setactiveSensors(sortedRTData); // set real time data
-                        
                     }
-                    if (!TSDBDataFetched) { // if not all TSDB data has been fetched:
-                        // Perform TSDB fetch for each sensor
-                        if (unit !== undefined) {
-                            performTSDBFetch(homeID, sensors, sensor, sType, sensor.seriesId, unit, wsData);
-                        }
-                    }
-                });
-            }
-        };
-    };
+                }
+            };
+            ModeConnection.addObserver(webSocketMessageHandler);
+
+            // Return cleanup function to be called when the component is unmounted
+            return (): void => {
+                ModeConnection.removeObserver(webSocketMessageHandler);
+            };
+    },  [selectedGateway, selectedModule, TSDBDataFetched, graphTimespan, graphTimespanNumeric]);
 
     const toggleGraphTimespan = (quantity: number, timespan: string): void => {
         setTSDBDataFetched(false);
         AppContext.restoreLogin();
-        modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
-        .then((response: any) => {
-            const homeID = response.id;
-            setGraphTimespanNumeric(quantity);
-            setGraphTimespan(timespan);
-            if (sensorTypes !== undefined) {
-                activeSensors.map((sensor: any, index: any) => {
-                    performTSDBFetch(
-                    homeID, [], sensor, sensor.type, sensor.seriesID,
-                    sensorTypes[index].unit, activeSensors);
-                });
-            }
-        });
+        setGraphTimespanNumeric(quantity);
+        setGraphTimespan(timespan);
     };
 
     const renderGraphTimespanToggle = (): React.ReactNode => {
@@ -254,14 +253,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     };
 
     return (
-        <ContextConsumer>
-        {(context: Context) =>
-          context && (
         <Fragment>
-            {
-                mounted && context.state.webSocket && 
-                    updateModuleData(context)
-            }
             <div className="module-section">
                 <NavLink 
                     to="/devices"
@@ -430,9 +422,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 </div>
             </div>
         </Fragment>
-        )
-    }
-    </ContextConsumer>
     );
 };
 
