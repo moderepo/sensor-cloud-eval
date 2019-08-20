@@ -44,7 +44,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const sensorContext: Context = useContext(context);
     
     const performTSDBFetch =  
-    (homeID: string, sensors: any, sensor: any, 
+    (homeID: string, sensors: any, 
      sType: string, seriesID: string, unit: string, wsData: any ) => {
         const now = new Date();
         const endTime = moment(now);
@@ -72,7 +72,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 }
                 if (datapointIndex === response.data.data.length - 1) {
                     const sensorData = {
-                        seriesID: sensor.seriesId,
+                        seriesID: seriesID,
                         unit: unit,
                         type: sType,
                         TSDBData: response.data,
@@ -87,21 +87,23 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 }
                 // Add relevant UI formatted units
                 // bundle data
-                if (sensors.length === wsData.length) { 
-                // if all of the sensor data has been populated
-                    const sortedTSDBData = sensors.sort(function(a: any, b: any) {
-                        if (a.type < b.type) {
-                            return -1;
+                if (sensors.length !== undefined) {
+                    if (sensors.length === wsData.length) { 
+                        // if all of the sensor data has been populated
+                            const sortedTSDBData = sensors.sort(function(a: any, b: any) {
+                                if (a.type < b.type) {
+                                    return -1;
+                                }
+                                if (a.type > b.type) {
+                                    return 1;
+                                }
+                                return 0;
+                            });
+                            if (!TSDBDataFetched) {
+                                setSensorTypes(sortedTSDBData);
+                                setTSDBDataFetched(true);
+                            }
                         }
-                        if (a.type > b.type) {
-                            return 1;
-                        }
-                        return 0;
-                    });
-                    if (!TSDBDataFetched) {
-                        setSensorTypes(sortedTSDBData);
-                        setTSDBDataFetched(true);
-                    }
                 }
             });
         });
@@ -150,6 +152,30 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         return !response.data.value.sensors.includes(sensor);
                     });
                     setOfflineSensors(sensorsOffline);
+                    // getTSDB seriesID for the particular module 
+                    const TSDBURL = MODE_API_BASE_URL + 'homes/' + homeID + '/smartModules/tsdb/timeSeries';
+                    modeAPI.request('GET', TSDBURL, {})
+                    .then((tsdbResponse: any) => {  
+                        let filteredTSDBData: any = tsdbResponse.data.filter((tsdbData: any): boolean => {
+                            return tsdbData.id.includes(selectedModule);
+                        });
+                        let onlineTSDBData: any = filteredTSDBData.filter((filteredData: any): boolean => {
+                            const sensorType = filteredData.id.split('-')[1].toUpperCase();
+                            return moduleSensors.includes(sensorType) && 
+                            !sensorType.includes('ACCELERATION') && !sensorType.includes('MAGNETIC');
+                        });
+                        let sensors: any = [];
+                        onlineTSDBData.forEach((sensor: any, index: any) => {
+                            if (onlineTSDBData.length > 0 && !TSDBDataFetched) {
+                                const format = sensor.id.split('-')[1];
+                                const sType = format.split(':')[0];
+                                const unit = determinUnit(sType);
+                                if (unit !== undefined) {
+                                    performTSDBFetch(homeID, sensors, sType, sensor.id, unit, onlineTSDBData);
+                                }
+                            }
+                        });
+                    });
                 });
             }
             // websocket message handler for RT data
@@ -199,13 +225,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                     });
                                     sensorContext.actions.setRTValues(rtNumbers);                        
                                     setActiveSensors(sortedRTData); // set real time data
-                                    
-                                }
-                                if (!TSDBDataFetched) { // if not all TSDB data has been fetched:
-                                    // Perform TSDB fetch for each sensor
-                                    if (unit !== undefined) {
-                                        performTSDBFetch(homeID, sensors, sensor, sType, sensor.seriesId, unit, wsData);
-                                    }
                                 }
                             }
                         });
@@ -299,6 +318,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     };
 
     const toggleGraphTimespan = (quantity: number, timespan: string): void => {
+        let sensorSet: any = [];
         // set TSDB data flag to false
         setTSDBDataFetched(false);
         AppContext.restoreLogin();
@@ -309,10 +329,10 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             setGraphTimespan(timespan);
             if (sensorTypes !== undefined) {
                 // map through active sensors and perform fetch
-                activeSensors.map((sensor: any, index: any) => {
+                sensorTypes.map((sensor: any, index: any) => {
                     performTSDBFetch(
-                    homeID, [], sensor, sensor.type, sensor.seriesID,
-                    sensorTypes[index].unit, activeSensors);
+                    homeID, sensorSet, sensor.type, sensor.seriesID,
+                    sensorTypes[index].unit, sensorTypes);
                 });
             }
         });
@@ -469,22 +489,22 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     <div
                         className="sensor-graph-container"
                     >
-                        { activeSensors ?
-                            activeSensors.map((activeSensor: any, index: any) => {
+                        { sensorTypes ?
+                            sensorTypes.map((sensor: any, index: any) => {
                             return (
                                 <div 
                                     className="sensor-container"
-                                    key={activeSensor.seriesID}
+                                    key={sensor.seriesID}
                                 > 
                                     <div className="unit-rt-container">
                                         <div className="header">
-                                            {activeSensor.type.toUpperCase()}
+                                            {sensor.type.toUpperCase()}
                                         </div>
                                         { activeSensors && sensorTypes ?
                                         <Fragment>
                                             <div className="unit-value">
-                                                {activeSensors[index] ?
-                                                    activeSensor.type === 'pressure' ?
+                                                {sensorTypes[index] ?
+                                                    sensor.type === 'pressure' ?
                                                     activeSensors[index].rtValue.toFixed(1) :
                                                     activeSensors[index].rtValue.toFixed(2) :
                                                     <img src={loader} />
@@ -513,7 +533,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                             <AmChart
                                                 TSDB={sensorTypes[index]}
                                                 newWebsocketData={(value: boolean) => setNewWebsocketData(value)}
-                                                websocketRT={activeSensors[index]}
                                                 identifier={sensorTypes[index].type}
                                                 timespanNumeric={graphTimespanNumeric}
                                                 timespan={graphTimespan}
