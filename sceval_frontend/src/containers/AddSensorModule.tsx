@@ -48,6 +48,34 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
         this.cancelScan = this.cancelScan.bind(this);
         this.startScan = this.startScan.bind(this);
         this.addNewModules = this.addNewModules.bind(this);
+
+        AppContext.restoreLogin();
+        ModeConnection.openConnection();
+        this.notify.bind(this);
+        ModeConnection.addObserver(this);
+    }
+
+    notify (event: any): void {
+        const moduleData = event;
+        if (this.state.scanning && moduleData && moduleData.eventData.sensorModules && this.state.availableModules) {
+            let newAvailableModules: any = [];
+            moduleData.eventData.sensorModules.forEach((sensorModule: any) => {
+                if (!this.state.associatedModules.includes(sensorModule.sensorModuleId)) {
+                    newAvailableModules.push(sensorModule);
+                }
+            });
+            this.setState(() => {
+                return {
+                    availableModules: this.state.availableModules.length 
+                    >= newAvailableModules.length ? this.state.availableModules : newAvailableModules,
+                    moduleMetadata: moduleData
+                };
+            });
+        }
+    }
+
+    componentWillUnmount () {
+        ModeConnection.removeObserver(this);
     }
 
     cancelScan(event: React.MouseEvent<HTMLButtonElement>): void {
@@ -55,33 +83,11 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
     }
 
     startScan(context: Context): void {
-        AppContext.restoreLogin();
         this.setState(() => {
             return {
                 scanning: true
             };
         });
-        if (context.state.webSocket !== undefined) {
-            context.state.webSocket.onmessage = event => {
-                const moduleData = JSON.parse(event.data);
-                if (moduleData && moduleData.eventData.sensorModules && this.state.scanning &&
-                    this.state.availableModules) {
-                    let newAvailableModules: any = [];
-                    moduleData.eventData.sensorModules.forEach((sensorModule: any) => {
-                        if (!this.state.associatedModules.includes(sensorModule.sensorModuleId)) {
-                            newAvailableModules.push(sensorModule);
-                        }
-                    });
-                    this.setState(() => {
-                        return {
-                            availableModules: this.state.availableModules.length 
-                            >= newAvailableModules.length ? this.state.availableModules : newAvailableModules,
-                            moduleMetadata: moduleData
-                        };
-                    });
-                }
-            };
-        }
         context.state.devices.forEach((device: any, index: any) => {
             // get already-associated modules
             const url =
@@ -129,7 +135,7 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
                 1000
             );
         });
-}
+    }
 
     addNewModules(context: Context) {
         AppContext.restoreLogin(); // restore user credentials and get home / associated devices
@@ -151,7 +157,7 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
                   }
                 };
                 ModeConnection.startSensor(homeResponse, selectedModule, context.state.selectedGateway);
-                ModeConnection.listSensorModules(this.state.selectedGateway);
+                ModeConnection.listSensorModules(context.state.selectedGateway);
                 modeAPI
                   .request('PUT', url, params)
                   .then((response: any) => {

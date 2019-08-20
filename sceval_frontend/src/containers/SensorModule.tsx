@@ -1,8 +1,8 @@
-import React, { useEffect, useState, Fragment } from 'react';
+import React, { useEffect, useState, Fragment, useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import AppContext from '../controllers/AppContext';
 import { AmChart } from '../components/AmChart';
-import { ContextConsumer, Context } from '../context/Context';
+import { ContextConsumer, Context, context } from '../context/Context';
 import modeAPI from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import moment from 'moment';
@@ -41,136 +41,8 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [moduleSettingsVisible, setModuleSettingsVisible] = useState<boolean>(false);
     const [editingModuleSettings, setEditingModuleSettings] = useState(false);
-
-    useEffect(
-        () => {
-            AppContext.restoreLogin();
-            setMounted(true);
-            const gateway = sessionStorage.getItem('selectedGateway');
-            const sensorModule = sessionStorage.getItem('selectedModule');
-            setSelectedModule(sensorModule);
-            setSelectedGateway(gateway);
-            if (gateway !== null) {
-                setTimeout(
-                    () => {
-                        ModeConnection.listSensorModules(gateway);
-                    },
-                    1000
-                );
-            }
-            if (sensorModule) {
-                // for now, setting sensor module name to ID
-                setSensorModuleName(sensorModule);
-                // fetch module data from KV store
-                const deviceURL = MODE_API_BASE_URL + 'devices/' + gateway + '/kv/sensorModule' + sensorModule;
-                modeAPI.request('GET', deviceURL, {})
-                .then((response: any) => {                    
-                    const moduleSensors = response.data.value.sensors;
-                    // set name of sensor
-                    setSensorModuleName(response.data.value.name);
-                    // set full sensor list and quantity
-                    setFullSensorList(moduleSensors);
-                    setActiveSensorQuantity(moduleSensors.length);
-                    // determine offline sensors
-                    let sensorsOffline: any = [];
-                    fullALPsList.map((sensor: any, index: any) => {
-                        if (!response.data.value.sensors.includes(sensor)) {
-                            sensorsOffline.push(sensor);
-                        }
-                        if (index === fullALPsList.length - 1) {
-                            setOfflineSensors(sensorsOffline);
-                        }
-                    });
-                });
-            }
-    },  [editingModuleSettings]);
-
-    const toggleModalVisibility = () => {
-        if (modalVisible) {
-            setModuleSettingsVisible(false);
-        }
-        setModalVisible(!modalVisible);
-    };
+    const sensorContext: Context = useContext(context);
     
-    const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        event.preventDefault();
-        setSensorModuleName(event.target.value);
-    };
-    const handleOk = (event: any) => {
-        let filteredActiveSensors: any = [];
-        // go through all sensors that are currently connected
-        fullALPsList.map((sensor: any, index: any) => {
-            // if the user does not request the sensor to be turned off
-            if (!offlineSensors.includes(sensor)) {
-                // keep online and push to filtered sensors
-                filteredActiveSensors.push(sensor);
-            }
-            // once through full list
-            if (index === fullSensorList.length - 1) {
-                // perform kv updates
-                const sensorModule = sessionStorage.getItem('selectedModule');
-                const device = sessionStorage.getItem('selectedGateway');
-                if (device && sensorModule) {
-                    const params = {
-                        value: {
-                            name: sensorModuleName,
-                            gatewayID: device, 
-                            id: sensorModule,
-                            interval: 30,
-                            modelId: '0101',
-                            sensing: 'on',
-                            sensors: filteredActiveSensors
-                        }
-                    };
-                    // update KV store for device + module
-                    const deviceURL = MODE_API_BASE_URL + 'devices/' + device + '/kv/sensorModule' + sensorModule;
-                    modeAPI.request('PUT', deviceURL, params)
-                    .then((deviceResponse: any) => {
-                        return deviceResponse;
-                    }).catch((reason: any) => {
-                      console.error('reason', reason);
-                    });
-                    // update KV store for home + module
-                    modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
-                    .then((response: any) => {
-                        const homeURL = MODE_API_BASE_URL + 
-                            'homes/' + response.id + '/kv/sensorModule' + sensorModule;
-                        modeAPI.request('PUT', homeURL, params)
-                        .then((homeResponse: any) => {
-                            setEditingModuleSettings(true);
-                            return homeResponse;
-                        }).catch((reason: any) => {
-                        console.error('reason', reason);
-                    });
-                });
-                }
-            }
-        });
-        setEditingModuleSettings(false); // re-render changes
-        setModuleSettingsVisible(false); // hide module settings
-        setModalVisible(false); // hide modal
-    };
-
-    const adjustOfflineSensors = (sensorType: string) => {
-        // if offline sensors includes toggled sensor:
-        if (offlineSensors.includes(sensorType)) {
-            // remove it from offline sensors
-            const removedSet = offlineSensors.filter((sensor: any) => {
-                return sensor !== sensorType;
-            });
-            setOfflineSensors(removedSet);     
-        } else {
-            // if it doesn't, add it to offline sensors
-            const addedSet: any = offlineSensors;
-            addedSet.push(sensorType);
-            setOfflineSensors(addedSet);
-        }
-    };
-
-    const toggleSensorModuleSettingsVisible = () => {
-        setModuleSettingsVisible(!moduleSettingsVisible);
-    };
-
     const performTSDBFetch =  
     (homeID: string, sensors: any, sensor: any, 
      sType: string, seriesID: string, unit: string, wsData: any ) => {
@@ -234,72 +106,196 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             });
         });
     };
-
-    const updateModuleData = (context: Context) => {
-        let homeID = '';
-        modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
-        .then((response: any) => {
-            homeID = response.id;
-        });
-        const ws = context.state.webSocket;
-        ws.onmessage = (event: any) => { // receives every 5 seconds
-            const moduleData = JSON.parse(event.data);
-            setNewWebsocketData(true);
-            if (moduleData.eventType === 'sensorModuleList') {
-                if (selectedModule && moduleData.eventData.sensorModules[selectedModule]) {
-                    const sensorList = moduleData.eventData.sensorModules[selectedModule].sensors;
-                    setFullSensorList(sensorList);
-                }
+    // React hook's componentDidMount and componentDidUpdate
+    useEffect(
+        () => {
+            // set home id
+            let homeID = '';
+            modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
+            .then((response: any) => {
+                homeID = response.id;
+            });
+            // restore login
+            AppContext.restoreLogin();
+            setMounted(true);
+            // get selected device and module
+            const gateway = sessionStorage.getItem('selectedGateway');
+            const sensorModule = sessionStorage.getItem('selectedModule');
+            setSelectedModule(sensorModule);
+            setSelectedGateway(gateway);
+            if (gateway !== null) {
+                setTimeout(
+                    () => {
+                        // list sensor modules
+                        ModeConnection.listSensorModules(gateway);
+                    },
+                    1000
+                );
             }
-            // if app receives real time data, and it pertains to the selected Module:
-            if (moduleData.eventType === 'realtimeData' 
-            && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule) &&
-            !moduleData.eventData.timeSeriesData[0].seriesId.includes('magnetic')) {
-
-                const wsData = moduleData.eventData.timeSeriesData;
-                let sensors: any = [];
-                let rtData: any = [];
-                let rtNumbers: any = [];
-                wsData.forEach((sensor: any, index: any) => {
-                    const format = sensor.seriesId.split('-')[1];
-                    // IMPORTANT: if user is choosing to view data from this sensor:
-                    if (!offlineSensors.includes(format.toUpperCase())) {
-                        const sType = format.split(':')[0];
-                        let unit = determinUnit(sType);
-                        rtData.push({
-                            seriesID: sensor.seriesId,
-                            type: sType,
-                            timestamp: sensor.timestamp,
-                            rtValue: sensor.value
-                        });
-                        rtNumbers.push({
-                            type: sType,
-                            val: sensor.value
-                        });
-                        if (index === wsData.length - 1) { // if we have gone through all RT data:
-                            const sortedRTData = rtData.sort(function(a: any, b: any) {
-                                if (a.type < b.type) {
-                                    return -1;
-                                }
-                                if (a.type > b.type) {
-                                    return 1;
-                                }
-                                return 0;
-                            });
-                            context.actions.setRTValues(rtNumbers);                        
-                            setActiveSensors(sortedRTData); // set real time data
-                            
-                        }
-                        if (!TSDBDataFetched) { // if not all TSDB data has been fetched:
-                            // Perform TSDB fetch for each sensor
-                            if (unit !== undefined) {
-                                performTSDBFetch(homeID, sensors, sensor, sType, sensor.seriesId, unit, wsData);
-                            }
-                        }
-                    }
+            if (sensorModule) {
+                // for now, setting sensor module name to ID
+                setSensorModuleName(sensorModule);
+                // fetch module data from KV store
+                const deviceURL = MODE_API_BASE_URL + 'devices/' + gateway + '/kv/sensorModule' + sensorModule;
+                modeAPI.request('GET', deviceURL, {})
+                .then((response: any) => {                    
+                    const moduleSensors = response.data.value.sensors;
+                    // set name of sensor
+                    setSensorModuleName(response.data.value.name);
+                    // set full sensor list and quantity
+                    setFullSensorList(moduleSensors);
+                    setActiveSensorQuantity(moduleSensors.length);
+                    // determine offline sensors
+                    let sensorsOffline: any = fullALPsList.filter((sensor: any, index: any): boolean => {
+                        return !response.data.value.sensors.includes(sensor);
+                    });
+                    setOfflineSensors(sensorsOffline);
                 });
             }
-        };
+            // websocket message handler for RT data
+            const webSocketMessageHandler: any = {
+                notify: (message: any): void => {
+                    const moduleData = message;
+                    // if event is sensorModuleList, set fullSensorList
+                    if (moduleData.eventType === 'sensorModuleList') {
+                        if (selectedModule && moduleData.eventData.sensorModules[selectedModule]) {
+                            const sensorList = moduleData.eventData.sensorModules[selectedModule].sensors;
+                            setFullSensorList(sensorList);
+                        }
+                    }
+                    // if app receives real time data, and it pertains to the selected Module:
+                    if (homeID && moduleData.eventType === 'realtimeData' 
+                    && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule) &&
+                    !moduleData.eventData.timeSeriesData[0].seriesId.includes('magnetic')) {
+                        const wsData = moduleData.eventData.timeSeriesData;
+                        let sensors: any = [];
+                        let rtData: any = [];
+                        let rtNumbers: any = [];
+                        wsData.forEach((sensor: any, index: any) => {
+                            const format = sensor.seriesId.split('-')[1];
+                            // IMPORTANT: if user is choosing to view data from this sensor:
+                            if (!offlineSensors.includes(format.toUpperCase())) {
+                                const sType = format.split(':')[0];
+                                let unit = determinUnit(sType);
+                                rtData.push({
+                                    seriesID: sensor.seriesId,
+                                    type: sType,
+                                    timestamp: sensor.timestamp,
+                                    rtValue: sensor.value
+                                });
+                                rtNumbers.push({
+                                    type: sType,
+                                    val: sensor.value
+                                });
+                                if (index === wsData.length - 1) { // if we have gone through all RT data:
+                                    const sortedRTData = rtData.sort(function(a: any, b: any) {
+                                        if (a.type < b.type) {
+                                            return -1;
+                                        }
+                                        if (a.type > b.type) {
+                                            return 1;
+                                        }
+                                        return 0;
+                                    });
+                                    sensorContext.actions.setRTValues(rtNumbers);                        
+                                    setActiveSensors(sortedRTData); // set real time data
+                                    
+                                }
+                                if (!TSDBDataFetched) { // if not all TSDB data has been fetched:
+                                    // Perform TSDB fetch for each sensor
+                                    if (unit !== undefined) {
+                                        performTSDBFetch(homeID, sensors, sensor, sType, sensor.seriesId, unit, wsData);
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            };
+            ModeConnection.addObserver(webSocketMessageHandler);
+
+            // Return cleanup function to be called when the component is unmounted
+            return (): void => {
+                ModeConnection.removeObserver(webSocketMessageHandler);
+            };
+    },  [editingModuleSettings, selectedGateway, selectedModule, TSDBDataFetched, graphTimespan, graphTimespanNumeric]);
+
+    const toggleModalVisibility = () => {
+        if (modalVisible) {
+            setModuleSettingsVisible(false);
+        }
+        setModalVisible(!modalVisible);
+    };
+    
+    const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        event.preventDefault();
+        setSensorModuleName(event.target.value);
+    };
+    const handleOk = (event: any) => {
+        let filteredActiveSensors: any = fullALPsList.filter((sensor: any): boolean => {
+            // if the user does not request the sensor to be turned off
+            return !offlineSensors.includes(sensor);
+        });
+        // perform kv updates
+        const sensorModule = sessionStorage.getItem('selectedModule');
+        const device = sessionStorage.getItem('selectedGateway');
+        if (device && sensorModule) {
+            const params = {
+                value: {
+                    name: sensorModuleName,
+                    gatewayID: device, 
+                    id: sensorModule,
+                    interval: 30,
+                    modelId: '0101',
+                    sensing: 'on',
+                    sensors: filteredActiveSensors
+                }
+            };
+            // // update KV store for device + module
+            const deviceURL = MODE_API_BASE_URL + 'devices/' + device + '/kv/sensorModule' + sensorModule;
+            modeAPI.request('PUT', deviceURL, params)
+            .then((deviceResponse: any) => {
+                return deviceResponse;
+            }).catch((reason: any) => {
+                console.error('reason', reason);
+            });
+            // update KV store for home + module
+            modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
+            .then((response: any) => {
+                const homeURL = MODE_API_BASE_URL + 
+                    'homes/' + response.id + '/kv/sensorModule' + sensorModule;
+                modeAPI.request('PUT', homeURL, params)
+                .then((homeResponse: any) => {
+                    setEditingModuleSettings(true);
+                    return homeResponse;
+                }).catch((reason: any) => {
+                    console.error('reason', reason);
+                });
+            });
+        }
+        setEditingModuleSettings(false); // re-render changes
+        setModuleSettingsVisible(false); // hide module settings
+        setModalVisible(false); // hide modal
+    };
+
+    const adjustOfflineSensors = (sensorType: string) => {
+        // if offline sensors includes toggled sensor:
+        if (offlineSensors.includes(sensorType)) {
+            // remove it from offline sensors
+            const removedSet = offlineSensors.filter((sensor: any) => {
+                return sensor !== sensorType;
+            });
+            setOfflineSensors(removedSet);     
+        } else {
+            // if it doesn't, add it to offline sensors
+            const addedSet: any = offlineSensors;
+            addedSet.push(sensorType);
+            setOfflineSensors(addedSet);
+        }
+    };
+
+    const toggleSensorModuleSettingsVisible = () => {
+        setModuleSettingsVisible(!moduleSettingsVisible);
     };
 
     const toggleGraphTimespan = (quantity: number, timespan: string): void => {
@@ -320,6 +316,8 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 });
             }
         });
+        setGraphTimespanNumeric(quantity);
+        setGraphTimespan(timespan);
     };
 
     const renderGraphTimespanToggle = (): React.ReactNode => {
@@ -365,14 +363,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     };
 
     return (
-        <ContextConsumer>
-        {(context: Context) =>
-          context && (
         <Fragment>
-            {
-                mounted && context.state.webSocket && 
-                    updateModuleData(context)
-            }
             <div className="module-section">
                 <NavLink 
                     to="/devices"
@@ -460,7 +451,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                             <div className="data-value">{activeSensorQuantity}</div>
                         </div>
                         <div className="data-col">
-                            <div className="data-name">Battery</div>
+                            <div className="data-name">Battery Strength</div>
                             <div className="data-value">{batteryPower}</div>
                         </div>
                         { selectedModule && selectedModule.split(':')[0] === '0101' &&
@@ -493,7 +484,9 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                         <Fragment>
                                             <div className="unit-value">
                                                 {activeSensors[index] ?
+                                                    activeSensor.type === 'pressure' ?
                                                     activeSensors[index].rtValue.toFixed(1) :
+                                                    activeSensors[index].rtValue.toFixed(2) :
                                                     <img src={loader} />
                                                 }
                                                 <span className="unit">{sensorTypes[index] && 
@@ -543,9 +536,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 </div>
             </div>
         </Fragment>
-        )
-    }
-    </ContextConsumer>
     );
 };
 
