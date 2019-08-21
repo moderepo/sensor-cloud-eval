@@ -1,5 +1,5 @@
 import Axios, { Method } from 'axios';
-import { AxiosRequestConfig, AxiosInstance, AxiosResponse } from 'axios';
+import { AxiosRequestConfig, AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 import Home from './Home';
 import moment from 'moment';
 
@@ -20,6 +20,25 @@ export interface KeyValueStore {
   key: string;
   modificationTime: string;
   value: any;
+}
+
+export interface TimeSeriesInfo {
+  homeId: number;
+  id: string;
+  moduleId: string;
+}
+export interface TimeSeriesData {
+  seriesId: string;
+  aggregation: string;
+  begin: string;
+  end: string;
+  resolution: string;
+  data: [][];
+}
+
+export interface ErrorResponse {
+  message: string;
+  status: number;
 }
 
 export class ModeAPI {
@@ -45,6 +64,30 @@ export class ModeAPI {
     }
 
     return 'NO_CONNECTION';
+  }
+
+  /**
+   * Convert any error object to a standard generic ErrorResponse object. This error object is usually an
+   * AxiosError but it cab be other error types.
+   */
+  public static getErrorResponse (error: any): ErrorResponse {
+    let message: string = 'Unknown error';
+    let status: number = 400;
+
+    if (error && error.response && error.response.data) {
+      message = error.response.data;
+    } else if (error && error.message) {
+      message = error.message;
+    }
+
+    if (error && error.response && error.response.status) {
+      status = error.response.status;
+    }
+
+    return {
+      message: message,
+      status: status,
+    };
   }
 
   constructor() {
@@ -195,50 +238,79 @@ export class ModeAPI {
     );
   }
 
-  public getTSDBData(homeID: string, seriesID: string, start: string, end: string) {
-    const fetchURL = MODE_API_BASE_URL + 'homes/' + homeID + '/smartModules/tsdb/timeSeries/' + seriesID
-    + '/data?begin=' + start + '&end=' + end + '&aggregation=avg';
-    this.request('GET', fetchURL, {})
-    .then((response: any) => {
-      return response;
-    });
+  /**
+   * Get the home's time series info for all serties. This will only return the time series'
+   * metadata data, not the actuel time series data.
+   * @param homeID
+   * @param seriesID 
+   * @param startTime 
+   * @param endTime 
+   * @param aggregation 
+   */
+  public async getTSDBInfo (homeID: string): Promise<TimeSeriesInfo[]> {
+    try {
+      let response: AxiosResponse<any> = await this.request(
+        'GET', `${MODE_API_BASE_URL}homes/${homeID}/smartModules/tsdb/timeSeries`, {});
+
+      return response.data as TimeSeriesInfo[];
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
+  }
+
+  /**
+   * Get time series data for the specified seriesID
+   * @param homeID
+   * @param seriesID 
+   * @param startTime 
+   * @param endTime 
+   * @param aggregation 
+   */
+  public async getTSDBData (
+      homeID: string, seriesID: string, startTime: string, endTime: string, aggregation: string = 'avg'
+    ): Promise<TimeSeriesData> {
+
+    try {
+      let url: string = `${MODE_API_BASE_URL}homes/${homeID}/smartModules/tsdb/timeSeries/${seriesID}/data`;
+
+      let response: AxiosResponse<any> = await this.request(
+        'GET',
+        `${MODE_API_BASE_URL}homes/${homeID}/smartModules/tsdb/timeSeries/${seriesID}` +
+        `/data?begin=${startTime}&end=${endTime}&aggregation=${aggregation}`,
+        {});
+
+      return response.data as TimeSeriesData;
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
   }
 
   /**
    * 
    * @param deviceID Get every key value store for a specific device
    */
-  public getAllDeviceKeyValueStore (deviceID: string): Promise<KeyValueStore[]> {
-    return new Promise<KeyValueStore[]>(
-      (resolve: (value?: KeyValueStore[]) => void, reject: (reason?: any) => void) => {
-        return this.request('GET', `${MODE_API_BASE_URL}devices/${deviceID}/kv`, {}).then(
-          (response: AxiosResponse<any>) => {
-            resolve(response.data as KeyValueStore[]);
-          }
-        ).catch((reason: any) => {
-          reject(reason);
-        });
-      }
-    );
+  public async getAllDeviceKeyValueStore (deviceID: string): Promise<KeyValueStore[]> {
+    try {
+      let response: AxiosResponse<any> = await this.request('GET', `${MODE_API_BASE_URL}devices/${deviceID}/kv`, {});
+      return response.data as KeyValueStore[];
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
   }
 
   /**
-   * 
    * @param deviceID Get the value of a key value store for a given key
    * @param key 
    */
-  public getDeviceKeyValueStore (deviceID: string, key: string): Promise<KeyValueStore> {
-    return new Promise<KeyValueStore>(
-      (resolve: (value?: KeyValueStore) => void, reject: (reason?: any) => void) => {
-        return this.request('GET', `${MODE_API_BASE_URL}devices/${deviceID}/kv/${key}`, {}).then(
-          (response: AxiosResponse<any>) => {
-            resolve(response.data as KeyValueStore);
-          }
-        ).catch((reason: any) => {
-          reject(reason);
-        });
-      }
-    );
+  public async getDeviceKeyValueStore (deviceID: string, key: string): Promise<KeyValueStore> {
+    try {
+      let response: AxiosResponse<any> = await this.request(
+        'GET', `${MODE_API_BASE_URL}devices/${deviceID}/kv/${key}`, {}
+      );
+      return response.data as KeyValueStore;
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
   }
 
   /**
@@ -246,18 +318,15 @@ export class ModeAPI {
    * @param deviceID
    * @param keyPrefix 
    */
-  public getAllDeviceKeyValueStoreByPrefix (deviceID: string, keyPrefix: string): Promise<KeyValueStore[]> {
-    return new Promise<KeyValueStore[]>(
-      (resolve: (value?: KeyValueStore[]) => void, reject: (reason?: any) => void) => {
-        return this.request('GET', `${MODE_API_BASE_URL}devices/${deviceID}/kv?keyPrefix=${keyPrefix}`, {}).then(
-          (response: AxiosResponse<any>) => {
-            resolve(response.data as KeyValueStore[]);
-          }
-        ).catch((reason: any) => {
-          reject(reason);
-        });
-      }
-    );
+  public async getAllDeviceKeyValueStoreByPrefix (deviceID: string, keyPrefix: string): Promise<KeyValueStore[]> {
+    try {
+      let response: AxiosResponse<any> = await this.request(
+        'GET', `${MODE_API_BASE_URL}devices/${deviceID}/kv?keyPrefix=${keyPrefix}`, {}
+      );
+      return response.data as KeyValueStore[];
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
   }
 
   /**
@@ -266,20 +335,17 @@ export class ModeAPI {
    * @param key
    * @param store 
    */
-  public setDeviceKeyValueStore (deviceID: string, key: string, store: KeyValueStore): Promise<void> {
-    return new Promise<void>(
-      (resolve: () => void, reject: (reason?: any) => void) => {
-        return this.request('PUT', `${MODE_API_BASE_URL}devices/${deviceID}/kv/${key}`, {
+  public async setDeviceKeyValueStore (deviceID: string, key: string, store: KeyValueStore): Promise<number> {
+    try {
+      let response: AxiosResponse<any> = await this.request(
+        'PUT', `${MODE_API_BASE_URL}devices/${deviceID}/kv/${key}`, {
           value: store.value
-        }).then(
-          (response: any) => {
-            resolve();
-          }
-        ).catch((reason: any) => {
-          reject(reason);
-        });
-      }
-    );
+        }
+      );
+      return response.status;
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
   }
 
   /**
@@ -288,20 +354,49 @@ export class ModeAPI {
    * @param key
    * @param store 
    */
-  public setHomeKeyValueStore (homeID: string, key: string, store: KeyValueStore): Promise<void> {
-    return new Promise<void>(
-      (resolve: () => void, reject: (reason?: any) => void) => {
-        return this.request('PUT', `${MODE_API_BASE_URL}homes/${homeID}/kv/${key}`, {
+  public async setHomeKeyValueStore (homeID: string, key: string, store: KeyValueStore): Promise<number> {
+    try {
+      let response: AxiosResponse<any> = await this.request(
+        'PUT', `${MODE_API_BASE_URL}homes/${homeID}/kv/${key}`, {
           value: store.value
-        }).then(
-          (response: any) => {
-            resolve();
-          }
-        ).catch((reason: any) => {
-          reject(reason);
-        });
-      }
-    );
+        }
+      );
+      return response.status;
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
+  }
+
+  /**
+   * @param deviceID Delete a key value store from a device
+   * @param key 
+   * @returns number response status
+   */
+  public async deleteDeviceKeyValueStore (deviceID: string, key: string): Promise<number> {
+    try {
+      let response: AxiosResponse<any> = await this.request(
+        'DELETE', `${MODE_API_BASE_URL}devices/${deviceID}/kv/${key}`, {}
+      );
+      return response.status;
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
+  }
+
+  /**
+   * @param homeID Delete a key value store from a home
+   * @param key 
+   * @returns number response status
+   */
+  public async deleteHomeKeyValueStore (homeID: string, key: string): Promise<number> {
+    try {
+      let response: AxiosResponse<any> = await this.request(
+        'DELETE', `${MODE_API_BASE_URL}homes/${homeID}/kv/${key}`, {}
+      );
+      return response.status;
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
   }
 
   private makeHome() {
