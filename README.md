@@ -13,8 +13,8 @@ Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be u
 - [Mode API Reference](https://dev.tinkermode.com/docs/api/)
 - [API Examples](#api-examples)
   - [Using REST Endpoints (GET, POST, PUT, PATCH, DELETE)](#using-rest-endpoints)
-    - [Updating User Information](#creating-validating-updating-user-information)
-    - [Linking / Unlinking Sensor Modules](#linking-unlinking-sensor-modules)
+    - [Handling User Information](#handling-user-information)
+    - [Linking / Unlinking Sensor Modules](#linking-and-unlinking-sensor-modules)
     - [Sending Device Commands](#sending-device-commands)
   - [Receiving Device Events (Websocket)](#receiving-device-events)
 
@@ -26,7 +26,7 @@ Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be u
 
 - Ability to view time-series sensor data and toggle between various time-horizons as well as sensing intervals. :clock10:
 
-- Configuration of sensor module sensing and general settings.:arrows_counterclockwise:
+- Configuration of sensor module sensing and general settings. :arrows_counterclockwise:
 
 ## Installation and Setup
 
@@ -88,7 +88,7 @@ const BASEURL = 'https://api.tinkermode.com/'
 
 Below are some examples pertaining to the usage of **REST endpoints**.
 
-#### Creating, validating, and updating user information
+#### Handling User Information
 
 `/users`
 To create [user](https://dev.tinkermode.com/docs/api/models.html#user) a user with an email and password, create a POST request with the following parameters:
@@ -118,7 +118,7 @@ name: {newName},
 password: {newPassword}
 ```
 
-#### Linking / Unlinking Sensor Modules
+#### Linking and Unlinking Sensor Modules
 
 `/devices/{deviceId}/kv/{sensorModuleId}`
 MODE stores key-value pairs in a given home to manage kinds of data, including sensor data. One can associate or disassociate sensor modules to/from a particular gateway by using a PUT or DELETE request and the following payload parameters. It's worth mentioning that the `arrayOfSensorsActive` can be used to enable/disable sensing of particular sensors within a given sensor module.
