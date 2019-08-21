@@ -1,7 +1,7 @@
 import React, { Fragment, useState, useEffect } from 'react';
 import { Redirect, RouteComponentProps, withRouter } from 'react-router';
 import { LeftNav } from '../components/LeftNav';
-import modeAPI from '../controllers/ModeAPI';
+import modeAPI, { ModeAPI, KeyValueStore } from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import AppContext from '../controllers/AppContext';
 import SensorModuleSet, { SensorModuleInterface } from '../components/entities/SensorModule';
@@ -121,12 +121,10 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
           if (result) {
             // Found the sensor module, now reload the KV for the module and update the module's value
             const url = `${MODE_API_BASE_URL}devices/${result.deviceId}/kv/${sensorModuleKey}`;
-            modeAPI.request('GET', url, {}).then((response: any): void => {
-              if (response && response.data) {
+            modeAPI.getDeviceKeyValueStore(result.deviceId, sensorModuleKey).then((keyValue: KeyValueStore): void => {
                 // update the module's data with data from response but this won't trigger a re-render
-                Object.assign(result.sensorModule, response.data);
+                Object.assign(result.sensorModule, keyValue);
                 setlinkedModules([...linkedModules]); // copy the linkedModules and set it to trigger re-render
-              }
             });
           }
         }
