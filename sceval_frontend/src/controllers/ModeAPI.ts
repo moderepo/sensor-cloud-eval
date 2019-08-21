@@ -16,7 +16,7 @@ export interface Device {
   deviceClass: string;
 }
 
-export interface KeyValue {
+export interface KeyValueStore {
   key: string;
   modificationTime: string;
   value: any;
@@ -208,12 +208,12 @@ export class ModeAPI {
    * 
    * @param deviceID Get every key value store for a specific device
    */
-  public getAllDeviceKeyValue(deviceID: string): Promise<KeyValue[]> {
-    return new Promise<KeyValue[]>(
-      (resolve: (value?: KeyValue[]) => void, reject: (reason?: any) => void) => {
+  public getAllDeviceKeyValueStore (deviceID: string): Promise<KeyValueStore[]> {
+    return new Promise<KeyValueStore[]>(
+      (resolve: (value?: KeyValueStore[]) => void, reject: (reason?: any) => void) => {
         return this.request('GET', `${MODE_API_BASE_URL}devices/${deviceID}/kv`, {}).then(
           (response: AxiosResponse<any>) => {
-            resolve(response.data as KeyValue[]);
+            resolve(response.data as KeyValueStore[]);
           }
         ).catch((reason: any) => {
           reject(reason);
@@ -227,12 +227,12 @@ export class ModeAPI {
    * @param deviceID Get the value of a key value store for a given key
    * @param key 
    */
-  public getDeviceKeyValue(deviceID: string, key: string): Promise<KeyValue> {
-    return new Promise<KeyValue>(
-      (resolve: (value?: KeyValue) => void, reject: (reason?: any) => void) => {
+  public getDeviceKeyValueStore (deviceID: string, key: string): Promise<KeyValueStore> {
+    return new Promise<KeyValueStore>(
+      (resolve: (value?: KeyValueStore) => void, reject: (reason?: any) => void) => {
         return this.request('GET', `${MODE_API_BASE_URL}devices/${deviceID}/kv/${key}`, {}).then(
           (response: AxiosResponse<any>) => {
-            resolve(response.data as KeyValue);
+            resolve(response.data as KeyValueStore);
           }
         ).catch((reason: any) => {
           reject(reason);
@@ -246,12 +246,12 @@ export class ModeAPI {
    * @param deviceID
    * @param keyPrefix 
    */
-  public getAllDeviceKeyValueByPrefix(deviceID: string, keyPrefix: string): Promise<KeyValue[]> {
-    return new Promise<KeyValue[]>(
-      (resolve: (value?: KeyValue[]) => void, reject: (reason?: any) => void) => {
+  public getAllDeviceKeyValueStoreByPrefix (deviceID: string, keyPrefix: string): Promise<KeyValueStore[]> {
+    return new Promise<KeyValueStore[]>(
+      (resolve: (value?: KeyValueStore[]) => void, reject: (reason?: any) => void) => {
         return this.request('GET', `${MODE_API_BASE_URL}devices/${deviceID}/kv?keyPrefix=${keyPrefix}`, {}).then(
           (response: AxiosResponse<any>) => {
-            resolve(response.data as KeyValue[]);
+            resolve(response.data as KeyValueStore[]);
           }
         ).catch((reason: any) => {
           reject(reason);
@@ -261,16 +261,38 @@ export class ModeAPI {
   }
 
   /**
-   * Add/Update a key value store
+   * Add/Update a key value store for a device
    * @param deviceID 
-   * @param key 
-   * @param value 
+   * @param key
+   * @param store 
    */
-  public setDeviceKeyValue(deviceID: string, key: string, value: any): Promise<KeyValue> {
-    return new Promise<KeyValue>(
-      (resolve: (value?: KeyValue) => void, reject: (reason?: any) => void) => {
+  public setDeviceKeyValueStore (deviceID: string, key: string, store: KeyValueStore): Promise<void> {
+    return new Promise<void>(
+      (resolve: () => void, reject: (reason?: any) => void) => {
         return this.request('PUT', `${MODE_API_BASE_URL}devices/${deviceID}/kv/${key}`, {
-          value: value
+          value: store.value
+        }).then(
+          (response: any) => {
+            resolve();
+          }
+        ).catch((reason: any) => {
+          reject(reason);
+        });
+      }
+    );
+  }
+
+  /**
+   * Add/Update a key value store for a home
+   * @param homeID 
+   * @param key
+   * @param store 
+   */
+  public setHomeKeyValueStore (homeID: string, key: string, store: KeyValueStore): Promise<void> {
+    return new Promise<void>(
+      (resolve: () => void, reject: (reason?: any) => void) => {
+        return this.request('PUT', `${MODE_API_BASE_URL}homes/${homeID}/kv/${key}`, {
+          value: store.value
         }).then(
           (response: any) => {
             resolve();

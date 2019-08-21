@@ -3,12 +3,13 @@ import { NavLink } from 'react-router-dom';
 import AppContext from '../controllers/AppContext';
 import { AmChart } from '../components/AmChart';
 import { Context, context } from '../context/Context';
-import modeAPI from '../controllers/ModeAPI';
+import modeAPI, { KeyValueStore } from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import moment from 'moment';
 import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
 import ModeConnection  from '../controllers/ModeConnection';
 import determinUnit from '../utils/SensorTypes';
+import { SensorModuleInterface } from '../components/entities/SensorModule';
 
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
@@ -21,10 +22,16 @@ const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 interface SensorModuleProps extends React.Props<any> {
     isLoggedIn: boolean;
 }
+interface SensingInterval {
+    value: number;
+    unit: string;
+    multiplier: number;
+}
 
 export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModuleProps) => {
     const [selectedModule, setSelectedModule] = useState<string|null>();
     const [sensorModuleName, setSensorModuleName] = useState<string>();
+    const [selectedSensorModuleObj, setSelectedSensorModuleObj] = useState<SensorModuleInterface|null>();
     const [selectedGateway, setSelectedGateway] = useState<string|null>();
     const [TSDBDataFetched, setTSDBDataFetched] = useState<boolean>(false);
     const [activeSensorQuantity, setActiveSensorQuantity] = useState<number>(0);
@@ -32,7 +39,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const [newWebsocketData, setNewWebsocketData] = useState<boolean>(false);
     const [sensorTypes, setSensorTypes] = useState<Array<any>>(); // contains data from TSDB fetch
     const [batteryPower, setBatteryPower] = useState<number>(0.1);
-    const [sensingInterval, setSensingInterval] = useState<string>('2s');
     const [graphTimespanNumeric, setGraphTimespanNumeric] = useState<any>(7);
     const [graphTimespan, setGraphTimespan] = useState<string>('days');
     const [fullSensorList, setFullSensorList] = useState();
@@ -144,7 +150,9 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 // fetch module data from KV store
                 const deviceURL = MODE_API_BASE_URL + 'devices/' + gateway + '/kv/sensorModule' + sensorModule;
                 modeAPI.request('GET', deviceURL, {})
-                .then((response: any) => {                    
+                .then((response: any) => {
+                    setSelectedSensorModuleObj(response.data);
+                    
                     const moduleSensors = response.data.value.sensors;
                     // set name of sensor
                     setSensorModuleName(response.data.value.name);
@@ -387,6 +395,91 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
         );
     };
 
+    const setSensingInterval = 
+        (sensorModuleObj: SensorModuleInterface | null | undefined, interval: SensingInterval): void => {
+        if (selectedGateway && sensorModuleObj && interval && interval.value > 0 &&
+            sensorModuleObj.value.interval !== (interval.value * interval.multiplier)) {
+
+            const updatedSensorModuleObj: SensorModuleInterface = Object.assign({}, sensorModuleObj);
+            updatedSensorModuleObj.value.interval = interval.value * interval.multiplier;
+            modeAPI.setDeviceKeyValueStore(selectedGateway, sensorModuleObj.key, updatedSensorModuleObj).then(
+                (): void => {
+                // now update the state
+                setSelectedSensorModuleObj(updatedSensorModuleObj);
+
+                // update KV store for home as well
+                modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
+                .then((response: any) => {
+                    modeAPI.setHomeKeyValueStore(response.id, sensorModuleObj.key, updatedSensorModuleObj).then(
+                    () => {
+                        // updated home key value store successfully
+                    }).catch((error: any) => {
+                        alert('Unable to update home key value store');
+                        console.log('Unable to update home key value store', error);
+                    });
+                });
+
+            },  (error: any): void => {
+                alert('Unable to update device key value store');
+                console.log('Unable to update device key value store', error);
+            });
+        }
+    };
+
+    const renderSensingIntervalOptions = (sensorModuleObj: SensorModuleInterface|null|undefined): React.ReactNode => {
+        if (!sensorModuleObj) {
+            return null;
+        }
+
+        const intervalSet: SensingInterval[] = [];
+        intervalSet.push({ value: 2, unit: 'Seconds', multiplier: 1});
+        intervalSet.push({ value: 5, unit: 'Seconds', multiplier: 1});
+        intervalSet.push({ value: 10, unit: 'Seconds', multiplier: 1});
+        intervalSet.push({ value: 15, unit: 'Seconds', multiplier: 1});
+        intervalSet.push({ value: 30, unit: 'Seconds', multiplier: 1});
+        intervalSet.push({ value: 1, unit: 'Minute', multiplier: 60});
+        intervalSet.push({ value: 5, unit: 'Minutes', multiplier: 60});
+        intervalSet.push({ value: 10, unit: 'Minutes', multiplier: 60});
+
+        const menu = (
+            <Menu>
+                {   intervalSet.map((interval: SensingInterval, index: any) => {
+                        return (
+                            <Menu.Item key={index}>
+                                <option 
+                                    value={interval.value}
+                                    onClick={() => setSensingInterval(sensorModuleObj, interval)}
+                                >
+                                    {interval.value} {interval.unit}
+                                </option>
+                            </Menu.Item>
+                        );
+                    })
+                }
+            </Menu>
+        );
+
+        let selectedInterval: SensingInterval | undefined = intervalSet.find((interval: SensingInterval): boolean => {
+            return sensorModuleObj.value.interval === interval.value * interval.multiplier;
+        });
+        if (!selectedInterval) {
+            selectedInterval = {
+                value: sensorModuleObj.value.interval,
+                unit: 'Seconds',
+                multiplier: 1
+            };
+        }
+
+        return (
+            <Dropdown overlay={menu} className="dropdown">
+                <a className="default-timespan-value">
+                    {selectedInterval.value} {selectedInterval.unit}
+                    <Icon type="down" />
+                </a>
+            </Dropdown>
+        );
+    };
+
     return (
         <Fragment>
             <div className="module-section">
@@ -482,7 +575,9 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         { selectedModule && selectedModule.split(':')[0] === '0101' &&
                         <div className="data-col">
                             <div className="data-name">Sensing Interval</div>
-                            <div className="data-value">{sensingInterval}</div>
+                            <div className="data-value">
+                                {renderSensingIntervalOptions(selectedSensorModuleObj)}
+                            </div>
                         </div>
                         }
                         <div className="data-col">
