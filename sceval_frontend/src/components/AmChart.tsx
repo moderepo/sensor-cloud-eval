@@ -9,7 +9,6 @@ am4core.useTheme(am4themes_animated);
 interface AmChartProps extends React.Props<any> {
     identifier: string;
     TSDB: SensorDataBundle;
-    websocketRT: any;
     newWebsocketData: (value: boolean) => void;
     timespanNumeric: number;
     timespan: string;
@@ -114,7 +113,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
             chart.scrollbarX = scrollbarX;
 
             // graph smoothness
-            series.tensionX = 0.77;
+            // series.tensionX = 0.77;
             dateAxis.renderer.grid.template.strokeOpacity = 0.07;
             valueAxis.renderer.grid.template.strokeOpacity = 0.07;
             return function cleanup() {

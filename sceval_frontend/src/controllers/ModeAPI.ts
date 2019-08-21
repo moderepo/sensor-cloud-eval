@@ -16,6 +16,12 @@ export interface Device {
   deviceClass: string;
 }
 
+export interface KeyValueStore {
+  key: string;
+  modificationTime: string;
+  value: any;
+}
+
 export class ModeAPI {
   private baseUrl: string;
   private authToken: string;
@@ -196,6 +202,106 @@ export class ModeAPI {
     .then((response: any) => {
       return response;
     });
+  }
+
+  /**
+   * 
+   * @param deviceID Get every key value store for a specific device
+   */
+  public getAllDeviceKeyValueStore (deviceID: string): Promise<KeyValueStore[]> {
+    return new Promise<KeyValueStore[]>(
+      (resolve: (value?: KeyValueStore[]) => void, reject: (reason?: any) => void) => {
+        return this.request('GET', `${MODE_API_BASE_URL}devices/${deviceID}/kv`, {}).then(
+          (response: AxiosResponse<any>) => {
+            resolve(response.data as KeyValueStore[]);
+          }
+        ).catch((reason: any) => {
+          reject(reason);
+        });
+      }
+    );
+  }
+
+  /**
+   * 
+   * @param deviceID Get the value of a key value store for a given key
+   * @param key 
+   */
+  public getDeviceKeyValueStore (deviceID: string, key: string): Promise<KeyValueStore> {
+    return new Promise<KeyValueStore>(
+      (resolve: (value?: KeyValueStore) => void, reject: (reason?: any) => void) => {
+        return this.request('GET', `${MODE_API_BASE_URL}devices/${deviceID}/kv/${key}`, {}).then(
+          (response: AxiosResponse<any>) => {
+            resolve(response.data as KeyValueStore);
+          }
+        ).catch((reason: any) => {
+          reject(reason);
+        });
+      }
+    );
+  }
+
+  /**
+   * Get all the key value stores for a specific device that has keys started with the specified keyPrefix
+   * @param deviceID
+   * @param keyPrefix 
+   */
+  public getAllDeviceKeyValueStoreByPrefix (deviceID: string, keyPrefix: string): Promise<KeyValueStore[]> {
+    return new Promise<KeyValueStore[]>(
+      (resolve: (value?: KeyValueStore[]) => void, reject: (reason?: any) => void) => {
+        return this.request('GET', `${MODE_API_BASE_URL}devices/${deviceID}/kv?keyPrefix=${keyPrefix}`, {}).then(
+          (response: AxiosResponse<any>) => {
+            resolve(response.data as KeyValueStore[]);
+          }
+        ).catch((reason: any) => {
+          reject(reason);
+        });
+      }
+    );
+  }
+
+  /**
+   * Add/Update a key value store for a device
+   * @param deviceID 
+   * @param key
+   * @param store 
+   */
+  public setDeviceKeyValueStore (deviceID: string, key: string, store: KeyValueStore): Promise<void> {
+    return new Promise<void>(
+      (resolve: () => void, reject: (reason?: any) => void) => {
+        return this.request('PUT', `${MODE_API_BASE_URL}devices/${deviceID}/kv/${key}`, {
+          value: store.value
+        }).then(
+          (response: any) => {
+            resolve();
+          }
+        ).catch((reason: any) => {
+          reject(reason);
+        });
+      }
+    );
+  }
+
+  /**
+   * Add/Update a key value store for a home
+   * @param homeID 
+   * @param key
+   * @param store 
+   */
+  public setHomeKeyValueStore (homeID: string, key: string, store: KeyValueStore): Promise<void> {
+    return new Promise<void>(
+      (resolve: () => void, reject: (reason?: any) => void) => {
+        return this.request('PUT', `${MODE_API_BASE_URL}homes/${homeID}/kv/${key}`, {
+          value: store.value
+        }).then(
+          (response: any) => {
+            resolve();
+          }
+        ).catch((reason: any) => {
+          reject(reason);
+        });
+      }
+    );
   }
 
   private makeHome() {
