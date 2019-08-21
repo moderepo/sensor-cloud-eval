@@ -176,20 +176,22 @@ export class ModeAPI {
     return this.axios.request<T>(config);
   }
 
-  public getHomes(userId: number) {
-    return new Promise(
-      (resolve: (homes: Home[]) => void, reject: (reason?: any) => void) => {
-        return this.request<Home[]>('GET', MODE_API_BASE_URL + 'homes', {userId: userId})
-        .then((response: AxiosResponse<any>) => {
-          resolve(response.data);
-        });
-      }
-    );
+  public async getHomes(userId: number): Promise<Home[]> {
+    try {
+      let response: AxiosResponse<any> = await this.request('GET', `${MODE_API_BASE_URL}homes`, {userId: userId});
+      return response.data as Home[];
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
   }
 
   public async getHomeByHomeId(homeId: number) {
-    const response = await this.request<Home>('GET', MODE_API_BASE_URL + 'homes/' + homeId, {});
-    return response.data as Home;
+    try {
+      let response: AxiosResponse<any> = await this.request('GET', `${MODE_API_BASE_URL}homes/${homeId}`, {});
+      return response.data as Home;
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
   }
 
   public getHome(userId: number) {
@@ -210,32 +212,22 @@ export class ModeAPI {
     }
   }
 
-  public getDevice(deviceId: number) {
-    return new Promise<Device>(
-      (resolve: (value?: Device) => void, reject: (reason?: any) => void) => {
-        return this.request('GET', MODE_API_BASE_URL + deviceId, {}).then(
-          (response: AxiosResponse<any>) => {
-            resolve(response.data as Device);
-          }
-        ).catch((reason: any) => {
-          reject(reason);
-        });
-      }
-    );
+  public async getDevice(deviceId: number): Promise<Device> {
+    try {
+      let response: AxiosResponse<any> = await this.request('GET', `${MODE_API_BASE_URL}${deviceId}`, {});
+      return response.data as Device;
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
   }
 
-  public getDevices(homeId: number) {
-    return new Promise<Device[]>(
-      (resolve: (value?: Device[]) => void, reject: (reason?: any) => void) => {
-        return this.request('GET', MODE_API_BASE_URL + 'devices', { homeId: homeId }).then(
-          (response: AxiosResponse<any>) => {
-            resolve(response.data as Device[]);
-          }
-        ).catch((reason: any) => {
-          reject(reason);
-        });
-      }
-    );
+  public async getDevices(homeId: number): Promise<Device[]> {
+    try {
+      let response: AxiosResponse<any> = await this.request('GET', `${MODE_API_BASE_URL}devices`, {homeId: homeId});
+      return response.data as Device[];
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
   }
 
   /**
@@ -251,7 +243,6 @@ export class ModeAPI {
     try {
       let response: AxiosResponse<any> = await this.request(
         'GET', `${MODE_API_BASE_URL}homes/${homeID}/smartModules/tsdb/timeSeries`, {});
-
       return response.data as TimeSeriesInfo[];
     } catch (error) {
       throw ModeAPI.getErrorResponse(error);
@@ -271,8 +262,6 @@ export class ModeAPI {
     ): Promise<TimeSeriesData> {
 
     try {
-      let url: string = `${MODE_API_BASE_URL}homes/${homeID}/smartModules/tsdb/timeSeries/${seriesID}/data`;
-
       let response: AxiosResponse<any> = await this.request(
         'GET',
         `${MODE_API_BASE_URL}homes/${homeID}/smartModules/tsdb/timeSeries/${seriesID}` +
