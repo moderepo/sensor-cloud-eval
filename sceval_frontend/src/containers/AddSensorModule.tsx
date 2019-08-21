@@ -152,7 +152,7 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
                   value: {
                     id: selectedModule.sensorModuleId,
                     sensing: 'on',
-                    interval: '30',
+                    interval: 30,
                     sensors: selectedModule.moduleSchema
                   }
                 };
