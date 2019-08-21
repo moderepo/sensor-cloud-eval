@@ -20,9 +20,11 @@ Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be u
 
 ## Features
 
-<!-- <p align="center">
-  <img src="" alt="Size Limit CLI" width="738">
-</p> -->
+```html
+<p align="center">
+  <img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/sensor_module.png" alt="Size Limit CLI" width="738">
+</p>
+```
 
 - Management of sensor modules and their device associations from within the application. :electric_plug:
 
