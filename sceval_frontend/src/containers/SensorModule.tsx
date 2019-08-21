@@ -227,7 +227,9 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                     val: sensor.value
                                 });
                                 if (index === wsData.length - 1) { // if we have gone through all RT data:
-                                    const sortedRTData = rtData.sort((a: any, b: any) => {
+                                    const mergedData = [...activeSensors, ...rtData];
+                                    const mergedRTVals = [...sensorContext.state.rtValues, ...rtNumbers];
+                                    const sortedSensors = mergedData.sort((a: any, b: any) => {
                                         if (a.type < b.type) {
                                             return -1;
                                         }
@@ -236,8 +238,18 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                         }
                                         return 0;
                                     });
-                                    sensorContext.actions.setRTValues(rtNumbers);                        
-                                    setActiveSensors(sortedRTData); // set real time data
+                                    const sortedRTNumbers = mergedRTVals.sort((a: any, b: any) => {
+                                        if (a.type < b.type) {
+                                            return -1;
+                                        }
+                                        if (a.type > b.type) {
+                                            return 1;
+                                        }
+                                        return 0;
+                                    });
+                                    console.log(mergedRTVals, sortedSensors);
+                                    sensorContext.actions.setRTValues(sortedRTNumbers);                        
+                                    setActiveSensors(sortedSensors); // set real time data
                                 }
                             }
                         });
