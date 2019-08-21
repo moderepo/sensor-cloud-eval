@@ -2,7 +2,7 @@
 
 <img align="right" src="https://github.com/moderepo/sensor-cloud-eval/blob/master/sceval_frontend/src/common_images/mode-logo.png">
 
-Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be used as an evaluation kit by business partners and app developers. :computer:
+Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be used as an evaluation kit by business partners and app developers.
 
 ## Contents
 
@@ -90,7 +90,7 @@ Below are some examples pertaining to the usage of **REST endpoints**.
 
 #### Handling User Information
 
-`/users`
+`/users`  
 To create [user](https://dev.tinkermode.com/docs/api/models.html#user) a user with an email and password, create a POST request with the following parameters:
 
 ```javascript
@@ -100,7 +100,7 @@ password: {password},
 name: {name}
 ```
 
-`/auth/users`
+`/auth/users`  
 To verify a user's credentials, create a POST request with the following parameters to check whether or not the user exists.
 
 ```javascript
@@ -110,7 +110,7 @@ email: {email},
 password: {password}
 ```
 
-`/users/{userId}`
+`/users/{userId}`  
 To update a user's name and/or password, create a PATCH request with the following parameters.
 
 ```javascript
@@ -120,7 +120,7 @@ password: {newPassword}
 
 #### Linking and Unlinking Sensor Modules
 
-`/devices/{deviceId}/kv/{sensorModuleId}`
+`/devices/{deviceId}/kv/{sensorModuleId}`  
 MODE stores key-value pairs in a given home to manage kinds of data, including sensor data. One can associate or disassociate sensor modules to/from a particular gateway by using a PUT or DELETE request and the following payload parameters. It's worth mentioning that the `arrayOfSensorsActive` can be used to enable/disable sensing of particular sensors within a given sensor module.
 
 ```javascript
@@ -132,7 +132,7 @@ sensors: {arrayOfSensorsActive}
 
 #### Sending Device Commands
 
-`/devices/{deviceID}/command'`
+`/devices/{deviceID}/command'`  
 Sending commands to gateways within a project can allow the user to control the behavior of the targeted gateway. Common commands include `startDiscovery`, which puts the gateway into discovery mode for finding nearby sensor modules. Another example of this is the `listSensorModules`, which lists the sensor modules associated to that particular gateway. A action and (occassionally) a timeout parameter must be provided for this command to work. The timeout specifies how long the action will last for.
 
 - Using the `startDiscovery` command
