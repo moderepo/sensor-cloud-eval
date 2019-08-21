@@ -17,6 +17,7 @@ Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be u
     - [Linking / Unlinking Sensor Modules](#linking-and-unlinking-sensor-modules)
     - [Sending Device Commands](#sending-device-commands)
   - [Receiving Device Events (Websocket)](#receiving-device-events)
+- [Links](#links)
 
 ## Features
 
@@ -189,3 +190,11 @@ The application receives device events in the form of a websocket message. The f
 6. `error`: The gateway emits this event when it has problem executing a command. The event contains a field called `msg` that explains the reason of the error.
 
 7. `sensorModuleStateChange`: The gateway emits this event whenever a sensor module changes its connection state and/or sensing state.
+
+## Links
+
+* [Corp Site](https://www.tinkermode.com/)
+* [Developer Site](https://dev.tinkermode.com/)
+* [Developer Docs](https://dev.tinkermode.com/docs/)
+* [Tinkermode Console](https://console.tinkermode.com/console/login)
+* [SCEVAL Source Code](https://github.com/moderepo/sensor-cloud-eval)
