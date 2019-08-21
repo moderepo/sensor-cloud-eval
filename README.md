@@ -1,6 +1,6 @@
-# Sensor-Cloud-Eval
-
 <img align="right" src="https://github.com/moderepo/sensor-cloud-eval/blob/master/sceval_frontend/src/common_images/mode-logo.png">
+
+# Sensor-Cloud-Eval
 
 Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be used as an evaluation kit by business partners and app developers.
 
@@ -134,7 +134,7 @@ sensors: {arrayOfSensorsActive}
 
 #### Sending Device Commands
 
-`/devices/{deviceID}/command'`  
+`/devices/{deviceID}/command`  
 Sending commands to gateways within a project can allow the user to control the behavior of the targeted gateway. Common commands include `startDiscovery`, which puts the gateway into discovery mode for finding nearby sensor modules. Another example of this is the `listSensorModules`, which lists the sensor modules associated to that particular gateway. A action and (occassionally) a timeout parameter must be provided for this command to work. The timeout specifies how long the action will last for.
 
 - Using the `startDiscovery` command
