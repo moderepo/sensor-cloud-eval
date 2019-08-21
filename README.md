@@ -20,6 +20,10 @@ Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be u
 
 ## Features
 
+<!-- <p align="center">
+  <img src="" alt="Size Limit CLI" width="738">
+</p> -->
+
 - Management of sensor modules and their device associations from within the application. :electric_plug:
 
 - Ability to view real-time sensor data in multiple sensor modules across multiple devices. :chart_with_upwards_trend:
