@@ -63,9 +63,8 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 'minute' : graphTimespan);
         // set fetch url
         const fetchURL = 
-        MODE_API_BASE_URL + 'homes/' + homeID + '/smartModules/tsdb/timeSeries/' + seriesID
-        + '/data?begin=' + startTime.toISOString() + '&end=' + endTime.toISOString() 
-        + '&aggregation=avg';
+        `${MODE_API_BASE_URL}homes/${homeID}/smartModules/tsdb/timeSeries/` + seriesID +
+            `/data?begin=${startTime.toISOString()}&end=${endTime.toISOString()}&aggregation=avg`;
         // perform fetch
         modeAPI.request('GET', fetchURL, {})
         .then((response: any) => {
@@ -100,7 +99,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 // bundle data after going through sensor set
                 if (sensors.length === wsData.length) { 
                         // if all of the sensor data has been populated, sort it alphabetically by type
-                        const sortedTSDBData = sensors.sort(function(a: any, b: any) {
+                        const sortedTSDBData = sensors.sort((a: any, b: any) =>  {
                             if (a.type < b.type) {
                                 return -1;
                             }
@@ -165,31 +164,31 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     });
                     setOfflineSensors(sensorsOffline);
                     // getTSDB seriesID for the particular module 
-                    const TSDBURL = MODE_API_BASE_URL + 'homes/' + homeID + '/smartModules/tsdb/timeSeries';
+                    const TSDBURL = `${MODE_API_BASE_URL}homes/${homeID}/smartModules/tsdb/timeSeries`;
                     modeAPI.request('GET', TSDBURL, {})
                     .then((tsdbResponse: any) => {  
                         // filter response initially by selected module
-                        let filteredTSDBData: any = tsdbResponse.data.filter((tsdbData: any): boolean => {
+                        const filteredTSDBData: any = tsdbResponse.data.filter((tsdbData: any): boolean => {
                             return tsdbData.id.includes(selectedModule);
                         });
                         // filter again for online sensors
-                        let onlineTSDBData: any = filteredTSDBData.filter((filteredData: any): boolean => {
+                        const onlineTSDBData: any = filteredTSDBData.filter((filteredData: any): boolean => {
                             const sensorType = filteredData.id.split('-')[1].toUpperCase();
                             return moduleSensors.includes(sensorType) && 
                             !sensorType.includes('ACCELERATION') && !sensorType.includes('MAGNETIC');
                         });
                         let sensors: any = [];
                         // for online sensors, perform TSDB fetch
-                        onlineTSDBData.forEach((sensor: any, index: any) => {
-                            if (onlineTSDBData.length > 0 && !TSDBDataFetched) {
+                        if (onlineTSDBData.length > 0 && !TSDBDataFetched) {
+                            onlineTSDBData.forEach((sensor: any, index: any) => {
                                 const format = sensor.id.split('-')[1];
                                 const sType = format.split(':')[0];
                                 const unit = determinUnit(sType);
                                 if (unit !== undefined) {
                                     performTSDBFetch(homeID, sensors, sType, sensor.id, unit, onlineTSDBData);
                                 }
-                            }
-                        });
+                            });
+                        }
                     });
                 });
             }
@@ -228,7 +227,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                     val: sensor.value
                                 });
                                 if (index === wsData.length - 1) { // if we have gone through all RT data:
-                                    const sortedRTData = rtData.sort(function(a: any, b: any) {
+                                    const sortedRTData = rtData.sort((a: any, b: any) => {
                                         if (a.type < b.type) {
                                             return -1;
                                         }
@@ -342,7 +341,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             setGraphTimespan(timespan);
             if (sensorTypes !== undefined) {
                 // map through active sensors and perform fetch
-                sensorTypes.map((sensor: any, index: any) => {
+                sensorTypes.forEach((sensor: any, index: any) => {
                     performTSDBFetch(
                     homeID, sensorSet, sensor.type, sensor.seriesID,
                     sensorTypes[index].unit, sensorTypes);

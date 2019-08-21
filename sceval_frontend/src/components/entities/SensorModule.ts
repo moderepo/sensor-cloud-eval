@@ -9,5 +9,6 @@ export interface SensorModuleInterface extends Omit<KeyValueStore, 'value'> {
         interval: number;
         sensing: string;
         sensors: Array<any>;
+        name?: string;
     };
 }
