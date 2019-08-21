@@ -387,7 +387,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
         );
         return (
             <Dropdown overlay={menu} className="dropdown">
-                <a className="default-timespan-value">
+                <a className="default-timespan-value sensing-interval">
                     {`${graphTimespanNumeric} ${graphTimespan}`}
                     <Icon type="down" />
                 </a>
@@ -432,14 +432,14 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
         }
 
         const intervalSet: SensingInterval[] = [];
-        intervalSet.push({ value: 2, unit: 'Seconds', multiplier: 1});
-        intervalSet.push({ value: 5, unit: 'Seconds', multiplier: 1});
-        intervalSet.push({ value: 10, unit: 'Seconds', multiplier: 1});
-        intervalSet.push({ value: 15, unit: 'Seconds', multiplier: 1});
-        intervalSet.push({ value: 30, unit: 'Seconds', multiplier: 1});
-        intervalSet.push({ value: 1, unit: 'Minute', multiplier: 60});
-        intervalSet.push({ value: 5, unit: 'Minutes', multiplier: 60});
-        intervalSet.push({ value: 10, unit: 'Minutes', multiplier: 60});
+        intervalSet.push({ value: 2, unit: 'seconds', multiplier: 1});
+        intervalSet.push({ value: 5, unit: 'seconds', multiplier: 1});
+        intervalSet.push({ value: 10, unit: 'seconds', multiplier: 1});
+        intervalSet.push({ value: 15, unit: 'seconds', multiplier: 1});
+        intervalSet.push({ value: 30, unit: 'seconds', multiplier: 1});
+        intervalSet.push({ value: 1, unit: 'minutes', multiplier: 60});
+        intervalSet.push({ value: 5, unit: 'minutes', multiplier: 60});
+        intervalSet.push({ value: 10, unit: 'minutes', multiplier: 60});
 
         const menu = (
             <Menu>
@@ -473,7 +473,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
         return (
             <Dropdown overlay={menu} className="dropdown">
                 <a className="default-timespan-value">
-                    {selectedInterval.value} {selectedInterval.unit}
+                    {selectedInterval.value} {selectedInterval.unit.charAt(0)}
                     <Icon type="down" />
                 </a>
             </Dropdown>
@@ -575,7 +575,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         { selectedModule && selectedModule.split(':')[0] === '0101' &&
                         <div className="data-col">
                             <div className="data-name">Sensing Interval</div>
-                            <div className="data-value">
+                            <div className="sensing">
                                 {renderSensingIntervalOptions(selectedSensorModuleObj)}
                             </div>
                         </div>
