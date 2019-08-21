@@ -6,18 +6,29 @@ Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be u
 
 ## Contents
 
-- [Installation](#installation)
+- [Features](#features)
+- [Installation and Setup](#installation-and-setup)
 - [Prerequisites](#prerequisites)
 - [Quick start](#quick-start)
 - [Mode API Reference](https://dev.tinkermode.com/docs/api/)
 - [API Examples](#api-examples)
   - [Using REST Endpoints (GET, POST, PUT, PATCH, DELETE)](#using-rest-endpoints)
-    - [Updating User Informaiton](#updating-user-information)
-    - [Linking / Unlinking Sensor Modules => Gateway](#linking-unlinking-sensor-modules)
+    - [Updating User Information](#creating-validating-updating-user-information)
+    - [Linking / Unlinking Sensor Modules](#linking-unlinking-sensor-modules)
     - [Sending Device Commands](#sending-device-commands)
   - [Receiving Device Events (Websocket)](#receiving-device-events)
 
-## Installation
+## Features
+
+- Management of sensor modules and their device associations from within the application. :electric_plug:
+
+- Ability to view real-time sensor data in multiple sensor modules across multiple devices. :chart_with_upwards_trend:
+
+- Ability to view time-series sensor data and toggle between various time-horizons as well as sensing intervals. :clock10:
+
+- Configuration of sensor module sensing and general settings.:arrows_counterclockwise:
+
+## Installation and Setup
 
 To begin development off MODE's sensor cloud evaluation kit, first clone the repository to your local machine.
 ```sh
@@ -64,7 +75,7 @@ const BASEURL = 'https://api.tinkermode.com/'
 /users/{id}                                                              | GET, POST, PATCH, DELETE  |
 /homes/{homeId}/members                                                  | GET, POST                 |
 /homes/{homeId}/members/{userId}                                         | GET, PATCH, DELETE        |
-/homes/{homeId}**                                                        | GET, POST, PATCH, DELETE  |
+/homes/{homeId}                                                          | GET, POST, PATCH, DELETE  |
 /homes/{homeId}/kv/{sensorModuleId}                                      | GET, POST, PUT            |  
 /homes/{homeId}/smartModules/tsdb/timeSeries/{seriesID}                  | GET                       |
 /devices/{deviceId}                                                      | GET, PATCH, DELETE        |
@@ -140,15 +151,24 @@ parameters: { timeout: 1000 }
 
 - Using the `getSensorModuleStatus` command
 
-<!-- fill in -->
+```javascript
+action: 'getSensorModuleStatus',
+parameters: { sensorId: {sensorId} }
+```
 
 - Using the `syncClock` command
 
-<!-- fill in -->
+```javascript
+action: 'syncClock',
+parameters: { sensorId: {sensorId} }
+```
 
 - Using the `getLog` command
 
-<!-- fill in -->
+```javascript
+action: 'getLog',
+parameters: { sensorId: {sensorId} }
+```
 
 ### Receiving Device Events
 
@@ -166,14 +186,4 @@ The application receives device events in the form of a websocket message. The f
 
 6. `error`: The gateway emits this event when it has problem executing a command. The event contains a field called `msg` that explains the reason of the error.
 
-7. `sensorModuleStateChange`:
-
-8. `sensorModuleUnregistered`:
-
-9. `statusReport`:
-
-10. `fastSensorData`:
-
-11. `accelerationChangeDetected`:
-
-12. `magneticChangeDetected`:
+7. `sensorModuleStateChange`: The gateway emits this event whenever a sensor module changes its connection state and/or sensing state.
