@@ -49,7 +49,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
             let deviceBundles = linkedModules;
             deviceResponse.forEach((device: any, index: any) => {
               // for each device, set linked modules
-              const url = MODE_API_BASE_URL + 'devices/' + device.id + '/kv?keyPrefix=sensorModule';
+              const url = `${MODE_API_BASE_URL}devices/${device.id}/kv?keyPrefix=sensorModule`;
               setIsLoading(true);
               modeAPI
                 .request('GET', url, {})
@@ -151,7 +151,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     deviceID: string,
     deviceIndex: number
   ) => {
-    const url = MODE_API_BASE_URL + 'devices/' + deviceID + '/kv/' + moduleID;
+    const url = `${MODE_API_BASE_URL}devices/${deviceID}/kv/${moduleID}`;
     modeAPI.request('DELETE', url, {}).then((response: any) => {
       if (response.status === 204) {
         const filteredModules = linkedModules[deviceIndex].sensorModules.filter(
@@ -187,7 +187,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     gatewayID: string,
     context: Context
   ): void => {
-    props.history.push('/devices/' + gatewayID + '/add_sensor_modules');
+    props.history.push(`/devices/${gatewayID}/add_sensor_modules`);
     setSelectedDevice(gatewayID);
     context.actions.setGateway(gatewayID);
   };
