@@ -11,6 +11,9 @@ Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be u
 - [Prerequisites](#prerequisites)
 - [Quick start](#quick-start)
 - [Mode API Reference](https://dev.tinkermode.com/docs/api/)
+- [App Navigation](#app-navigation)
+  -[Link and Unlink Sensor Modules to and from a Gateway](#link-and-unlink-sensor-modules-to-and-from-a-gateway)
+  -[Viewing and Manipulating the Sensor Module](#viewing-and-manipulating-the-sensor-module)
 - [API Examples](#api-examples)
   - [Using REST Endpoints (GET, POST, PUT, PATCH, DELETE)](#using-rest-endpoints)
     - [Handling User Information](#handling-user-information)
@@ -20,8 +23,6 @@ Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be u
 - [Links](#links)
 
 ## Features
-
-<img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/sensor_module.png" alt="Size Limit CLI" width="738">
 
 - Management of sensor modules and their device associations from within the application. :electric_plug:
 
@@ -64,6 +65,46 @@ $ npm install -g typescript
 3. Run `npm start` to immediately bring up the application at http://localhost:3000.
 
 4. Navigate to http://localhost:3000 your browser to view the running application.
+
+## App Navigation
+
+### Link and Unlink Sensor Modules to and from a Gateway
+
+Linking and unlinking sensor modules to and from a gateway is simple. Assuming you have the sensor module(s) on hand, make sure they are within 5 feet of the gateway, and press the start scanning button.
+
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/sensor_module_instructions.png" alt="Size Limit CLI" width="738">
+
+Once you press the start scanning button, the device will go into `discovery mode` and begin looking for sensors either available to connect via Bluetooth or USB.
+
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/add_sensor_modules.png" alt="Size Limit CLI" width="738">
+
+If the gateway discovers any sensor modules `currently not paired` to itself or any other gateways, they will be listed in the format below. Selecting any available module will allow you to add the sensor module to your desired gateway.
+
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/sensor_modules_discovered.png" alt="Size Limit CLI" width="738">
+
+In the gateway view, you will be able to see all sensor module(s) associated with your gateway(s). To unlink a particular sensor module from the gateway, click the settings icon and then press the `Unlink Sensor Modules` button that appears.
+
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/toggle_gateway_settings.png" alt="Size Limit CLI" width="738">
+
+After selecting the `Unlink Sensor Modules` button, the gateway will go into edit mode. It's worth mentioning you can put multiple gateways in edit mode.
+
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/gateway_edit_mode.png" alt="Size Limit CLI" width="738">
+
+Selecting a particular sensor module in this mode will trigger a unlink confirmation of the selected module, and clicking okay will disassociate it from the gateway.
+
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/confirm_unlink.png" alt="Size Limit CLI" width="738">
+
+Clicking on a sensor module in a gateway that is not in `edit mode` will show sensor module details. This page contains real-time data, time-series graphs, adjustments, and the general settings of the sensor module.
+
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/sensor_module.png" alt="Size Limit CLI" width="738">
+
+Clicking the settings icon and then clicking the `Edit Settings` button will display the sensor module settings, including the name of the module and the currently active sensors. To modify this, edit the name and select or deselect sensors to activate or inactive the sensors respectively.
+
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/sensor_module_settings.png" alt="Size Limit CLI" width="738">
+
+The active sensor time-series graphs and real-time data will be updated accordingly.
+
+## Viewing and Manipulating the Sensor Module
 
 ## API Examples
 
