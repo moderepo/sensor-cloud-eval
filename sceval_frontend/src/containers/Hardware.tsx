@@ -1,7 +1,7 @@
 import React, { Fragment, useState, useEffect } from 'react';
 import { Redirect, RouteComponentProps, withRouter } from 'react-router';
 import { LeftNav } from '../components/LeftNav';
-import modeAPI, { ModeAPI, KeyValueStore } from '../controllers/ModeAPI';
+import modeAPI, { ModeAPI, KeyValueStore, ErrorResponse } from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import AppContext from '../controllers/AppContext';
 import SensorModuleSet, { SensorModuleInterface } from '../components/entities/SensorModule';
@@ -49,32 +49,19 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
             let deviceBundles = linkedModules;
             deviceResponse.forEach((device: any, index: any) => {
               // for each device, set linked modules
-              const url = `${MODE_API_BASE_URL}devices/${device.id}/kv?keyPrefix=sensorModule`;
               setIsLoading(true);
-              modeAPI
-                .request('GET', url, {})
-                .then((sensorModules: any) => {
-                  const filteredModules = sensorModules.data.filter(
-                    (sModule: any) => {
-                      return (
-                        sModule.key !== 'firmwareVersion' &&
-                        sModule.key !== 'firmwareDistribution'
-                      );
-                    }
-                  );
+              modeAPI.getAllDeviceKeyValueStoreByPrefix(device.id, 'sensorModule')
+                .then((sensorModules: KeyValueStore[]) => {
                   const deviceBundle: SensorModuleSet = {
                     // create sensor module set
                     device: device.id,
-                    sensorModules: filteredModules
+                    sensorModules: sensorModules
                   };
                   if (!deviceBundles.includes(deviceBundle)) {
                     deviceBundles.push(deviceBundle);
                   }
                   setlinkedModules([...deviceBundles]); // set linked modules
-                  if (
-                    sensorModules.status === 200 &&
-                    index === deviceResponse.length - 1
-                  ) {
+                  if (deviceBundles.length === deviceResponse.length) {
                     setFetchComplete(true);
                     setIsLoading(false);
                   }
@@ -87,13 +74,13 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
         });
       });
 
-    // Listen to sensorModuleStateChange change event from the web socket and reload the sensor module
+    // Listen to _keyValueSaved_ event from the web socket and reload the sensor module
     // data for the module that triggered the event.
     const messageHandler: any = {
       notify: (message: any): void => {
-        if (message.eventType === 'sensorModuleStateChange' && linkedModules !== undefined) {
-          // the key of the sensor module that triggered the state change event
-          const sensorModuleKey: string = `sensorModule${message.eventData.sensorModuleId}`;
+        if (message.eventType === '_keyValueSaved_' && message.eventData && linkedModules !== undefined) {
+          // message.eventData will be the key/value store for the sensorModule
+          const updatedSensorModule: SensorModuleInterface = message.eventData;
 
           // Find the linked module that has a sensor module with the same key and at the same time, find the deviceId
           // of the device the module is connected to because we need the deviceId to make an API call to load the
@@ -115,17 +102,14 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
               })];
             },
             []).find((findable: Findable): boolean => {
-              return findable.sensorModule.key === sensorModuleKey;
+              return findable.sensorModule.key === updatedSensorModule.key;
             });
 
           if (result) {
             // Found the sensor module, now reload the KV for the module and update the module's value
-            const url = `${MODE_API_BASE_URL}devices/${result.deviceId}/kv/${sensorModuleKey}`;
-            modeAPI.getDeviceKeyValueStore(result.deviceId, sensorModuleKey).then((keyValue: KeyValueStore): void => {
-                // update the module's data with data from response but this won't trigger a re-render
-                Object.assign(result.sensorModule, keyValue);
-                setlinkedModules([...linkedModules]); // copy the linkedModules and set it to trigger re-render
-            });
+            // update the module's data with data from response but this won't trigger a re-render
+            Object.assign(result.sensorModule, updatedSensorModule);
+            setlinkedModules([...linkedModules]); // copy the linkedModules and set it to trigger re-render
           }
         }
       }
@@ -144,14 +128,14 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     props.history.push('/sensor_modules/' + moduleID);
   };
 
-  const handleOk = (
+  const handleOk = async (
     moduleID: string,
     deviceID: string,
     deviceIndex: number
   ) => {
-    const url = `${MODE_API_BASE_URL}devices/${deviceID}/kv/${moduleID}`;
-    modeAPI.request('DELETE', url, {}).then((response: any) => {
-      if (response.status === 204) {
+    try {
+      const status: number = await modeAPI.deleteDeviceKeyValueStore(deviceID, moduleID);
+      if (status === 204) {
         const filteredModules = linkedModules[deviceIndex].sensorModules.filter(
           sensor => {
             return sensor.key !== moduleID;
@@ -161,7 +145,10 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
         updatedLinkedModules[deviceIndex].sensorModules = filteredModules;
         setlinkedModules(updatedLinkedModules);
       }
-    });
+    } catch (error) {
+      alert(error.message);
+      console.log(error);
+    }
   };
 
   const renderDeleteModal = (

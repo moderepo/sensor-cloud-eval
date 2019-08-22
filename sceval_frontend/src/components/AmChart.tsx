@@ -4,6 +4,7 @@ import * as am4charts from '@amcharts/amcharts4/charts';
 import am4themes_animated from '@amcharts/amcharts4/themes/animated';
 import moment from 'moment';
 import { Context, context } from '../context/Context';
+import { TimeSeriesData } from '../controllers/ModeAPI';
 am4core.useTheme(am4themes_animated);
 
 interface AmChartProps extends React.Props<any> {
@@ -16,18 +17,7 @@ interface AmChartProps extends React.Props<any> {
 interface SensorDataBundle {
     unit: string;
     type: string;
-    TSDBData: TSDBDataBase;
-}
-
-interface TSDBDataBase {
-    aggregation: string;
-    begin: string;
-    data: Array<any>;
-    end: string;
-    resolution: string;
-    seriesId: string;
-    type: string;
-    unit: string;
+    TSDBData: TimeSeriesData;
 }
 
 export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
