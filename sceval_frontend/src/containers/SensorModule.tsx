@@ -226,43 +226,34 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                 if (index === wsData.length - 1) { // if we have gone through all RT data:
                                     let updatedSensorData: any = activeSensors;
                                     if (activeSensors) {
-                                    rtData.forEach((newSensor: any) => {
+                                        let updatedActiveArray: any = activeSensors;
+                                        rtData.forEach((newSensor: any) => {
                                         // filter and check if activeSensors exists
                                             const dataExists = activeSensors.filter((onlineSensor: any): boolean => {
                                                 return onlineSensor.type === newSensor.type;
                                             });
                                             // if the sensor already has previous data, update it
-                                            let updatedActiveArray: any = activeSensors;
                                             if (dataExists.length === 1) {
                                                 updatedActiveArray.forEach((updatedSensor: any) => {
                                                     if (updatedSensor.type === newSensor.type) {
                                                         updatedSensor.rtValue = newSensor.rtValue;
-                                                        setActiveSensors(updatedActiveArray.sort((a: any, b: any) => {
-                                                            if (a.type < b.type) {
-                                                                return -1;
-                                                            }
-                                                            if (a.type > b.type) {
-                                                                return 1;
-                                                            }
-                                                            return 0;
-                                                        })); 
-                                                        setNewWebsocketData(true);
                                                     }
                                                 });
                                             } else { // otherwise just simply push to new array and update
                                                 updatedActiveArray.push(newSensor);
-                                                setActiveSensors(updatedActiveArray.sort((a: any, b: any) => {
-                                                    if (a.type < b.type) {
-                                                        return -1;
-                                                    }
-                                                    if (a.type > b.type) {
-                                                        return 1;
-                                                    }
-                                                    return 0;
-                                                })); 
-                                                setNewWebsocketData(true);
                                             }
                                         });
+                                        // after loop finishes, set active sensors to updated 
+                                        setActiveSensors(updatedActiveArray.sort((a: any, b: any) => {
+                                            if (a.type < b.type) {
+                                                return -1;
+                                            }
+                                            if (a.type > b.type) {
+                                                return 1;
+                                            }
+                                            return 0;
+                                        })); 
+                                        setNewWebsocketData(true);
                                     } else {
                                         const sortedSensors = rtData.sort((a: any, b: any) => {
                                             if (a.type < b.type) {
