@@ -333,6 +333,66 @@ export class ModeAPI {
   }
 
   /**
+   * @param deviceID Delete a key value store from a device
+   * @param key 
+   * @returns number response status
+   */
+  public async deleteDeviceKeyValueStore (deviceID: string, key: string): Promise<number> {
+    try {
+      const response: AxiosResponse<any> = await this.request(
+        'DELETE', `${MODE_API_BASE_URL}devices/${deviceID}/kv/${key}`, {}
+      );
+      return response.status;
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
+  }
+
+  /**
+   * 
+   * @param homeID Get every key value store for a specific home
+   */
+  public async getAllHomeKeyValueStore (homeID: string): Promise<KeyValueStore[]> {
+    try {
+      const response: AxiosResponse<any> = await this.request('GET', `${MODE_API_BASE_URL}homes/${homeID}/kv`, {});
+      return response.data as KeyValueStore[];
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
+  }
+
+  /**
+   * @param homeID Get the value of a key value store for a given key
+   * @param key 
+   */
+  public async getHomeKeyValueStore (homeID: string, key: string): Promise<KeyValueStore> {
+    try {
+      const response: AxiosResponse<any> = await this.request(
+        'GET', `${MODE_API_BASE_URL}homes/${homeID}/kv/${key}`, {}
+      );
+      return response.data as KeyValueStore;
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
+  }
+
+  /**
+   * Get all the key value stores for a specific home that has keys started with the specified keyPrefix
+   * @param homeID
+   * @param keyPrefix 
+   */
+  public async getAllHomeKeyValueStoreByPrefix (homeID: string, keyPrefix: string): Promise<KeyValueStore[]> {
+    try {
+      const response: AxiosResponse<any> = await this.request(
+        'GET', `${MODE_API_BASE_URL}homes/${homeID}/kv?keyPrefix=${keyPrefix}`, {}
+      );
+      return response.data as KeyValueStore[];
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
+  }
+
+  /**
    * Add/Update a key value store for a home
    * @param homeID 
    * @param key
@@ -344,22 +404,6 @@ export class ModeAPI {
         'PUT', `${MODE_API_BASE_URL}homes/${homeID}/kv/${key}`, {
           value: store.value
         }
-      );
-      return response.status;
-    } catch (error) {
-      throw ModeAPI.getErrorResponse(error);
-    }
-  }
-
-  /**
-   * @param deviceID Delete a key value store from a device
-   * @param key 
-   * @returns number response status
-   */
-  public async deleteDeviceKeyValueStore (deviceID: string, key: string): Promise<number> {
-    try {
-      const response: AxiosResponse<any> = await this.request(
-        'DELETE', `${MODE_API_BASE_URL}devices/${deviceID}/kv/${key}`, {}
       );
       return response.status;
     } catch (error) {
