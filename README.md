@@ -57,11 +57,13 @@ $ npm install -g typescript
 
 **Assuming you have met the previously mentioned prerequisites**, follow these steps to get up and running in minutes:
 
-1. `cd` into `sceval_frontend` and run `npm i` or `npm install`. This will install the default app dependencies.
+1. Create a `.env` file with the `REACT_APP_API_KEY` and `REACT_APP_PROJECT_ID` variables associated with your project.
 
-2. Run `npm start` to immediately bring up the application at http://localhost:3000.
+2. `cd` into `sceval_frontend` and run `npm i` or `npm install`. This will install the default app dependencies.
 
-3. Navigate to http://localhost:3000 your browser to view the running application.
+3. Run `npm start` to immediately bring up the application at http://localhost:3000.
+
+4. Navigate to http://localhost:3000 your browser to view the running application.
 
 ## API Examples
 
