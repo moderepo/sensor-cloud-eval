@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import AppContext from '../controllers/AppContext';
 import { AmChart } from '../components/AmChart';
 import { Context, context } from '../context/Context';
-import modeAPI, { KeyValueStore } from '../controllers/ModeAPI';
+import modeAPI, { KeyValueStore, ErrorResponse, TimeSeriesData, TimeSeriesInfo } from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import moment from 'moment';
 import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
@@ -61,18 +61,15 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 1 : graphTimespanNumeric, 
             graphTimespan === 'real-time' ?
                 'minute' : graphTimespan);
-        // set fetch url
-        const fetchURL = 
-        `${MODE_API_BASE_URL}homes/${homeID}/smartModules/tsdb/timeSeries/` + seriesID +
-            `/data?begin=${startTime.toISOString()}&end=${endTime.toISOString()}&aggregation=avg`;
-        // perform fetch
-        modeAPI.request('GET', fetchURL, {})
-        .then((response: any) => {
+
+        modeAPI.getTSDBData(homeID, seriesID, startTime.toISOString(), endTime.toISOString())
+        .then((timeseriesData: TimeSeriesData) => {
             let maxVal = 0;
             let minVal = Infinity;
             let sum = 0;
+            
             // for each set of TSDB data, perform a calculation
-            response.data.data.forEach((datapoint: any, datapointIndex: any) => {
+            timeseriesData.data.forEach((datapoint: any, datapointIndex: any) => {
                 sum += datapoint[1];
                 if (datapoint[1] > maxVal) {
                     maxVal = datapoint[1];
@@ -80,12 +77,12 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 if (datapoint[1] < minVal) {
                     minVal = datapoint[1];
                 }
-                if (datapointIndex === response.data.data.length - 1) {
+                if (datapointIndex === timeseriesData.data.length - 1) {
                     const sensorData = {
                         seriesID: seriesID,
                         unit: unit,
                         type: sType,
-                        TSDBData: response.data,
+                        TSDBData: timeseriesData,
                         avgVal: sType !== 'uv' ? 
                             (sum / datapointIndex).toFixed(1) : (sum / datapointIndex).toFixed(3),
                         maxVal: sType !== 'uv' ?
@@ -97,23 +94,23 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     sensors.push(sensorData);
                 }
                 // bundle data after going through sensor set
-                if (sensors.length === wsData.length) { 
-                        // if all of the sensor data has been populated, sort it alphabetically by type
-                        const sortedTSDBData = sensors.sort((a: any, b: any) =>  {
-                            if (a.type < b.type) {
-                                return -1;
-                            }
-                            if (a.type > b.type) {
-                                return 1;
-                            }
-                            return 0;
-                        });
-                        // set TSDB values
-                        if (!TSDBDataFetched) {
-                            setSensorTypes(sortedTSDBData);
-                            setTSDBDataFetched(true);
+                if (sensors.length === wsData.length) {
+                    // if all of the sensor data has been populated, sort it alphabetically by type
+                    const sortedTSDBData = sensors.sort((a: any, b: any) =>  {
+                        if (a.type < b.type) {
+                            return -1;
                         }
+                        if (a.type > b.type) {
+                            return 1;
+                        }
+                        return 0;
+                    });
+                    // set TSDB values
+                    if (!TSDBDataFetched) {
+                        setSensorTypes(sortedTSDBData);
+                        setTSDBDataFetched(true);
                     }
+                }
             });
         });
     };
@@ -143,32 +140,29 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     1000
                 );
             }
-            if (sensorModule) {
+            if (gateway && sensorModule) {
                 // for now, setting sensor module name to ID
                 setSensorModuleName(sensorModule);
                 // fetch module data from KV store
-                const deviceURL = MODE_API_BASE_URL + 'devices/' + gateway + '/kv/sensorModule' + sensorModule;
-                modeAPI.request('GET', deviceURL, {})
-                .then((response: any) => {
-                    setSelectedSensorModuleObj(response.data);
+                modeAPI.getDeviceKeyValueStore(gateway, `sensorModule${sensorModule}`)
+                .then((keyValueStore: KeyValueStore) => {
+                    setSelectedSensorModuleObj(keyValueStore);
                     
-                    const moduleSensors = response.data.value.sensors;
+                    const moduleSensors = keyValueStore.value.sensors;
                     // set name of sensor
-                    setSensorModuleName(response.data.value.name);
+                    setSensorModuleName(keyValueStore.value.name);
                     // set full sensor list and quantity
                     setFullSensorList(moduleSensors);
                     setActiveSensorQuantity(moduleSensors.length);
                     // determine offline sensors
                     let sensorsOffline: any = fullALPsList.filter((sensor: any, index: any): boolean => {
-                        return !response.data.value.sensors.includes(sensor);
+                        return !keyValueStore.value.sensors.includes(sensor);
                     });
                     setOfflineSensors(sensorsOffline);
-                    // getTSDB seriesID for the particular module 
-                    const TSDBURL = `${MODE_API_BASE_URL}homes/${homeID}/smartModules/tsdb/timeSeries`;
-                    modeAPI.request('GET', TSDBURL, {})
-                    .then((tsdbResponse: any) => {  
+
+                    modeAPI.getTSDBInfo(homeID).then((tsdbInfo: TimeSeriesInfo[]) => {
                         // filter response initially by selected module
-                        const filteredTSDBData: any = tsdbResponse.data.filter((tsdbData: any): boolean => {
+                        const filteredTSDBData: any = tsdbInfo.filter((tsdbData: any): boolean => {
                             return tsdbData.id.includes(selectedModule);
                         });
                         // filter again for online sensors
@@ -190,6 +184,9 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                             });
                         }
                     });
+                }).catch((error: ErrorResponse): void => {
+                    alert(`Unable to get sensor module setting because of this error '${error.message}'`);
+                    console.log(error);
                 });
             }
             // websocket message handler for RT data
@@ -271,37 +268,20 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
         const sensorModule = sessionStorage.getItem('selectedModule');
         const device = sessionStorage.getItem('selectedGateway');
         if (device && sensorModule) {
-            const params = {
-                value: {
-                    name: sensorModuleName,
-                    gatewayID: device, 
-                    id: sensorModule,
-                    interval: 30,
-                    modelId: '0101',
-                    sensing: 'on',
-                    sensors: filteredActiveSensors
-                }
-            };
-            // // update KV store for device + module
-            const deviceURL = MODE_API_BASE_URL + 'devices/' + device + '/kv/sensorModule' + sensorModule;
-            modeAPI.request('PUT', deviceURL, params)
+           // copy the current selected sensor module object and replace the module's name and list of sensors
+            const updatedSensorModuleObj: SensorModuleInterface = Object.assign({}, selectedSensorModuleObj);
+            if (sensorModuleName) {
+                updatedSensorModuleObj.value.name = sensorModuleName;
+            }
+            updatedSensorModuleObj.value.sensors = filteredActiveSensors;
+
+            // update KV store for the device
+            modeAPI.setDeviceKeyValueStore(device, updatedSensorModuleObj.key, updatedSensorModuleObj)
             .then((deviceResponse: any) => {
+                setEditingModuleSettings(true);
                 return deviceResponse;
             }).catch((reason: any) => {
                 console.error('reason', reason);
-            });
-            // update KV store for home + module
-            modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
-            .then((response: any) => {
-                const homeURL = MODE_API_BASE_URL + 
-                    'homes/' + response.id + '/kv/sensorModule' + sensorModule;
-                modeAPI.request('PUT', homeURL, params)
-                .then((homeResponse: any) => {
-                    setEditingModuleSettings(true);
-                    return homeResponse;
-                }).catch((reason: any) => {
-                    console.error('reason', reason);
-                });
             });
         }
         setEditingModuleSettings(false); // re-render changes
@@ -402,22 +382,9 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             const updatedSensorModuleObj: SensorModuleInterface = Object.assign({}, sensorModuleObj);
             updatedSensorModuleObj.value.interval = interval.value * interval.multiplier;
             modeAPI.setDeviceKeyValueStore(selectedGateway, sensorModuleObj.key, updatedSensorModuleObj).then(
-                (): void => {
+                (status: number): void => {
                 // now update the state
                 setSelectedSensorModuleObj(updatedSensorModuleObj);
-
-                // update KV store for home as well
-                modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
-                .then((response: any) => {
-                    modeAPI.setHomeKeyValueStore(response.id, sensorModuleObj.key, updatedSensorModuleObj).then(
-                    () => {
-                        // updated home key value store successfully
-                    }).catch((error: any) => {
-                        alert('Unable to update home key value store');
-                        console.log('Unable to update home key value store', error);
-                    });
-                });
-
             },  (error: any): void => {
                 alert('Unable to update device key value store');
                 console.log('Unable to update device key value store', error);
