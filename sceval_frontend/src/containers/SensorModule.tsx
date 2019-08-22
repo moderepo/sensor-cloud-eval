@@ -174,8 +174,9 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         // filter again for online sensors
                         const onlineTSDBData: any = filteredTSDBData.filter((filteredData: any): boolean => {
                             const sensorType = filteredData.id.split('-')[1].toUpperCase();
-                            return moduleSensors.includes(sensorType) && 
-                            !sensorType.includes('ACCELERATION') && !sensorType.includes('MAGNETIC');
+                            return moduleSensors.includes(sensorType);
+                            // && 
+                            // !sensorType.includes('ACCELERATION') && !sensorType.includes('MAGNETIC');
                         });
                         let sensors: any = [];
                         // for online sensors, perform TSDB fetch
@@ -205,8 +206,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     }
                     // if app receives real time data, and it pertains to the selected Module:
                     if (homeID && moduleData.eventType === 'realtimeData' 
-                    && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule) &&
-                    !moduleData.eventData.timeSeriesData[0].seriesId.includes('magnetic')) {
+                    && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule)) {
                         const wsData = moduleData.eventData.timeSeriesData;
                         let rtData: any = [];
                         let rtNumbers: any = [];
@@ -227,29 +227,58 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                     val: sensor.value
                                 });
                                 if (index === wsData.length - 1) { // if we have gone through all RT data:
-                                    const mergedData = [...activeSensors, ...rtData];
-                                    const mergedRTVals = [...sensorContext.state.rtValues, ...rtNumbers];
-                                    const sortedSensors = mergedData.sort((a: any, b: any) => {
-                                        if (a.type < b.type) {
-                                            return -1;
-                                        }
-                                        if (a.type > b.type) {
-                                            return 1;
-                                        }
-                                        return 0;
-                                    });
-                                    const sortedRTNumbers = mergedRTVals.sort((a: any, b: any) => {
-                                        if (a.type < b.type) {
-                                            return -1;
-                                        }
-                                        if (a.type > b.type) {
-                                            return 1;
-                                        }
-                                        return 0;
-                                    });
-                                    console.log(mergedRTVals, sortedSensors);
-                                    sensorContext.actions.setRTValues(sortedRTNumbers);                        
-                                    setActiveSensors(sortedSensors); // set real time data
+                                    let updatedSensorData: any = activeSensors;
+                                    if (activeSensors) {
+                                    rtData.forEach((newSensor: any) => {
+                                        // filter and check if activeSensors exists
+                                            const dataExists = activeSensors.filter((onlineSensor: any): boolean => {
+                                                return onlineSensor.type === newSensor.type;
+                                            });
+                                            // if the sensor already has previous data, update it
+                                            let updatedActiveArray: any = activeSensors;
+                                            if (dataExists.length === 1) {
+                                                updatedActiveArray.forEach((updatedSensor: any) => {
+                                                    if (updatedSensor.type === newSensor.type) {
+                                                        console.log('setting new data');
+                                                        updatedSensor.rtValue = newSensor.rtValue;
+                                                        setActiveSensors(updatedActiveArray.sort((a: any, b: any) => {
+                                                            if (a.type < b.type) {
+                                                                return -1;
+                                                            }
+                                                            if (a.type > b.type) {
+                                                                return 1;
+                                                            }
+                                                            return 0;
+                                                        })); 
+                                                    }
+                                                });
+                                            } else { // otherwise just simply push to new array and update
+                                                updatedActiveArray.push(newSensor);
+                                                console.log('setting new data');
+                                                setActiveSensors(updatedActiveArray.sort((a: any, b: any) => {
+                                                    if (a.type < b.type) {
+                                                        return -1;
+                                                    }
+                                                    if (a.type > b.type) {
+                                                        return 1;
+                                                    }
+                                                    return 0;
+                                                })); 
+                                            }
+                                        });
+                                    } else {
+                                        const sortedSensors = rtData.sort((a: any, b: any) => {
+                                            if (a.type < b.type) {
+                                                return -1;
+                                            }
+                                            if (a.type > b.type) {
+                                                return 1;
+                                            }
+                                            return 0;
+                                        }); 
+                                        sensorContext.actions.setRTValues(rtNumbers);   
+                                        setActiveSensors(sortedSensors); // set real time data
+                                    }
                                 }
                             }
                         });
@@ -261,7 +290,8 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             return (): void => {
                 ModeConnection.removeObserver(webSocketMessageHandler);
             };
-    },  [editingModuleSettings, selectedGateway, selectedModule, TSDBDataFetched, graphTimespan, graphTimespanNumeric]);
+    },  [activeSensors, editingModuleSettings, selectedGateway, 
+        selectedModule, TSDBDataFetched, graphTimespan, graphTimespanNumeric]);
 
     const toggleModalVisibility = () => {
         if (modalVisible) {
@@ -614,8 +644,9 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                         { activeSensors && sensorTypes ?
                                         <Fragment>
                                             <div className="unit-value">
-                                                {sensorTypes[index] ?
-                                                    sensor.type === 'pressure' ?
+                                                {activeSensors[index] && 
+                                                activeSensors[index].rtValue ?
+                                                    activeSensors[index].type === 'pressure' ?
                                                     activeSensors[index].rtValue.toFixed(1) :
                                                     activeSensors[index].rtValue.toFixed(2) :
                                                     <img src={loader} />
