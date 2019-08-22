@@ -194,21 +194,20 @@ export class ModeAPI {
     }
   }
 
-  public getHome(userId: number) {
+  public async getHome(userId: number): Promise<Home> {
     if (this.defaultHome === null) {
-      return this.getHomes(userId).then((homes: Home[]) => {
-        console.log('GET /homes - success');
-        if (homes.length > 0) {
-          // pick the first home
-          this.defaultHome = homes[0];
-          return Promise.resolve(homes[0]);
-        } else {
-          // If no home, create "home" once.
-          return this.makeHome();
-        }
-      });
+      const homes: Home[] = await this.getHomes(userId);
+      console.log('GET /homes - success');
+      if (homes.length > 0) {
+        // pick the first home
+        this.defaultHome = homes[0];
+        return homes[0];
+      } else {
+        // If no home, create "home" once.
+        return this.makeHome();
+      }
     } else {
-      return Promise.resolve(this.defaultHome);
+      return this.defaultHome;
     }
   }
 

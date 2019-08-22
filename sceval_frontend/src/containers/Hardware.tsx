@@ -128,12 +128,13 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     props.history.push('/sensor_modules/' + moduleID);
   };
 
-  const handleOk = (
+  const handleOk = async (
     moduleID: string,
     deviceID: string,
     deviceIndex: number
   ) => {
-    modeAPI.deleteDeviceKeyValueStore(deviceID, moduleID).then((status: number) => {
+    try {
+      const status: number = await modeAPI.deleteDeviceKeyValueStore(deviceID, moduleID);
       if (status === 204) {
         const filteredModules = linkedModules[deviceIndex].sensorModules.filter(
           sensor => {
@@ -144,10 +145,10 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
         updatedLinkedModules[deviceIndex].sensorModules = filteredModules;
         setlinkedModules(updatedLinkedModules);
       }
-    }).catch((error: ErrorResponse): void => {
+    } catch (error) {
       alert(error.message);
       console.log(error);
-    });
+    }
   };
 
   const renderDeleteModal = (
