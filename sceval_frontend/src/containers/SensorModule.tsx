@@ -21,6 +21,8 @@ const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 
 interface SensorModuleProps extends React.Props<any> {
     isLoggedIn: boolean;
+    selectedModule?: string;
+    selectedGateway?: string;
 }
 interface SensingInterval {
     value: number;
@@ -117,6 +119,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     // React hook's componentDidMount and componentDidUpdate
     useEffect(
         () => {
+            console.log('context data', sensorContext.state.selectedGateway);
             // set home id
             let homeID = '';
             modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
@@ -126,25 +129,23 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             // restore login
             AppContext.restoreLogin();
             setMounted(true);
+            const gw = sensorContext.state.selectedGateway;
+            const mod = sensorContext.state.selectedModule;
             // get selected device and module
-            const gateway = sessionStorage.getItem('selectedGateway');
-            const sensorModule = sessionStorage.getItem('selectedModule');
-            setSelectedModule(sensorModule);
-            setSelectedGateway(gateway);
-            if (gateway !== null) {
+            setSelectedModule(mod);
+            setSelectedGateway(gw);
+            if (gw !== null) {
                 setTimeout(
                     () => {
                         // list sensor modules
-                        ModeConnection.listSensorModules(gateway);
+                        ModeConnection.listSensorModules(gw);
                     },
                     1000
                 );
             }
-            if (gateway && sensorModule) {
-                // for now, setting sensor module name to ID
-                setSensorModuleName(sensorModule);
+            if (gw && mod) {
                 // fetch module data from KV store
-                modeAPI.getDeviceKeyValueStore(gateway, `sensorModule${sensorModule}`)
+                modeAPI.getDeviceKeyValueStore(gw, `sensorModule${mod}`)
                 .then((keyValueStore: KeyValueStore) => {
                     setSelectedSensorModuleObj(keyValueStore);
                     
@@ -163,7 +164,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     modeAPI.getTSDBInfo(homeID).then((tsdbInfo: TimeSeriesInfo[]) => {
                         // filter response initially by selected module
                         const filteredTSDBData: any = tsdbInfo.filter((tsdbData: any): boolean => {
-                            return tsdbData.id.includes(selectedModule);
+                            return tsdbData.id.includes(mod);
                         });
                         // filter again for online sensors
                         const onlineTSDBData: any = filteredTSDBData.filter((filteredData: any): boolean => {
@@ -195,14 +196,14 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     const moduleData = message;
                     // if event is sensorModuleList, set fullSensorList
                     if (moduleData.eventType === 'sensorModuleList') {
-                        if (selectedModule && moduleData.eventData.sensorModules[selectedModule]) {
-                            const sensorList = moduleData.eventData.sensorModules[selectedModule].sensors;
+                        if (selectedModule && moduleData.eventData.sensorModules[mod]) {
+                            const sensorList = moduleData.eventData.sensorModules[mod].sensors;
                             setFullSensorList(sensorList);
                         }
                     }
                     // if app receives real time data, and it pertains to the selected Module:
                     if (homeID && moduleData.eventType === 'realtimeData' 
-                    && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule) &&
+                    && moduleData.eventData.timeSeriesData[0].seriesId.includes(mod) &&
                     !moduleData.eventData.timeSeriesData[0].seriesId.includes('magnetic')) {
                         const wsData = moduleData.eventData.timeSeriesData;
                         let rtData: any = [];

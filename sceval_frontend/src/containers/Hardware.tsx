@@ -1,13 +1,13 @@
-import React, { Fragment, useState, useEffect } from 'react';
+import React, { Fragment, useState, useEffect, useContext } from 'react';
 import { Redirect, RouteComponentProps, withRouter } from 'react-router';
 import { LeftNav } from '../components/LeftNav';
 import modeAPI, { ModeAPI, KeyValueStore, ErrorResponse } from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
+import { Context, context, ContextConsumer } from '../context/Context';
 import AppContext from '../controllers/AppContext';
 import SensorModuleSet, { SensorModuleInterface } from '../components/entities/SensorModule';
 import { evaluateSensorTypes } from '../utils/SensorTypes';
 import { Modal } from 'antd';
-import { Context, ContextConsumer } from '../context/Context';
 import ModeConnection from '../controllers/ModeConnection';
 import { SensorModule } from './index';
 const { confirm } = Modal;
@@ -37,6 +37,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
   const [editingGateways, seteditingGateways] = useState<Array<string>>([]);
   const [targetedModule, setTargetedModule] = useState<string>('');
   const [moduleInDeleteMode, setmoduleInDeleteMode] = useState<string>('');
+  const sensorContext: Context = useContext(context);
 
   useEffect(() => {
     AppContext.restoreLogin(); // restore user credentials and get home / associated devices
@@ -123,8 +124,9 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     };
   },        []); // this argument outlines re-rendering dependencies
 
-  const goToSensorModule = (event: any, moduleID: string): void => {
-    setTargetedModule(moduleID);
+  const goToSensorModule = (event: any, moduleID: string, deviceID: string): void => {
+    sensorContext.actions.setGateway(deviceID);
+    sensorContext.actions.setModuleSelected(moduleID.split('sensorModule')[1]);
     props.history.push('/sensor_modules/' + moduleID);
   };
 
@@ -170,11 +172,10 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
   const addSensorModules = (
     event: any,
     gatewayID: string,
-    context: Context
   ): void => {
     props.history.push(`/devices/${gatewayID}/add_sensor_modules`);
     setSelectedDevice(gatewayID);
-    context.actions.setGateway(gatewayID);
+    sensorContext.actions.setGateway(gatewayID);
   };
 
   const showGatewayOptions = (gatewayID: string): void => {
@@ -200,14 +201,13 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
   };
 
   const renderSensorModules = (
-    context: Context,
     deviceID: string,
     index: number
   ): React.ReactNode => {
     const ws = ModeConnection.openConnection();
     if (ws !== undefined) {
       setTimeout(() => {
-        context.actions.setWebsocket(ws);
+        sensorContext.actions.setWebsocket(ws);
       },         2000);
     }
     if (linkedModules && linkedModules[index]) {
@@ -230,12 +230,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                   key={key}
                   className={`sensor-module ${sensor.value.sensing}`}
                   onClick={event => {
-                    sessionStorage.setItem('selectedGateway', deviceID);
-                    sessionStorage.setItem(
-                      'selectedModule',
-                      sensor.key.split('sensorModule')[1]
-                    );
-                    goToSensorModule(event, sensor.key);
+                    goToSensorModule(event, sensor.key, deviceID);
                   }}
                 >
                   <img className="module-image" src={sensorGeneral} />
@@ -273,9 +268,6 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     return <Redirect to="/login" />;
   }
   return (
-    <ContextConsumer>
-      {(context: Context) =>
-        context && (
           <div>
             <LeftNav />
             {props.history.location.pathname === '/devices' ? ( // /devices path, render gateway set
@@ -328,7 +320,6 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                                             addSensorModules(
                                               event,
                                               device.id,
-                                              context
                                             )
                                           }
                                         >
@@ -384,7 +375,6 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                                 {!editingGateways.includes(device.id)
                                   ? // if this gateway is not being edited
                                     renderSensorModules(
-                                      context,
                                       device.id,
                                       index
                                     )
@@ -463,13 +453,12 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
             ) : (
               // sensor module specific path, render sensor module details
               <Fragment>
-                <SensorModule isLoggedIn={true} />
+                <SensorModule 
+                  isLoggedIn={true} 
+                />
               </Fragment>
             )}
           </div>
-        )
-      }
-    </ContextConsumer>
   );
 });
 
