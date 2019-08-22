@@ -68,7 +68,7 @@ export class ModeAPI {
 
   /**
    * Convert any error object to a standard generic ErrorResponse object. This error object is usually an
-   * AxiosError but it cab be other error types.
+   * AxiosError but it can be other error types.
    */
   public static getErrorResponse (error: any): ErrorResponse {
     let message: string = 'Unknown error';
@@ -234,10 +234,6 @@ export class ModeAPI {
    * Get the home's time series info for all serties. This will only return the time series'
    * metadata data, not the actuel time series data.
    * @param homeID
-   * @param seriesID 
-   * @param startTime 
-   * @param endTime 
-   * @param aggregation 
    */
   public async getTSDBInfo (homeID: string): Promise<TimeSeriesInfo[]> {
     try {
