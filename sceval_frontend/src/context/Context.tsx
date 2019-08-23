@@ -79,6 +79,7 @@ export const ContextProvider: React.FC<ContextProviderProps> = (
                 state: values,
                 actions: {
                     setGateway: setGateway,
+                    setModuleSelected: setModuleSelected,
                     setWebsocket: setWebsocket,
                     setRTValues: setRealTimeValues
                 }

@@ -17,7 +17,6 @@ const backArrow = require('../common_images/navigation/back.svg');
 const fullALPsList = ['TEMPERATURE:0', 'HUMIDITY:0', 'UV:0', 'PRESSURE:0', 'AMBIENT:0', 
     'MAGNETIC_X:0', 'ACCELERATION_Y:0', 'ACCELERATION_Z:0', 'MAGNETIC_Y:0', 
     'MAGNETIC_Z:0', 'ACCELERATION_X:0'];
-const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 
 interface SensorModuleProps extends React.Props<any> {
     isLoggedIn: boolean;
@@ -119,7 +118,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     // React hook's componentDidMount and componentDidUpdate
     useEffect(
         () => {
-            console.log('context data', sensorContext.state.selectedGateway);
             // set home id
             let homeID = '';
             modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
@@ -180,6 +178,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                 const sType = format.split(':')[0];
                                 const unit = determinUnit(sType);
                                 if (unit !== undefined) {
+                                    console.log('fetching...');
                                     performTSDBFetch(homeID, sensors, sType, sensor.id, unit, onlineTSDBData);
                                 }
                             });
