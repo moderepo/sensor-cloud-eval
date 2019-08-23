@@ -10,6 +10,7 @@ import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
 import ModeConnection  from '../controllers/ModeConnection';
 import determinUnit from '../utils/SensorTypes';
 import { SensorModuleInterface } from '../components/entities/SensorModule';
+import Home from '../controllers/Home';
 
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
@@ -28,6 +29,7 @@ interface SensingInterval {
 }
 
 export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModuleProps) => {
+    const [homeId, setHomeId] = useState<string|null>(null);
     const [selectedModule, setSelectedModule] = useState<string|null>();
     const [sensorModuleName, setSensorModuleName] = useState<string>();
     const [selectedSensorModuleObj, setSelectedSensorModuleObj] = useState<SensorModuleInterface|null>();
@@ -42,7 +44,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const [graphTimespan, setGraphTimespan] = useState<string>('days');
     const [fullSensorList, setFullSensorList] = useState();
     const [offlineSensors, setOfflineSensors] = useState<Array<any>>([]);
-    const [mounted, setMounted] = useState(false);
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [moduleSettingsVisible, setModuleSettingsVisible] = useState<boolean>(false);
     const [editingModuleSettings, setEditingModuleSettings] = useState(false);
@@ -113,39 +114,38 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             });
         });
     };
-    // React hook's componentDidMount and componentDidUpdate
+
+    /**
+     * This useEffect does not depend on any state so it will only get called once, when the component is mounted
+     */
     useEffect(
         () => {
             // restore login
             AppContext.restoreLogin();
+
             // open new connection for refresh
             ModeConnection.openConnection(); 
-            // set home id
-            let homeID = '';
+
+            // get home id
             modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
-            .then((response: any) => {
-                homeID = response.id;
+            .then((home: Home): void => {
+                setHomeId(home.id.toString());
             });
-            // restore login
-            AppContext.restoreLogin();
-            setMounted(true);
+
             // get selected device and module
             const gateway = sessionStorage.getItem('selectedGateway');
             const sensorModule = sessionStorage.getItem('selectedModule');
             setSelectedModule(sensorModule);
             setSelectedGateway(gateway);
-            if (gateway !== null) {
-                setTimeout(
-                    () => {
-                        // list sensor modules
-                        ModeConnection.listSensorModules(gateway);
-                    },
-                    1000
-                );
-            }
-            if (gateway && sensorModule) {
+    },  []);
+
+    // React hook's componentDidMount and componentDidUpdate
+    useEffect(
+        () => {
+            if (homeId !== null && selectedGateway && selectedModule) {
+
                 // fetch module data from KV store
-                modeAPI.getDeviceKeyValueStore(gateway, `sensorModule${sensorModule}`)
+                modeAPI.getDeviceKeyValueStore(selectedGateway, `sensorModule${selectedModule}`)
                 .then((keyValueStore: KeyValueStore) => {
                     setSelectedSensorModuleObj(keyValueStore);
                     
@@ -161,48 +161,42 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     });
                     setOfflineSensors(sensorsOffline);
 
-                    modeAPI.getTSDBInfo(homeID).then((tsdbInfo: TimeSeriesInfo[]) => {
-                        // filter response initially by selected module
-                        const filteredTSDBData: any = tsdbInfo.filter((tsdbData: any): boolean => {
-                            return tsdbData.id.includes(selectedModule);
-                        });
-                        // filter again for online sensors
-                        const onlineTSDBData: any = filteredTSDBData.filter((filteredData: any): boolean => {
-                            const sensorType = filteredData.id.split('-')[1].toUpperCase();
-                            return moduleSensors.includes(sensorType);
-                        });
-                        setOfflineSensors(sensorsOffline);
-                        let sensors: any = [];
-                        // for online sensors, perform TSDB fetch
-                        if (onlineTSDBData.length > 0 && !TSDBDataFetched) {
-                            onlineTSDBData.forEach((sensor: any, index: any) => {
-                                const format = sensor.id.split('-')[1];
-                                const sType = format.split(':')[0];
-                                const unit = determinUnit(sType);
-                                if (unit !== undefined) {
-                                    performTSDBFetch(homeID, sensors, sType, sensor.id, unit, onlineTSDBData);
-                                }
+                    modeAPI.getTSDBInfo(homeId).then((tsdbInfo: TimeSeriesInfo[]) => {
+                            // filter response initially by selected module
+                            const filteredTSDBData: any = tsdbInfo.filter((tsdbData: any): boolean => {
+                                return tsdbData.id.includes(selectedModule);
                             });
-                        }
-                    });
+                            // filter again for online sensors
+                            const onlineTSDBData: any = filteredTSDBData.filter((filteredData: any): boolean => {
+                                const sensorType = filteredData.id.split('-')[1].toUpperCase();
+                                return moduleSensors.includes(sensorType);
+                            });
+                            setOfflineSensors(sensorsOffline);
+                            let sensors: any = [];
+                            // for online sensors, perform TSDB fetch
+                            if (onlineTSDBData.length > 0 && !TSDBDataFetched) {
+                                onlineTSDBData.forEach((sensor: any, index: any) => {
+                                    const format = sensor.id.split('-')[1];
+                                    const sType = format.split(':')[0];
+                                    const unit = determinUnit(sType);
+                                    if (unit !== undefined) {
+                                        performTSDBFetch(homeId, sensors, sType, sensor.id, unit, onlineTSDBData);
+                                    }
+                                });
+                            }
+                        });
                 }).catch((error: ErrorResponse): void => {
-                        alert(`Unable to get sensor module setting because of this error '${error.message}'`);
-                        console.log(error);
-                    });
-                }
+                    alert(`Unable to get sensor module setting because of this error '${error.message}'`);
+                    console.log(error);
+                });
+            }
+
             // websocket message handler for RT data
             const webSocketMessageHandler: any = {
                 notify: (message: any): void => {
                     const moduleData = message;
-                    // if event is sensorModuleList, set fullSensorList
-                    if (moduleData.eventType === 'sensorModuleList') {
-                        if (selectedModule && moduleData.eventData.sensorModules[selectedModule]) {
-                            const sensorList = moduleData.eventData.sensorModules[selectedModule].sensors;
-                            setFullSensorList(sensorList);
-                        }
-                    }
                     // if app receives real time data, and it pertains to the selected Module:
-                    if (homeID && moduleData.eventType === 'realtimeData' 
+                    if (homeId && moduleData.eventType === 'realtimeData' 
                     && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule)) {
                         setNewWebsocketData(false);
                         const wsData = moduleData.eventData.timeSeriesData;
@@ -278,8 +272,8 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             return (): void => {
                 ModeConnection.removeObserver(webSocketMessageHandler);
             };
-    },  [activeSensors, editingModuleSettings, selectedGateway, 
-        selectedModule, TSDBDataFetched, graphTimespan, graphTimespanNumeric, newWebsocketData]);
+    },  [homeId, activeSensors, editingModuleSettings, selectedGateway, 
+        selectedModule, TSDBDataFetched, graphTimespan, graphTimespanNumeric]);
 
     const toggleModalVisibility = () => {
         if (modalVisible) {
@@ -346,7 +340,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
         let sensorSet: any = [];
         // set TSDB data flag to false
         setTSDBDataFetched(false);
-        AppContext.restoreLogin();
         modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
         .then((response: any) => {
             const homeID = response.id;
