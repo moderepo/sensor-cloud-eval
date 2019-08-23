@@ -30,6 +30,5 @@
     "webpack",
     "jest",
     "extracted",
-    "server.js"
   ]
 }
