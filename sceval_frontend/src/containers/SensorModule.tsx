@@ -146,7 +146,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             }
             if (gateway && sensorModule) {
                 // fetch module data from KV store
-                modeAPI.getDeviceKeyValueStore(gateway, `sensorModule${sensorModule}`)
+                modeAPI.getDeviceKeyValueStore(gateway, `${CONSTANTS.SENSOR_MODULE_KEY_PREFIX}${sensorModule}`)
                 .then((keyValueStore: KeyValueStore) => {
                     setSelectedSensorModuleObj(keyValueStore);
                     
