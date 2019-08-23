@@ -29,7 +29,7 @@
     "eject": "react-scripts eject",
     "start-js": "sh -ac '. ./.env; react-scripts-ts start'",
     "start": "npm-run-all -p watch-css start-js",
-    "build-js": "react-scripts-ts build && rm build/index.html",
+    "build-js": "react-scripts-ts build",
     "build": "npm-run-all build-css build-js",
     "build-env": "sh -ac '. ./.env; npm run build'",
     "build:production": "REACT_APP_ENV=production npm run build-env",
