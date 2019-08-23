@@ -145,7 +145,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     // for now, setting sensor module name to ID
                     setSensorModuleName(sensorModule);
                     // fetch module data from KV store
-                    modeAPI.getDeviceKeyValueStore(gateway, `sensorModule${sensorModule}`)
+                    modeAPI.getDeviceKeyValueStore(gateway, `${CONSTANTS.SENSOR_MODULE_KEY_PREFIX}${sensorModule}`)
                     .then((keyValueStore: KeyValueStore) => {
                         setSelectedSensorModuleObj(keyValueStore);
                         
@@ -162,9 +162,9 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         setOfflineSensors(sensorsOffline);
                         // getTSDB seriesID for the particular module 
                         modeAPI.getTSDBInfo(homeID)
-                        .then((tsdbResponse: any) => {  
+                        .then((tsdbResponse: TimeSeriesInfo[]) => {  
                             // filter response initially by selected module
-                            const filteredTSDBData: any = tsdbResponse.data.filter((tsdbData: any): boolean => {
+                            const filteredTSDBData: any = tsdbResponse.filter((tsdbData: any): boolean => {
                                 return tsdbData.id.includes(selectedModule);
                             });
                             // filter again for online sensors
