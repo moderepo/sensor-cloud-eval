@@ -7,13 +7,11 @@ interface ContextProviderProps extends React.Props<any> {}
 
 interface ContextAction {
     setGateway: (gatewayID: string) => void;
-    setWebsocket: (websocket: WebSocket) => void;
     setRTValues: (vals: any) => void;
 }
 
 interface ContextState  {
     selectedGateway: string;
-    webSocket: WebSocket;
     rtValues: Array<any>;
     devices: Array<any>;
 }
@@ -27,16 +25,11 @@ export const ContextProvider: React.FC<ContextProviderProps> = (
     props: ContextProviderProps
 ) => {
     const [selectedGateway, setSelectedGateway] = useState<string>('');
-    const [webSocket, setWebSocket] = useState();
     const [rtVals, setRTVals] = useState([]);
 
     const [devices, setDevices] = useState([]);
     const setGateway = (gatewayID: string) => {
         setSelectedGateway(gatewayID);
-    };
-
-    const setWebsocket = (websocket: WebSocket) => {
-        setWebSocket(websocket);
     };
 
     const setRealTimeValues = (vals: any) => {
@@ -45,7 +38,6 @@ export const ContextProvider: React.FC<ContextProviderProps> = (
 
     const values: ContextState = {
         selectedGateway: selectedGateway,
-        webSocket: webSocket,
         rtValues: rtVals,
         devices: devices
     };
@@ -72,7 +64,6 @@ export const ContextProvider: React.FC<ContextProviderProps> = (
                 state: values,
                 actions: {
                     setGateway: setGateway,
-                    setWebsocket: setWebsocket,
                     setRTValues: setRealTimeValues
                 }
             }}

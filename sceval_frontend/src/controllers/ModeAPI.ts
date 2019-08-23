@@ -4,7 +4,7 @@ import Home from './Home';
 import moment from 'moment';
 import User from './User';
 
-const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
+export const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 
 export interface RequestConfig extends AxiosRequestConfig {
 }
@@ -518,6 +518,22 @@ export class ModeAPI {
     try {
       const response: AxiosResponse<any> = await this.request(
         'DELETE', `homes/${homeID}/kv/${key}`, {}
+      );
+      return response.status;
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
+  }
+
+  /**
+   * Send a command to a device
+   * @param deviceID 
+   * @param params 
+   */
+  public async sendCommand (deviceID: string, params: any): Promise<number> {
+    try {
+      const response: AxiosResponse<any> = await this.request(
+        'PUT', `devices/${deviceID}/command`, params
       );
       return response.status;
     } catch (error) {

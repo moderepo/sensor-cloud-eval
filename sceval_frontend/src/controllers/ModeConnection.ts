@@ -1,10 +1,9 @@
-import { default as modeAPI } from './ModeAPI';
+import modeAPI, { MODE_API_BASE_URL, ErrorResponse, KeyValueStore } from './ModeAPI';
 import { ConcreteObservable } from './Observer';
 import Event from './Event';
 
-const MODE_API_BASE_URL = 'https://api.tinkermode.com';
 export class ModeConnection extends ConcreteObservable<Event> {
-  webSocket: WebSocket | null;
+  private webSocket: WebSocket | null;
 
   constructor() {
     super();
@@ -26,12 +25,11 @@ export class ModeConnection extends ConcreteObservable<Event> {
       }
     }
 
-    const apiUrl = MODE_API_BASE_URL + '/userSession/websocket?authToken=' + modeAPI.getAuthToken();
-    const wsUrl = apiUrl.replace(/^http/, 'ws');
+    const wsUrl: string =
+      `${MODE_API_BASE_URL.replace(/^http/, 'ws')}userSession/websocket?authToken=${modeAPI.getAuthToken()}`;
 
     this.webSocket = new WebSocket(wsUrl);
     this.webSocket.onmessage = this.onMessage;
-    return this.webSocket;
   }
 
   onMessage(messageEvent: MessageEvent) {
@@ -47,8 +45,9 @@ export class ModeConnection extends ConcreteObservable<Event> {
   }
 
   startSensor(home: any, sensor: any, deviceID: string): void {
-    const enableURL = MODE_API_BASE_URL + '/homes/' + home.id + '/kv/' + sensor.sensorModuleId;
-    const cmd = {
+    // TODO - Check if these info should be passed into this function instead and this function might not be neccessary
+    const store: KeyValueStore = {
+      key: `sensorModule${sensor.modelSpecificId}`,
       value: {
         gatewayID: deviceID,
         id: sensor.modelSpecificId,
@@ -59,60 +58,37 @@ export class ModeConnection extends ConcreteObservable<Event> {
         sensors: sensor.moduleSchema
       }
     };
-    modeAPI.request('PUT', enableURL, cmd)
-                    .then((response: any) => {
-                      return response;
-                    }).catch((reason: any) => {
-                      console.error('reason', reason);
-                    });
+
+    modeAPI.setHomeKeyValueStore(home.id, sensor.sensorModuleId, store)
+    .catch ((error: ErrorResponse): void => {
+      console.error('reason', error.message);
+    });
   }
 
-  getSensorData(deviceID: string): void {
-    const url = MODE_API_BASE_URL + '/devices/' + deviceID + '/command';
-    const cmd = {
+  getSensorTSData(deviceID: string): void {
+    modeAPI.sendCommand(deviceID, {
       action: 'timeSeriesData',
-    };
-
-    modeAPI.request('PUT', url, cmd)
-                    .then((response: any) => {
-                      return response;
-                    }).catch((reason: any) => {
-                      console.error('reason', reason);
-                    });
+    }).catch((error: ErrorResponse) => {
+      console.error('reason', error.message);
+    });
   }
 
   searchForSensorModules(deviceID: string): void {
-    const url = MODE_API_BASE_URL + '/devices/' + deviceID + '/command';
-    const cmd = {
+    modeAPI.sendCommand(deviceID, {
       action: 'startDiscovery',
       parameters: { timeout: 1000 }
-    };
-
-    modeAPI.request('PUT', url, cmd)
-                    .then((response: any) => {
-                      return response;
-                    }).catch((reason: any) => {
-                      console.error('reason', reason);
-                    });
+    }).catch((error: ErrorResponse) => {
+      console.error('reason', error.message);
+    });
   }
 
   listSensorModules(deviceID: string): void {
-    const url = MODE_API_BASE_URL + '/devices/' + deviceID + '/command';
-    const cmd = {
+    modeAPI.sendCommand(deviceID, {
       action: 'listSensorModules',
       parameters: { timeout: 1000 }
-    };
-
-    modeAPI.request('PUT', url, cmd)
-                    .then((response: any) => {
-                      return response;
-                    }).catch((reason: any) => {
-                      console.error('reason', reason);
-                    });
-  }
-
-  getConnection() {
-    return this.webSocket;
+    }).catch((error: ErrorResponse) => {
+      console.error('reason', error.message);
+    });
   }
 }
 

@@ -203,12 +203,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     deviceID: string,
     index: number
   ): React.ReactNode => {
-    const ws = ModeConnection.openConnection();
-    if (ws !== undefined) {
-      setTimeout(() => {
-        context.actions.setWebsocket(ws);
-      },         2000);
-    }
+    ModeConnection.openConnection();
     if (linkedModules && linkedModules[index]) {
       const sortedLinkedModules = linkedModules.sort(function(a: any, b: any) {
         if (a.device < b.device) {
