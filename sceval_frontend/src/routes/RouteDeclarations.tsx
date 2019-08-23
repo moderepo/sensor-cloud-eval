@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { Route, Redirect } from 'react-router-dom';
+import { LeftNav } from '../components/LeftNav';
 import { Login, ResetPassword, Register, Hardware, 
-  EmailSent, MyAccount, AddSensorModule } from '../containers/index';
+  EmailSent, MyAccount, AddSensorModule, SensorModule } from '../containers/index';
 export interface RouteDeclarationsProps {
   isSavedLoginPresent: boolean;
   isLoggedIn: boolean;
@@ -121,9 +122,9 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
           path="/sensor_modules/:id"
           component={() => (
             <>
-              <Hardware
+              <LeftNav />
+              <SensorModule
                 isLoggedIn={this.props.isLoggedIn}
-                onLogIn={this.props.onLogin}
               />
             </>
           )}
