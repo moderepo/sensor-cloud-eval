@@ -2,7 +2,7 @@
 
 # Sensor-Cloud-Eval
 
-Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be used as an evaluation kit by business partners and app developers.
+Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be used as an evaluation kit by business partners and app developers. The codebase outlines the latest SPA development design from React / Typescript, including Context and flux-style data flow, Hooks, Websockets, and more.
 
 ## Contents
 
@@ -47,11 +47,12 @@ $ git clone https://github.com/moderepo/sensor-cloud-eval.git
 
 3. You must have an account with the [Tinkermode Console](https://console.tinkermode.com/console/signup).
 
-4. If you don't already have npm and typescript installed, you will need to install both in order to run the application.
+4. If you don't already have npm and typescript installed, you will need to install both in order to run the application. You will also need at least `Node 8.16.0` or `Node 10.16.0` or later version on your local development machine. If you don't already have node, please navigate [here](https://nodejs.org/en/download/) to download the source code compatible with your machine.
 
 ```sh
 $ npm install -g npm
 $ npm install -g typescript
+$ npm install -g node
 ```
 
 ## Quick Start
