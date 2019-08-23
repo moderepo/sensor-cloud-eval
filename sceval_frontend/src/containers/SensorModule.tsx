@@ -37,7 +37,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const [activeSensors, setActiveSensors] = useState<any>(); // contains RT Websocket data
     const [newWebsocketData, setNewWebsocketData] = useState<boolean>(false);
     const [sensorTypes, setSensorTypes] = useState<Array<any>>(); // contains data from TSDB fetch
-    const [batteryPower, setBatteryPower] = useState<number>(0.1);
+    const [batteryPower, setBatteryPower] = useState<number>(0.1); // TODO: update battery power.
     const [graphTimespanNumeric, setGraphTimespanNumeric] = useState<any>(7);
     const [graphTimespan, setGraphTimespan] = useState<string>('days');
     const [fullSensorList, setFullSensorList] = useState();
@@ -125,107 +125,125 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
             .then((response: any) => {
                 homeID = response.id;
-                setMounted(true);
-                // get selected device and module
-                const gateway = sessionStorage.getItem('selectedGateway');
-                const sensorModule = sessionStorage.getItem('selectedModule');
-                setSelectedModule(sensorModule);
-                setSelectedGateway(gateway);
-                if (gateway !== null) {
-                    setTimeout(
-                        () => {
-                            // list sensor modules
-                            ModeConnection.listSensorModules(gateway);
-                        },
-                        1000
-                    );
-                }
-                if (gateway && sensorModule) {
-                    // for now, setting sensor module name to ID
-                    setSensorModuleName(sensorModule);
-                    // fetch module data from KV store
-                    modeAPI.getDeviceKeyValueStore(gateway, `sensorModule${sensorModule}`)
-                    .then((keyValueStore: KeyValueStore) => {
-                        setSelectedSensorModuleObj(keyValueStore);
-                        
-                        const moduleSensors = keyValueStore.value.sensors;
-                        // set name of sensor
-                        setSensorModuleName(keyValueStore.value.name);
-                        // set full sensor list and quantity
-                        setFullSensorList(moduleSensors);
-                        setActiveSensorQuantity(moduleSensors.length);
-                        // determine offline sensors
-                        let sensorsOffline: any = fullALPsList.filter((sensor: any, index: any): boolean => {
-                            return !keyValueStore.value.sensors.includes(sensor);
+            });
+            // restore login
+            AppContext.restoreLogin();
+            setMounted(true);
+            // get selected device and module
+            const gateway = sessionStorage.getItem('selectedGateway');
+            const sensorModule = sessionStorage.getItem('selectedModule');
+            setSelectedModule(sensorModule);
+            setSelectedGateway(gateway);
+            if (gateway !== null) {
+                setTimeout(
+                    () => {
+                        // list sensor modules
+                        ModeConnection.listSensorModules(gateway);
+                    },
+                    1000
+                );
+            }
+            if (gateway && sensorModule) {
+                // fetch module data from KV store
+                modeAPI.getDeviceKeyValueStore(gateway, `sensorModule${sensorModule}`)
+                .then((keyValueStore: KeyValueStore) => {
+                    setSelectedSensorModuleObj(keyValueStore);
+                    
+                    const moduleSensors = keyValueStore.value.sensors;
+                    // set name of sensor
+                    setSensorModuleName(keyValueStore.value.name);
+                    // set full sensor list and quantity
+                    setFullSensorList(moduleSensors);
+                    setActiveSensorQuantity(moduleSensors.length);
+                    // determine offline sensors
+                    let sensorsOffline: any = fullALPsList.filter((sensor: any): boolean => {
+                        return !keyValueStore.value.sensors.includes(sensor);
+                    });
+                    setOfflineSensors(sensorsOffline);
+
+                    modeAPI.getTSDBInfo(homeID).then((tsdbInfo: TimeSeriesInfo[]) => {
+                        // filter response initially by selected module
+                        const filteredTSDBData: any = tsdbInfo.filter((tsdbData: any): boolean => {
+                            return tsdbData.id.includes(selectedModule);
+                        });
+                        // filter again for online sensors
+                        const onlineTSDBData: any = filteredTSDBData.filter((filteredData: any): boolean => {
+                            const sensorType = filteredData.id.split('-')[1].toUpperCase();
+                            return moduleSensors.includes(sensorType);
                         });
                         setOfflineSensors(sensorsOffline);
-                        // getTSDB seriesID for the particular module 
-                        modeAPI.getTSDBInfo(homeID)
-                        .then((tsdbResponse: TimeSeriesInfo[]) => {  
-                            // filter response initially by selected module
-                            const filteredTSDBData: any = tsdbResponse.filter((tsdbData: any): boolean => {
-                                return tsdbData.id.includes(selectedModule);
+                        let sensors: any = [];
+                        // for online sensors, perform TSDB fetch
+                        if (onlineTSDBData.length > 0 && !TSDBDataFetched) {
+                            onlineTSDBData.forEach((sensor: any, index: any) => {
+                                const format = sensor.id.split('-')[1];
+                                const sType = format.split(':')[0];
+                                const unit = determinUnit(sType);
+                                if (unit !== undefined) {
+                                    performTSDBFetch(homeID, sensors, sType, sensor.id, unit, onlineTSDBData);
+                                }
                             });
-                            // filter again for online sensors
-                            const onlineTSDBData: any = filteredTSDBData.filter((filteredData: any): boolean => {
-                                const sensorType = filteredData.id.split('-')[1].toUpperCase();
-                                return moduleSensors.includes(sensorType) && 
-                                !sensorType.includes('ACCELERATION') && !sensorType.includes('MAGNETIC');
-                            });
-                            let sensors: any = [];
-                            // for online sensors, perform TSDB fetch
-                            if (onlineTSDBData.length > 0 && !TSDBDataFetched) {
-                                onlineTSDBData.forEach((sensor: any, index: any) => {
-                                    const format = sensor.id.split('-')[1];
-                                    const sType = format.split(':')[0];
-                                    const unit = determinUnit(sType);
-                                    if (unit !== undefined) {
-                                        performTSDBFetch(homeID, sensors, sType, sensor.id, unit, onlineTSDBData);
-                                    }
-                                });
-                            }
-                        });
-                    }).catch((error: ErrorResponse): void => {
+                        }
+                    });
+                }).catch((error: ErrorResponse): void => {
                         alert(`Unable to get sensor module setting because of this error '${error.message}'`);
                         console.log(error);
                     });
                 }
-                // websocket message handler for RT data
-                const webSocketMessageHandler: any = {
-                    notify: (message: any): void => {
-                        const moduleData = message;
-                        // if event is sensorModuleList, set fullSensorList
-                        if (moduleData.eventType === 'sensorModuleList') {
-                            if (selectedModule && moduleData.eventData.sensorModules[selectedModule]) {
-                                const sensorList = moduleData.eventData.sensorModules[selectedModule].sensors;
-                                setFullSensorList(sensorList);
-                            }
+            // websocket message handler for RT data
+            const webSocketMessageHandler: any = {
+                notify: (message: any): void => {
+                    const moduleData = message;
+                    // if event is sensorModuleList, set fullSensorList
+                    if (moduleData.eventType === 'sensorModuleList') {
+                        if (selectedModule && moduleData.eventData.sensorModules[selectedModule]) {
+                            const sensorList = moduleData.eventData.sensorModules[selectedModule].sensors;
+                            setFullSensorList(sensorList);
                         }
-                        // if app receives real time data, and it pertains to the selected Module:
-                        if (homeID && moduleData.eventType === 'realtimeData' 
-                        && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule) &&
-                        !moduleData.eventData.timeSeriesData[0].seriesId.includes('magnetic')) {
-                            const wsData = moduleData.eventData.timeSeriesData;
-                            let rtData: any = [];
-                            let rtNumbers: any = [];
-                            wsData.forEach((sensor: any, index: any) => {
-                                const format = sensor.seriesId.split('-')[1];
-                                // IMPORTANT: if user is choosing to view data from this sensor:
-                                if (!offlineSensors.includes(format.toUpperCase())) {
-                                    const sType = format.split(':')[0];
-                                    let unit = determinUnit(sType);
-                                    rtData.push({
-                                        seriesID: sensor.seriesId,
-                                        type: sType,
-                                        timestamp: sensor.timestamp,
-                                        rtValue: sensor.value
-                                    });
-                                    rtNumbers.push({
-                                        type: sType,
-                                        val: sensor.value
-                                    });
-                                    if (index === wsData.length - 1) { // if we have gone through all RT data:
-                                        const sortedRTData = rtData.sort((a: any, b: any) => {
+                    }
+                    // if app receives real time data, and it pertains to the selected Module:
+                    if (homeID && moduleData.eventType === 'realtimeData' 
+                    && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule)) {
+                        setNewWebsocketData(false);
+                        const wsData = moduleData.eventData.timeSeriesData;
+                        let rtData: any = [];
+                        let rtNumbers: any = [];
+                        wsData.forEach((sensor: any, index: any) => {
+                            const format = sensor.seriesId.split('-')[1];
+                            // IMPORTANT: if user is choosing to view data from this sensor:
+                            if (!offlineSensors.includes(format.toUpperCase())) {
+                                const sType = format.split(':')[0];
+                                rtData.push({
+                                    seriesID: sensor.seriesId,
+                                    type: sType,
+                                    timestamp: sensor.timestamp,
+                                    rtValue: sensor.value
+                                });
+                                rtNumbers.push({
+                                    type: sType,
+                                    val: sensor.value
+                                });
+                                if (index === wsData.length - 1) { // if we have gone through all RT data:
+                                    if (activeSensors) {
+                                        let updatedActiveArray: any = activeSensors;
+                                        rtData.forEach((newSensor: any) => {
+                                        // filter and check if activeSensors exists
+                                            const dataExists = activeSensors.filter((onlineSensor: any): boolean => {
+                                                return onlineSensor.type === newSensor.type;
+                                            });
+                                            // if the sensor already has previous data, update it
+                                            if (dataExists.length === 1) {
+                                                updatedActiveArray.forEach((updatedSensor: any) => {
+                                                    if (updatedSensor.type === newSensor.type) {
+                                                        updatedSensor.rtValue = newSensor.rtValue;
+                                                    }
+                                                });
+                                            } else { // otherwise just simply push to new array and update
+                                                updatedActiveArray.push(newSensor);
+                                            }
+                                        });
+                                        // after loop finishes, set active sensors to updated 
+                                        setActiveSensors(updatedActiveArray.sort((a: any, b: any) => {
                                             if (a.type < b.type) {
                                                 return -1;
                                             }
@@ -233,22 +251,35 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                                 return 1;
                                             }
                                             return 0;
-                                        });
-                                        sensorContext.actions.setRTValues(rtNumbers);                        
-                                        setActiveSensors(sortedRTData); // set real time data
+                                        })); 
+                                        setNewWebsocketData(true);
+                                    } else {
+                                        const sortedSensors = rtData.sort((a: any, b: any) => {
+                                            if (a.type < b.type) {
+                                                return -1;
+                                            }
+                                            if (a.type > b.type) {
+                                                return 1;
+                                            }
+                                            return 0;
+                                        }); 
+                                        sensorContext.actions.setRTValues(rtNumbers);   
+                                        setActiveSensors(sortedSensors); // set real time data
+                                        setNewWebsocketData(true);
                                     }
                                 }
-                            });
-                        }
+                            }
+                        });
                     }
-                };
-                ModeConnection.addObserver(webSocketMessageHandler);
-                // Return cleanup function to be called when the component is unmounted
-                return (): void => {
-                    ModeConnection.removeObserver(webSocketMessageHandler);
-                };
-            });
-    },  [editingModuleSettings, selectedGateway, selectedModule, TSDBDataFetched, graphTimespan, graphTimespanNumeric]);
+                }
+            };
+            ModeConnection.addObserver(webSocketMessageHandler);
+            // Return cleanup function to be called when the component is unmounted
+            return (): void => {
+                ModeConnection.removeObserver(webSocketMessageHandler);
+            };
+    },  [activeSensors, editingModuleSettings, selectedGateway, 
+        selectedModule, TSDBDataFetched, graphTimespan, graphTimespanNumeric, newWebsocketData]);
 
     const toggleModalVisibility = () => {
         if (modalVisible) {
@@ -566,13 +597,16 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                 > 
                                     <div className="unit-rt-container">
                                         <div className="header">
-                                            {sensor.type.toUpperCase()}
+                                            {sensor.type.replace(/_/g, ' ').toUpperCase()}
                                         </div>
                                         { activeSensors && sensorTypes ?
                                         <Fragment>
                                             <div className="unit-value">
-                                                {sensorTypes[index] ?
-                                                    sensor.type === 'pressure' ?
+                                                {
+                                                activeSensors[index] &&
+                                                activeSensors[index].type === sensor.type && 
+                                                activeSensors[index].rtValue ?
+                                                    activeSensors[index].type === 'pressure' ?
                                                     activeSensors[index].rtValue.toFixed(1) :
                                                     activeSensors[index].rtValue.toFixed(2) :
                                                     <img src={loader} />
