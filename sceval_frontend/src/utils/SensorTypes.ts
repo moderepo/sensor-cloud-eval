@@ -12,6 +12,18 @@ export default function determineUnit(sensorType: string) {
             return 'mW/cm²';
         case 'sound':
             return 'dB';
+        case 'magnetic_x':
+            return 'N';
+        case 'magnetic_y':
+            return 'N';
+        case 'magnetic_z':
+            return 'N';
+        case 'acceleration_x':
+          return 'm/s²';
+        case 'acceleration_y':
+          return 'm/s²';
+        case 'acceleration_z':
+          return 'm/s²';
         case 'omron_discomfort':
             return '';
         case 'omron_heatstroke':
@@ -46,6 +58,7 @@ export function evaluateSensorTypes(sensorType: any): string | undefined {
       case 'PRESSURE':
         return sensorPressure;
       case 'MAGNETIC_X':
+        
       case 'MAGNETIC_Y':
       case 'MAGNETIC_Z':
         return sensorMagnetic;

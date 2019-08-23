@@ -43,7 +43,7 @@
                 background-color: white;
                 border: solid 1px #b5c0d8;
                 border-radius: 2px;
-                min-width: 500px;
+                min-width: 550px;
                 margin-right: 20px;
 
                 .dropdown-menu {
@@ -72,7 +72,6 @@
                 .info-section {
                     padding-top: 20px;
                     float: left;
-                    text-align: center;
                     .device-name {
                         overflow: hidden;
                         text-overflow: ellipsis;
@@ -123,6 +122,10 @@
                     font-size: 25px;
                     font-family: "ProximaNova", "Helvetica Neue", Helvetica, Arial, sans-serif;
                     font-weight: 800; 
+                }
+                .sensing {
+                    padding-top: 8px;
+                    font-size: 25px;
                 }
             }
         }
@@ -227,6 +230,7 @@
     .sensor-module-form {
         text-align: center;
         .label-title {
+            display: block;
             color: #292e34;
             font-weight: 600;
         }

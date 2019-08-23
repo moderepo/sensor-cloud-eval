@@ -1,15 +1,15 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import * as am4core from '@amcharts/amcharts4/core';
 import * as am4charts from '@amcharts/amcharts4/charts';
 import am4themes_animated from '@amcharts/amcharts4/themes/animated';
 import moment from 'moment';
-import { ContextConsumer, Context } from '../context/Context';
+import { Context, context } from '../context/Context';
+import { TimeSeriesData } from '../controllers/ModeAPI';
 am4core.useTheme(am4themes_animated);
 
 interface AmChartProps extends React.Props<any> {
     identifier: string;
     TSDB: SensorDataBundle;
-    websocketRT: any;
     newWebsocketData: (value: boolean) => void;
     timespanNumeric: number;
     timespan: string;
@@ -17,18 +17,7 @@ interface AmChartProps extends React.Props<any> {
 interface SensorDataBundle {
     unit: string;
     type: string;
-    TSDBData: TSDBDataBase;
-}
-
-interface TSDBDataBase {
-    aggregation: string;
-    begin: string;
-    data: Array<any>;
-    end: string;
-    resolution: string;
-    seriesId: string;
-    type: string;
-    unit: string;
+    TSDBData: TimeSeriesData;
 }
 
 export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
@@ -38,24 +27,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     const [latestRTVal, setlatestRTVal] = useState();
     const [latestDate, setlatestDate] = useState();
     const [sensorChart, setSensorChart] = useState<am4charts.XYChart>();
-    
-    const AddRTData = (chart: am4charts.XYChart, context: Context): void => {
-        let update = true;
-        setInterval(
-            () => {
-                const sData = context.state.rtValues.filter((sensor: any) => {
-                    return sensor.type === props.TSDB.type;
-                });
-                if (update) {
-                    chart.removeData(1);
-                    chart.addData({date: moment().toISOString(), 
-                        value: sData[0].val.toFixed(2)});
-                    update = false;
-                }
-            },
-            2000
-        );
-    };
+    const sensorContext: Context = useContext(context);
 
     useEffect(
         () => {
@@ -131,7 +103,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
             chart.scrollbarX = scrollbarX;
 
             // graph smoothness
-            series.tensionX = 0.77;
+            // series.tensionX = 0.77;
             dateAxis.renderer.grid.template.strokeOpacity = 0.07;
             valueAxis.renderer.grid.template.strokeOpacity = 0.07;
             return function cleanup() {
@@ -144,15 +116,21 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
         []
     );
 
-    return (
-        <ContextConsumer>
-        {(context: Context) =>
-          context && (
-        <div>
-            {
-                sensorChart && props.timespan === 'real-time' &&  // add real time  data if on real-time scale
-                    AddRTData(sensorChart, context)
+    useEffect (
+        () => {
+            // Listen to the sensorChart, timespan, and rtValues changes and update the chart
+            // data but only for real-time data view
+            if (props.timespan === 'real-time' && sensorChart && sensorContext.state.rtValues) {
+                const sData = sensorContext.state.rtValues.filter((sensor: any) => {
+                    return sensor.type === props.TSDB.type;
+                });
+                sensorChart.removeData(1);
+                sensorChart.addData({date: moment().toISOString(), value: sData[0].val.toFixed(2)});
             }
+    },  [sensorChart, props.timespan, sensorContext.state.rtValues]);
+
+    return (
+        <div>
             <div 
                 onClick={() => {
                     if (!expandedMode) {
@@ -175,9 +153,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
             </button>
             }
         </div>
-        )
-    }
-    </ContextConsumer>
     );
 };
 
