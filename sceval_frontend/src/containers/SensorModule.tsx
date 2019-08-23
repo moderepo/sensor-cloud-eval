@@ -17,7 +17,6 @@ const backArrow = require('../common_images/navigation/back.svg');
 const fullALPsList = ['TEMPERATURE:0', 'HUMIDITY:0', 'UV:0', 'PRESSURE:0', 'AMBIENT:0', 
     'MAGNETIC_X:0', 'ACCELERATION_Y:0', 'ACCELERATION_Z:0', 'MAGNETIC_Y:0', 
     'MAGNETIC_Z:0', 'ACCELERATION_X:0'];
-const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 
 interface SensorModuleProps extends React.Props<any> {
     isLoggedIn: boolean;
@@ -117,6 +116,10 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     // React hook's componentDidMount and componentDidUpdate
     useEffect(
         () => {
+            // restore login
+            AppContext.restoreLogin();
+            // open new connection for refresh
+            ModeConnection.openConnection(); 
             // set home id
             let homeID = '';
             modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
@@ -141,8 +144,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 );
             }
             if (gateway && sensorModule) {
-                // for now, setting sensor module name to ID
-                setSensorModuleName(sensorModule);
                 // fetch module data from KV store
                 modeAPI.getDeviceKeyValueStore(gateway, `sensorModule${sensorModule}`)
                 .then((keyValueStore: KeyValueStore) => {
@@ -170,6 +171,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                             const sensorType = filteredData.id.split('-')[1].toUpperCase();
                             return moduleSensors.includes(sensorType);
                         });
+                        setOfflineSensors(sensorsOffline);
                         let sensors: any = [];
                         // for online sensors, perform TSDB fetch
                         if (onlineTSDBData.length > 0 && !TSDBDataFetched) {
@@ -184,10 +186,10 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         }
                     });
                 }).catch((error: ErrorResponse): void => {
-                    alert(`Unable to get sensor module setting because of this error '${error.message}'`);
-                    console.log(error);
-                });
-            }
+                        alert(`Unable to get sensor module setting because of this error '${error.message}'`);
+                        console.log(error);
+                    });
+                }
             // websocket message handler for RT data
             const webSocketMessageHandler: any = {
                 notify: (message: any): void => {
@@ -202,7 +204,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     // if app receives real time data, and it pertains to the selected Module:
                     if (homeID && moduleData.eventType === 'realtimeData' 
                     && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule)) {
-                        console.log('received real time event');
                         setNewWebsocketData(false);
                         const wsData = moduleData.eventData.timeSeriesData;
                         let rtData: any = [];
@@ -212,7 +213,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                             // IMPORTANT: if user is choosing to view data from this sensor:
                             if (!offlineSensors.includes(format.toUpperCase())) {
                                 const sType = format.split(':')[0];
-                                let unit = determinUnit(sType);
                                 rtData.push({
                                     seriesID: sensor.seriesId,
                                     type: sType,
@@ -224,7 +224,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                     val: sensor.value
                                 });
                                 if (index === wsData.length - 1) { // if we have gone through all RT data:
-                                    let updatedSensorData: any = activeSensors;
                                     if (activeSensors) {
                                         let updatedActiveArray: any = activeSensors;
                                         rtData.forEach((newSensor: any) => {
