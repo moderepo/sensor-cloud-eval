@@ -40,25 +40,27 @@ export interface ErrorResponse {
   status: number;
 }
 
-export const MODE_CONSTANTS: any = Object.freeze({
-  MODE_API_BASE_URL: 'https://api.tinkermode.com/',
+export class MODECONSTANTS {
+  public static MODE_API_BASE_URL: string = 'https://api.tinkermode.com/';
   
-  EVENT_DEVICE_CONNECTED: '_deviceConnected_',
-  EVENT_DEVICE_DISCONNECTED: '_deviceDisconnected_',
-  EVENT_KEY_VALUE_SAVED: '_keyValueSaved_',
+  public static EVENT_DEVICE_CONNECTED: string = '_deviceConnected_';
+  public static EVENT_DEVICE_DISCONNECTED: string = '_deviceDisconnected_';
+  public static EVENT_KEY_VALUE_SAVED: string = '_keyValueSaved_';
 
-  ERROR_UNKNOWN_EMAIL: 'UNKNOWN_EMAIL',
-  ERROR_INVALID_EMAIL: 'INVALID_EMAIL',
-  ERROR_CONNECTION_ERROR: 'CONNECTION_ERROR',
-  ERROR_INVALID_TOKEN: 'INVALID_TOKEN',
-  ERROR_INCORRECT_PASSWORD: 'INCORRECT_PASSWORD',
-  ERROR_PASSWORD_TOO_SHORT: 'PASSWORD_TOO_SHORT',
-  ERROR_PASSWORD_TOO_WEAK: 'PASSWORD_TOO_WEAK',
-  ERROR_EXCEEDED_MAX_USERS: 'EXCEEDED_MAX_USERS',
-  ERROR_USER_EXISTS_UNVERIFIED: 'USER_EXISTS_UNVERIFIED',
-  ERROR_USER_EXISTS: 'USER_EXISTS',
-  ERROR_USER_UNVERIFIED: 'USER_UNVERIFIED',
-});
+  public static ERROR_UNKNOWN_EMAIL: string = 'UNKNOWN_EMAIL';
+  public static ERROR_INVALID_EMAIL: string = 'INVALID_EMAIL';
+  public static ERROR_CONNECTION_ERROR: string = 'CONNECTION_ERROR';
+  public static ERROR_INVALID_TOKEN: string = 'INVALID_TOKEN';
+  public static ERROR_INCORRECT_PASSWORD: string = 'INCORRECT_PASSWORD';
+  public static ERROR_PASSWORD_TOO_SHORT: string = 'PASSWORD_TOO_SHORT';
+  public static ERROR_PASSWORD_TOO_WEAK: string = 'PASSWORD_TOO_WEAK';
+  public static ERROR_EXCEEDED_MAX_USERS: string = 'EXCEEDED_MAX_USERS';
+  public static ERROR_USER_EXISTS_UNVERIFIED: string = 'USER_EXISTS_UNVERIFIED';
+  public static ERROR_USER_EXISTS: string = 'USER_EXISTS';
+  public static ERROR_USER_UNVERIFIED: string = 'USER_UNVERIFIED';
+
+  private constructor () {}
+}
 
 export class ModeAPI {
   private baseUrl: string;
@@ -168,7 +170,7 @@ export class ModeAPI {
 
   // Make a REST request. For POST/PUT/PATCH requests, body is encoded as JSON.
   public request<T>(method: Method, path: string, data: string | Object, withCredentials?: boolean) {
-    const config: any = this._initRequest(method, `${MODE_CONSTANTS.MODE_API_BASE_URL}${path}`, withCredentials);
+    const config: any = this._initRequest(method, `${MODECONSTANTS.MODE_API_BASE_URL}${path}`, withCredentials);
     if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
       config.data = data;
     } else {
@@ -182,7 +184,7 @@ export class ModeAPI {
 
   // Make a POST request as a web form submission.
   public postForm<T>(path: string, postData: Object) {
-    const config: any = this._initRequest('POST', `${MODE_CONSTANTS.MODE_API_BASE_URL}${path}`, false);
+    const config: any = this._initRequest('POST', `${MODECONSTANTS.MODE_API_BASE_URL}${path}`, false);
 
     config.data = postData;
     config.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
