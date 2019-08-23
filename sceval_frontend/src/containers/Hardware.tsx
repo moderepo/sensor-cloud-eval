@@ -1,7 +1,7 @@
 import React, { Fragment, useState, useEffect } from 'react';
 import { Redirect, RouteComponentProps, withRouter } from 'react-router';
 import { LeftNav } from '../components/LeftNav';
-import modeAPI, { ModeAPI, KeyValueStore, ErrorResponse, MODE_CONSTANTS } from '../controllers/ModeAPI';
+import modeAPI, { ModeAPI, KeyValueStore, ErrorResponse, MODECONSTANTS } from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import AppContext from '../controllers/AppContext';
 import SensorModuleSet, { SensorModuleInterface } from '../components/entities/SensorModule';
@@ -79,7 +79,9 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     // data for the module that triggered the event.
     const messageHandler: any = {
       notify: (message: any): void => {
-        if (message.eventType === MODE_CONSTANTS.KEY_VALUE_SAVED && message.eventData && linkedModules !== undefined) {
+        if (message.eventType === MODECONSTANTS.EVENT_KEY_VALUE_SAVED &&
+          message.eventData && linkedModules !== undefined) {
+
           // message.eventData will be the key/value store for the sensorModule
           const updatedSensorModule: SensorModuleInterface = message.eventData;
 
