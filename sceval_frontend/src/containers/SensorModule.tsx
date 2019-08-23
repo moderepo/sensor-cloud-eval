@@ -160,11 +160,10 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                         });
                         setOfflineSensors(sensorsOffline);
                         // getTSDB seriesID for the particular module 
-                        const TSDBURL = `${MODE_API_BASE_URL}homes/${homeID}/smartModules/tsdb/timeSeries`;
-                        modeAPI.request('GET', TSDBURL, {})
-                        .then((tsdbResponse: any) => {  
+                        modeAPI.getTSDBInfo(homeID)
+                        .then((tsdbResponse: TimeSeriesInfo[]) => {  
                             // filter response initially by selected module
-                            const filteredTSDBData: any = tsdbResponse.data.filter((tsdbData: any): boolean => {
+                            const filteredTSDBData: any = tsdbResponse.filter((tsdbData: any): boolean => {
                                 return tsdbData.id.includes(selectedModule);
                             });
                             // filter again for online sensors
