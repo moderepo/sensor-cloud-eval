@@ -2,6 +2,7 @@ import Axios, { Method } from 'axios';
 import { AxiosRequestConfig, AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 import Home from './Home';
 import moment from 'moment';
+import User from './User';
 
 const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 
@@ -18,7 +19,7 @@ export interface Device {
 
 export interface KeyValueStore {
   key: string;
-  modificationTime: string;
+  modificationTime?: string;
   value: any;
 }
 
@@ -75,7 +76,11 @@ export class ModeAPI {
     let status: number = 400;
 
     if (error && error.response && error.response.data) {
-      message = error.response.data;
+      if (typeof error.response.data === 'object' && error.response.data.reason) {
+        message = error.response.data.reason;
+      } else {
+        message = error.response.data.toString();
+      }
     } else if (error && error.message) {
       message = error.message;
     }
@@ -174,6 +179,99 @@ export class ModeAPI {
     };
 
     return this.axios.request<T>(config);
+  }
+
+  /**
+   * 
+   * @param projectId Register a new user account
+   * @param name 
+   * @param email 
+   * @param password 
+   */
+  public async registerUser (projectId: number, name: string, email: string, password: string): Promise <User> {
+    try {
+      const params: any = {
+        projectId: projectId,
+        name: name,
+        email: email,
+        password: password,
+      };
+
+      const response: AxiosResponse<any> = await this.request('POST', `${MODE_API_BASE_URL}users`, params);
+      return response.data as User;
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
+  }
+
+  /**
+   * Log user in
+   * @param projectId
+   * @param appId 
+   * @param email 
+   * @param password 
+   */
+  public async login (projectId: number, appId: string, email: string, password: string): Promise<any> {
+    try {
+      const params: any = {
+        projectId: projectId,
+        appId: appId,
+        email: email,
+        password: password,
+      };
+
+      const response: AxiosResponse<any> = await this.postForm(`${MODE_API_BASE_URL}auth/user`, params);
+      return response.data;
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
+  }
+
+  /**
+   * Get user profile info
+   */
+  public async getUserInfo (userId: number): Promise<User> {
+    try {
+      const response: AxiosResponse<any> = await this.request('GET', `${MODE_API_BASE_URL}users/${userId}`, {});
+      return response.data as User;
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
+  }
+
+  /**
+   * 
+   * @param userId Update user info
+   * @param params Should only contain the fields and values that need to be updated, not the entire User object
+   */
+  public async updateUserInfo (userId: string, params: any): Promise<number> {
+    try {
+      const response: AxiosResponse<any> = await this.request('PATCH', `${MODE_API_BASE_URL}users/${userId}`, params);
+      return response.status;
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
+  }
+
+  /**
+   * Reset user password
+   * @param projectId
+   * @param email 
+   */
+  public async resetPassword (projectId: number, email: string): Promise<number> {
+    try {
+      const response: AxiosResponse<any> = await this.request(
+        'POST',
+        `${MODE_API_BASE_URL}auth/user/passwordReset/start`,
+        {
+          projectId: projectId,
+          email: email
+        }
+      );
+      return response.status;
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
   }
 
   public async getHomes(userId: number): Promise<Home[]> {

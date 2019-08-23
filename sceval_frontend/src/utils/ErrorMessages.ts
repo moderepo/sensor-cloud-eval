@@ -31,6 +31,9 @@ export default function handleErrors(reason: string): string {
         case 'USER_EXISTS': 
             transformedErr =  'This email address has already been used.';
             break;
+        case 'USER_UNVERIFIED':
+            transformedErr =  'User has not verified.';
+            break;
         default:
             break;
     }
