@@ -49,7 +49,6 @@ export class MODECONSTANTS {
 
   public static ERROR_UNKNOWN_EMAIL: string = 'UNKNOWN_EMAIL';
   public static ERROR_INVALID_EMAIL: string = 'INVALID_EMAIL';
-  public static ERROR_CONNECTION_ERROR: string = 'CONNECTION_ERROR';
   public static ERROR_INVALID_TOKEN: string = 'INVALID_TOKEN';
   public static ERROR_INCORRECT_PASSWORD: string = 'INCORRECT_PASSWORD';
   public static ERROR_PASSWORD_TOO_SHORT: string = 'PASSWORD_TOO_SHORT';

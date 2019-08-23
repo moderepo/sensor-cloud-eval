@@ -1,4 +1,5 @@
 import { MODECONSTANTS } from '../controllers/ModeAPI';
+import { CONSTANTS } from './Constants';
 
 export default function handleErrors(reason: string): string {
     let transformedErr =  '';
@@ -9,7 +10,7 @@ export default function handleErrors(reason: string): string {
         case MODECONSTANTS.ERROR_INVALID_EMAIL:
             transformedErr = 'You entered an invalid email.';
             break;
-        case MODECONSTANTS.ERROR_CONNECTION_ERROR:
+        case CONSTANTS.ERROR_CONNECTION_ERROR:
             transformedErr = 'We\re having trouble processing your request.';
             break;
         case MODECONSTANTS.ERROR_INVALID_TOKEN:
