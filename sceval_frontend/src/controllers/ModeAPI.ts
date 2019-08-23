@@ -46,7 +46,10 @@ export class MODECONSTANTS {
   public static EVENT_DEVICE_CONNECTED: string = '_deviceConnected_';
   public static EVENT_DEVICE_DISCONNECTED: string = '_deviceDisconnected_';
   public static EVENT_KEY_VALUE_SAVED: string = '_keyValueSaved_';
-
+  public static EVENT_KEY_VALUE_DELETED: string = '_keyValueDeleted_';
+  public static EVENT_DEVICE_KEY_VALUE_SAVED: string = '_deviceKVSaved_';
+  public static EVENT_DEVICE_KEY_VALUE_DELETED: string = '_deviceKVDeleted_';
+  
   public static ERROR_UNKNOWN_EMAIL: string = 'UNKNOWN_EMAIL';
   public static ERROR_INVALID_EMAIL: string = 'INVALID_EMAIL';
   public static ERROR_INVALID_TOKEN: string = 'INVALID_TOKEN';
