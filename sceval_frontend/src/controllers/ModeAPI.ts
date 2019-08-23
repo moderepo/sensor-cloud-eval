@@ -543,7 +543,7 @@ export class ModeAPI {
 
   private makeHome() {
     if (this.makeHomePromise === null) {
-      this.makeHomePromise = this.request('POST', '/homes', {name: 'home'})
+      this.makeHomePromise = this.request('POST', 'homes', {name: 'home'})
         .then((response: any) => {
           console.log('POST /homes success');
           this.defaultHome = response.data;
