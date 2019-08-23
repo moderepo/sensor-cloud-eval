@@ -10,6 +10,7 @@ import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
 import ModeConnection  from '../controllers/ModeConnection';
 import determinUnit from '../utils/SensorTypes';
 import { SensorModuleInterface } from '../components/entities/SensorModule';
+import { CONSTANTS } from '../utils/Constants';
 
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
@@ -143,7 +144,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 // for now, setting sensor module name to ID
                 setSensorModuleName(sensorModule);
                 // fetch module data from KV store
-                modeAPI.getDeviceKeyValueStore(gateway, `sensorModule${sensorModule}`)
+                modeAPI.getDeviceKeyValueStore(gateway, `${CONSTANTS.SENSOR_MODULE_KEY_PREFIX}${sensorModule}`)
                 .then((keyValueStore: KeyValueStore) => {
                     setSelectedSensorModuleObj(keyValueStore);
                     
@@ -193,14 +194,14 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 notify: (message: any): void => {
                     const moduleData = message;
                     // if event is sensorModuleList, set fullSensorList
-                    if (moduleData.eventType === 'sensorModuleList') {
+                    if (moduleData.eventType === CONSTANTS.EVENT_SENSOR_MODULE_LIST) {
                         if (selectedModule && moduleData.eventData.sensorModules[selectedModule]) {
                             const sensorList = moduleData.eventData.sensorModules[selectedModule].sensors;
                             setFullSensorList(sensorList);
                         }
                     }
                     // if app receives real time data, and it pertains to the selected Module:
-                    if (homeID && moduleData.eventType === 'realtimeData' 
+                    if (homeID && moduleData.eventType === CONSTANTS.EVENT_REALTIME_DATA 
                     && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule) &&
                     !moduleData.eventData.timeSeriesData[0].seriesId.includes('magnetic')) {
                         const wsData = moduleData.eventData.timeSeriesData;

@@ -1,4 +1,4 @@
-import modeAPI, { MODE_API_BASE_URL, ErrorResponse, KeyValueStore } from './ModeAPI';
+import modeAPI, { MODE_CONSTANTS, ErrorResponse, KeyValueStore } from './ModeAPI';
 import { ConcreteObservable } from './Observer';
 import Event from './Event';
 
@@ -25,8 +25,8 @@ export class ModeConnection extends ConcreteObservable<Event> {
       }
     }
 
-    const wsUrl: string =
-      `${MODE_API_BASE_URL.replace(/^http/, 'ws')}userSession/websocket?authToken=${modeAPI.getAuthToken()}`;
+    const baseUrl: string = MODE_CONSTANTS.MODE_API_BASE_URL.replace(/^http/, 'ws');
+    const wsUrl: string = `${baseUrl}userSession/websocket?authToken=${modeAPI.getAuthToken()}`;
 
     this.webSocket = new WebSocket(wsUrl);
     this.webSocket.onmessage = this.onMessage;

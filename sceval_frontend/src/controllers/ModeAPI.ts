@@ -4,8 +4,6 @@ import Home from './Home';
 import moment from 'moment';
 import User from './User';
 
-export const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
-
 export interface RequestConfig extends AxiosRequestConfig {
 }
 
@@ -41,6 +39,26 @@ export interface ErrorResponse {
   message: string;
   status: number;
 }
+
+export const MODE_CONSTANTS: any = Object.freeze({
+  MODE_API_BASE_URL: 'https://api.tinkermode.com/',
+  
+  EVENT_DEVICE_CONNECTED: '_deviceConnected_',
+  EVENT_DEVICE_DISCONNECTED: '_deviceDisconnected_',
+  EVENT_KEY_VALUE_SAVED: '_keyValueSaved_',
+
+  ERROR_UNKNOWN_EMAIL: 'UNKNOWN_EMAIL',
+  ERROR_INVALID_EMAIL: 'INVALID_EMAIL',
+  ERROR_CONNECTION_ERROR: 'CONNECTION_ERROR',
+  ERROR_INVALID_TOKEN: 'INVALID_TOKEN',
+  ERROR_INCORRECT_PASSWORD: 'INCORRECT_PASSWORD',
+  ERROR_PASSWORD_TOO_SHORT: 'PASSWORD_TOO_SHORT',
+  ERROR_PASSWORD_TOO_WEAK: 'PASSWORD_TOO_WEAK',
+  ERROR_EXCEEDED_MAX_USERS: 'EXCEEDED_MAX_USERS',
+  ERROR_USER_EXISTS_UNVERIFIED: 'USER_EXISTS_UNVERIFIED',
+  ERROR_USER_EXISTS: 'USER_EXISTS',
+  ERROR_USER_UNVERIFIED: 'USER_UNVERIFIED',
+});
 
 export class ModeAPI {
   private baseUrl: string;
@@ -150,7 +168,7 @@ export class ModeAPI {
 
   // Make a REST request. For POST/PUT/PATCH requests, body is encoded as JSON.
   public request<T>(method: Method, path: string, data: string | Object, withCredentials?: boolean) {
-    const config: any = this._initRequest(method, `${MODE_API_BASE_URL}${path}`, withCredentials);
+    const config: any = this._initRequest(method, `${MODE_CONSTANTS.MODE_API_BASE_URL}${path}`, withCredentials);
     if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
       config.data = data;
     } else {
@@ -164,7 +182,7 @@ export class ModeAPI {
 
   // Make a POST request as a web form submission.
   public postForm<T>(path: string, postData: Object) {
-    const config: any = this._initRequest('POST', `${MODE_API_BASE_URL}${path}`, false);
+    const config: any = this._initRequest('POST', `${MODE_CONSTANTS.MODE_API_BASE_URL}${path}`, false);
 
     config.data = postData;
     config.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
