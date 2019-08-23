@@ -15,7 +15,6 @@ const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const checkMark = require('../common_images/notifications/check-1.svg');
 const addModule1 = require('../common_images/add-module-1.svg');
 const addModule2 = require('../common_images/add-module-2.svg');
-const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 interface AddSensorModuleProps extends React.Props<any> {
     isLoggedIn: boolean;
     onLogIn: () => void;

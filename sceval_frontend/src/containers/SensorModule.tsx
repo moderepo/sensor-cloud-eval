@@ -17,7 +17,6 @@ const backArrow = require('../common_images/navigation/back.svg');
 const fullALPsList = ['TEMPERATURE:0', 'HUMIDITY:0', 'UV:0', 'PRESSURE:0', 'AMBIENT:0', 
     'MAGNETIC_X:0', 'ACCELERATION_Y:0', 'ACCELERATION_Z:0', 'MAGNETIC_Y:0', 
     'MAGNETIC_Z:0', 'ACCELERATION_X:0'];
-const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 
 interface SensorModuleProps extends React.Props<any> {
     isLoggedIn: boolean;

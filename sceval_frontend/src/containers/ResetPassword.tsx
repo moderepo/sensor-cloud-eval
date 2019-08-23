@@ -6,8 +6,6 @@ import modeAPI, { ErrorResponse } from '../controllers/ModeAPI';
 
 const emailSent = require('../common_images/email_sent.svg');
 
-const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
-
 const ResetPassword: React.FC = () => {
     const [input, setInput] = useState(''),
         [emailValid, setEmailValid] = useState(false),

@@ -17,7 +17,6 @@ const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const deviceImage = require('../common_images/devices/gateway.svg');
 const deviceLocation = require('../common_images/devices/location-pin.svg');
 
-const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 interface HardwareProps extends React.Props<any> {
   isLoggedIn: boolean;
   onLogIn: () => void;
