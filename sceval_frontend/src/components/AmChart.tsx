@@ -124,8 +124,10 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
                 const sData = sensorContext.state.rtValues.filter((sensor: any) => {
                     return sensor.type === props.TSDB.type;
                 });
-                sensorChart.removeData(1);
-                sensorChart.addData({date: moment().toISOString(), value: sData[0].val.toFixed(2)});
+                if (sData.length > 0) {
+                    sensorChart.removeData(1);
+                    sensorChart.addData({date: moment().toISOString(), value: sData[0].val.toFixed(2)});
+                }
             }
     },  [sensorChart, props.timespan, sensorContext.state.rtValues]);
 
