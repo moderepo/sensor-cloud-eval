@@ -37,7 +37,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const [activeSensors, setActiveSensors] = useState<any>(); // contains RT Websocket data
     const [newWebsocketData, setNewWebsocketData] = useState<boolean>(false);
     const [sensorTypes, setSensorTypes] = useState<Array<any>>(); // contains data from TSDB fetch
-    const [batteryPower, setBatteryPower] = useState<number>(0.1);
+    const [batteryPower, setBatteryPower] = useState<number>(0.1); // TODO: update battery power.
     const [graphTimespanNumeric, setGraphTimespanNumeric] = useState<any>(7);
     const [graphTimespan, setGraphTimespan] = useState<string>('days');
     const [fullSensorList, setFullSensorList] = useState();
@@ -156,7 +156,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     setFullSensorList(moduleSensors);
                     setActiveSensorQuantity(moduleSensors.length);
                     // determine offline sensors
-                    let sensorsOffline: any = fullALPsList.filter((sensor: any, index: any): boolean => {
+                    let sensorsOffline: any = fullALPsList.filter((sensor: any): boolean => {
                         return !keyValueStore.value.sensors.includes(sensor);
                     });
                     setOfflineSensors(sensorsOffline);
