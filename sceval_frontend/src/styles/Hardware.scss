@@ -105,6 +105,12 @@
                     }
                 }
             }
+
+            &.no-device {
+                min-height: auto;
+                padding: 20px;
+                font-size: 20px;
+            }
         }
         .editing-gateway {
             background-color: #ddecf8;

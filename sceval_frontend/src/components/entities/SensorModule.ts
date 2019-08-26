@@ -1,6 +1,6 @@
-import { KeyValueStore } from '../../controllers/ModeAPI';
+import { KeyValueStore, Device } from '../../controllers/ModeAPI';
 export default interface SensorModuleSet {
-    device: string;
+    device: Device;
     sensorModules: Array<SensorModuleInterface>;
 }
 

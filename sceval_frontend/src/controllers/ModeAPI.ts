@@ -352,7 +352,7 @@ export class ModeAPI {
    * metadata data, not the actuel time series data.
    * @param homeID
    */
-  public async getTSDBInfo (homeID: string): Promise<TimeSeriesInfo[]> {
+  public async getTSDBInfo (homeID: number): Promise<TimeSeriesInfo[]> {
     try {
       const response: AxiosResponse<any> = await this.request(
         'GET', `homes/${homeID}/smartModules/tsdb/timeSeries`, {});
@@ -371,7 +371,7 @@ export class ModeAPI {
    * @param aggregation 
    */
   public async getTSDBData (
-      homeID: string, seriesID: string, startTime: string, endTime: string, aggregation: string = 'avg'
+      homeID: number, seriesID: string, startTime: string, endTime: string, aggregation: string = 'avg'
     ): Promise<TimeSeriesData> {
 
     try {
@@ -391,7 +391,7 @@ export class ModeAPI {
    * 
    * @param deviceID Get every key value store for a specific device
    */
-  public async getAllDeviceKeyValueStore (deviceID: string): Promise<KeyValueStore[]> {
+  public async getAllDeviceKeyValueStore (deviceID: number): Promise<KeyValueStore[]> {
     try {
       const response: AxiosResponse<any> = await this.request('GET', `devices/${deviceID}/kv`, {});
       return response.data as KeyValueStore[];
@@ -404,7 +404,7 @@ export class ModeAPI {
    * @param deviceID Get the value of a key value store for a given key
    * @param key 
    */
-  public async getDeviceKeyValueStore (deviceID: string, key: string): Promise<KeyValueStore> {
+  public async getDeviceKeyValueStore (deviceID: number, key: string): Promise<KeyValueStore> {
     try {
       const response: AxiosResponse<any> = await this.request(
         'GET', `devices/${deviceID}/kv/${key}`, {}
@@ -420,7 +420,7 @@ export class ModeAPI {
    * @param deviceID
    * @param keyPrefix 
    */
-  public async getAllDeviceKeyValueStoreByPrefix (deviceID: string, keyPrefix: string): Promise<KeyValueStore[]> {
+  public async getAllDeviceKeyValueStoreByPrefix (deviceID: number, keyPrefix: string): Promise<KeyValueStore[]> {
     try {
       const response: AxiosResponse<any> = await this.request(
         'GET', `devices/${deviceID}/kv?keyPrefix=${keyPrefix}`, {}
@@ -437,7 +437,7 @@ export class ModeAPI {
    * @param key
    * @param store 
    */
-  public async setDeviceKeyValueStore (deviceID: string, key: string, store: KeyValueStore): Promise<number> {
+  public async setDeviceKeyValueStore (deviceID: number, key: string, store: KeyValueStore): Promise<number> {
     try {
       const response: AxiosResponse<any> = await this.request(
         'PUT', `devices/${deviceID}/kv/${key}`, {
@@ -455,7 +455,7 @@ export class ModeAPI {
    * @param key 
    * @returns number response status
    */
-  public async deleteDeviceKeyValueStore (deviceID: string, key: string): Promise<number> {
+  public async deleteDeviceKeyValueStore (deviceID: number, key: string): Promise<number> {
     try {
       const response: AxiosResponse<any> = await this.request(
         'DELETE', `devices/${deviceID}/kv/${key}`, {}
@@ -470,7 +470,7 @@ export class ModeAPI {
    * 
    * @param homeID Get every key value store for a specific home
    */
-  public async getAllHomeKeyValueStore (homeID: string): Promise<KeyValueStore[]> {
+  public async getAllHomeKeyValueStore (homeID: number): Promise<KeyValueStore[]> {
     try {
       const response: AxiosResponse<any> = await this.request('GET', `homes/${homeID}/kv`, {});
       return response.data as KeyValueStore[];
@@ -483,7 +483,7 @@ export class ModeAPI {
    * @param homeID Get the value of a key value store for a given key
    * @param key 
    */
-  public async getHomeKeyValueStore (homeID: string, key: string): Promise<KeyValueStore> {
+  public async getHomeKeyValueStore (homeID: number, key: string): Promise<KeyValueStore> {
     try {
       const response: AxiosResponse<any> = await this.request(
         'GET', `homes/${homeID}/kv/${key}`, {}
@@ -499,7 +499,7 @@ export class ModeAPI {
    * @param homeID
    * @param keyPrefix 
    */
-  public async getAllHomeKeyValueStoreByPrefix (homeID: string, keyPrefix: string): Promise<KeyValueStore[]> {
+  public async getAllHomeKeyValueStoreByPrefix (homeID: number, keyPrefix: string): Promise<KeyValueStore[]> {
     try {
       const response: AxiosResponse<any> = await this.request(
         'GET', `homes/${homeID}/kv?keyPrefix=${keyPrefix}`, {}
@@ -516,7 +516,7 @@ export class ModeAPI {
    * @param key
    * @param store 
    */
-  public async setHomeKeyValueStore (homeID: string, key: string, store: KeyValueStore): Promise<number> {
+  public async setHomeKeyValueStore (homeID: number, key: string, store: KeyValueStore): Promise<number> {
     try {
       const response: AxiosResponse<any> = await this.request(
         'PUT', `homes/${homeID}/kv/${key}`, {
@@ -534,7 +534,7 @@ export class ModeAPI {
    * @param key 
    * @returns number response status
    */
-  public async deleteHomeKeyValueStore (homeID: string, key: string): Promise<number> {
+  public async deleteHomeKeyValueStore (homeID: number, key: string): Promise<number> {
     try {
       const response: AxiosResponse<any> = await this.request(
         'DELETE', `homes/${homeID}/kv/${key}`, {}
@@ -550,7 +550,7 @@ export class ModeAPI {
    * @param deviceID 
    * @param params 
    */
-  public async sendCommand (deviceID: string, params: any): Promise<number> {
+  public async sendCommand (deviceID: number, params: any): Promise<number> {
     try {
       const response: AxiosResponse<any> = await this.request(
         'PUT', `devices/${deviceID}/command`, params

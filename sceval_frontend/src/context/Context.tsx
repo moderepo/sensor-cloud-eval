@@ -6,12 +6,12 @@ import ClientStorage from '../controllers/ClientStorage';
 interface ContextProviderProps extends React.Props<any> {}
 
 interface ContextAction {
-    setGateway: (gatewayID: string) => void;
+    setGateway: (gatewayID: number) => void;
     setRTValues: (vals: any) => void;
 }
 
 interface ContextState  {
-    selectedGateway: string;
+    selectedGateway: number;
     rtValues: Array<any>;
     devices: Array<any>;
 }
@@ -24,11 +24,11 @@ export const context = React.createContext<any>(null);
 export const ContextProvider: React.FC<ContextProviderProps> = (
     props: ContextProviderProps
 ) => {
-    const [selectedGateway, setSelectedGateway] = useState<string>('');
+    const [selectedGateway, setSelectedGateway] = useState<number>(0);
     const [rtVals, setRTVals] = useState([]);
 
     const [devices, setDevices] = useState([]);
-    const setGateway = (gatewayID: string) => {
+    const setGateway = (gatewayID: number) => {
         setSelectedGateway(gatewayID);
     };
 

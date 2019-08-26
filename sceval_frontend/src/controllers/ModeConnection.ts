@@ -44,7 +44,7 @@ export class ModeConnection extends ConcreteObservable<Event> {
     }
   }
 
-  startSensor(home: any, sensor: any, deviceID: string): void {
+  startSensor(home: any, sensor: any, deviceID: number): void {
     // TODO - Check if these info should be passed into this function instead and this function might not be neccessary
     const store: KeyValueStore = {
       key: `sensorModule${sensor.modelSpecificId}`,
@@ -65,7 +65,7 @@ export class ModeConnection extends ConcreteObservable<Event> {
     });
   }
 
-  getSensorTSData(deviceID: string): void {
+  getSensorTSData(deviceID: number): void {
     modeAPI.sendCommand(deviceID, {
       action: 'timeSeriesData',
     }).catch((error: ErrorResponse) => {
@@ -73,7 +73,7 @@ export class ModeConnection extends ConcreteObservable<Event> {
     });
   }
 
-  searchForSensorModules(deviceID: string): void {
+  searchForSensorModules(deviceID: number): void {
     modeAPI.sendCommand(deviceID, {
       action: 'startDiscovery',
       parameters: { timeout: 1000 }
@@ -82,7 +82,7 @@ export class ModeConnection extends ConcreteObservable<Event> {
     });
   }
 
-  listSensorModules(deviceID: string): void {
+  listSensorModules(deviceID: number): void {
     modeAPI.sendCommand(deviceID, {
       action: 'listSensorModules',
       parameters: { timeout: 1000 }

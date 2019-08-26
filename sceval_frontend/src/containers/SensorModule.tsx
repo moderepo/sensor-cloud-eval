@@ -30,11 +30,11 @@ interface SensingInterval {
 }
 
 export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModuleProps) => {
-    const [homeId, setHomeId] = useState<string|null>(null);
+    const [homeId, setHomeId] = useState<number>(0);
     const [selectedModule, setSelectedModule] = useState<string|null>();
     const [sensorModuleName, setSensorModuleName] = useState<string>();
     const [selectedSensorModuleObj, setSelectedSensorModuleObj] = useState<SensorModuleInterface|null>();
-    const [selectedGateway, setSelectedGateway] = useState<string|null>();
+    const [selectedGateway, setSelectedGateway] = useState<number>(0);
     const [TSDBDataFetched, setTSDBDataFetched] = useState<boolean>(false);
     const [activeSensorQuantity, setActiveSensorQuantity] = useState<number>(0);
     const [activeSensors, setActiveSensors] = useState<any>(); // contains RT Websocket data
@@ -51,7 +51,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     const sensorContext: Context = useContext(context);
     
     const performTSDBFetch =  
-    (homeID: string, sensors: any, 
+    (homeID: number, sensors: any, 
      sType: string, seriesID: string, unit: string, wsData: any ) => {
         //  set now as reference point
         const now = new Date();
@@ -130,11 +130,11 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             // get home id
             modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
             .then((home: Home): void => {
-                setHomeId(home.id.toString());
+                setHomeId(home.id);
             });
 
             // get selected device and module
-            const gateway = sessionStorage.getItem('selectedGateway');
+            const gateway: number = Number(sessionStorage.getItem('selectedGateway'));
             const sensorModule = sessionStorage.getItem('selectedModule');
             setSelectedModule(sensorModule);
             setSelectedGateway(gateway);
@@ -295,7 +295,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
         });
         // perform kv updates
         const sensorModule = sessionStorage.getItem('selectedModule');
-        const device = sessionStorage.getItem('selectedGateway');
+        const device: number = Number(sessionStorage.getItem('selectedGateway'));
         if (device && sensorModule) {
            // copy the current selected sensor module object and replace the module's name and list of sensors
             const updatedSensorModuleObj: SensorModuleInterface = Object.assign({}, selectedSensorModuleObj);
