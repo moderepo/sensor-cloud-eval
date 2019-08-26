@@ -40,28 +40,26 @@ export interface ErrorResponse {
   status: number;
 }
 
-export class MODECONSTANTS {
-  public static MODE_API_BASE_URL: string = 'https://api.tinkermode.com/';
+export namespace ModeConstants {
+  export const MODE_API_BASE_URL: string = 'https://api.tinkermode.com/';
   
-  public static EVENT_DEVICE_CONNECTED: string = '_deviceConnected_';
-  public static EVENT_DEVICE_DISCONNECTED: string = '_deviceDisconnected_';
-  public static EVENT_KEY_VALUE_SAVED: string = '_keyValueSaved_';
-  public static EVENT_KEY_VALUE_DELETED: string = '_keyValueDeleted_';
-  public static EVENT_DEVICE_KEY_VALUE_SAVED: string = '_deviceKVSaved_';
-  public static EVENT_DEVICE_KEY_VALUE_DELETED: string = '_deviceKVDeleted_';
+  export const EVENT_DEVICE_CONNECTED: string = '_deviceConnected_';
+  export const EVENT_DEVICE_DISCONNECTED: string = '_deviceDisconnected_';
+  export const EVENT_KEY_VALUE_SAVED: string = '_keyValueSaved_';
+  export const EVENT_KEY_VALUE_DELETED: string = '_keyValueDeleted_';
+  export const EVENT_DEVICE_KEY_VALUE_SAVED: string = '_deviceKVSaved_';
+  export const EVENT_DEVICE_KEY_VALUE_DELETED: string = '_deviceKVDeleted_';
   
-  public static ERROR_UNKNOWN_EMAIL: string = 'UNKNOWN_EMAIL';
-  public static ERROR_INVALID_EMAIL: string = 'INVALID_EMAIL';
-  public static ERROR_INVALID_TOKEN: string = 'INVALID_TOKEN';
-  public static ERROR_INCORRECT_PASSWORD: string = 'INCORRECT_PASSWORD';
-  public static ERROR_PASSWORD_TOO_SHORT: string = 'PASSWORD_TOO_SHORT';
-  public static ERROR_PASSWORD_TOO_WEAK: string = 'PASSWORD_TOO_WEAK';
-  public static ERROR_EXCEEDED_MAX_USERS: string = 'EXCEEDED_MAX_USERS';
-  public static ERROR_USER_EXISTS_UNVERIFIED: string = 'USER_EXISTS_UNVERIFIED';
-  public static ERROR_USER_EXISTS: string = 'USER_EXISTS';
-  public static ERROR_USER_UNVERIFIED: string = 'USER_UNVERIFIED';
-
-  private constructor () {}
+  export const ERROR_UNKNOWN_EMAIL: string = 'UNKNOWN_EMAIL';
+  export const ERROR_INVALID_EMAIL: string = 'INVALID_EMAIL';
+  export const ERROR_INVALID_TOKEN: string = 'INVALID_TOKEN';
+  export const ERROR_INCORRECT_PASSWORD: string = 'INCORRECT_PASSWORD';
+  export const ERROR_PASSWORD_TOO_SHORT: string = 'PASSWORD_TOO_SHORT';
+  export const ERROR_PASSWORD_TOO_WEAK: string = 'PASSWORD_TOO_WEAK';
+  export const ERROR_EXCEEDED_MAX_USERS: string = 'EXCEEDED_MAX_USERS';
+  export const ERROR_USER_EXISTS_UNVERIFIED: string = 'USER_EXISTS_UNVERIFIED';
+  export const ERROR_USER_EXISTS: string = 'USER_EXISTS';
+  export const ERROR_USER_UNVERIFIED: string = 'USER_UNVERIFIED';
 }
 
 export class ModeAPI {
@@ -172,7 +170,7 @@ export class ModeAPI {
 
   // Make a REST request. For POST/PUT/PATCH requests, body is encoded as JSON.
   public request<T>(method: Method, path: string, data: string | Object, withCredentials?: boolean) {
-    const config: any = this._initRequest(method, `${MODECONSTANTS.MODE_API_BASE_URL}${path}`, withCredentials);
+    const config: any = this._initRequest(method, `${ModeConstants.MODE_API_BASE_URL}${path}`, withCredentials);
     if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
       config.data = data;
     } else {
@@ -186,7 +184,7 @@ export class ModeAPI {
 
   // Make a POST request as a web form submission.
   public postForm<T>(path: string, postData: Object) {
-    const config: any = this._initRequest('POST', `${MODECONSTANTS.MODE_API_BASE_URL}${path}`, false);
+    const config: any = this._initRequest('POST', `${ModeConstants.MODE_API_BASE_URL}${path}`, false);
 
     config.data = postData;
     config.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';

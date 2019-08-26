@@ -10,7 +10,7 @@ import { Progress } from 'antd';
 import 'antd/dist/antd.css';
 import ClientStorage from '../controllers/ClientStorage';
 import { evaluateSensorTypes } from '../utils/SensorTypes';
-import { CONSTANTS } from '../utils/Constants';
+import { Constants } from '../utils/Constants';
 
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const checkMark = require('../common_images/notifications/check-1.svg');
@@ -90,7 +90,7 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
         });
         context.state.devices.forEach((device: any, index: any) => {
             // get already-associated modules
-            modeAPI.getAllDeviceKeyValueStoreByPrefix(device.id, CONSTANTS.SENSOR_MODULE_KEY_PREFIX)
+            modeAPI.getAllDeviceKeyValueStoreByPrefix(device.id, Constants.SENSOR_MODULE_KEY_PREFIX)
             .then((associatedModules: KeyValueStore[]) => {
                 associatedModules.map((sensor: any) => sensor.value.id);
                 if (index === context.state.devices.length - 1) {
@@ -138,7 +138,7 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
         .then((homeResponse: any) => {
             this.state.selectedModules.forEach((selectedModule, index) => {
                 const params: KeyValueStore = {
-                  key: `${CONSTANTS.SENSOR_MODULE_KEY_PREFIX}${selectedModule.sensorModuleId}`,
+                  key: `${Constants.SENSOR_MODULE_KEY_PREFIX}${selectedModule.sensorModuleId}`,
                   value: {
                     id: selectedModule.sensorModuleId,
                     sensing: 'on',
@@ -151,7 +151,7 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
 
                 modeAPI.setDeviceKeyValueStore(
                     context.state.selectedGateway,
-                    `${CONSTANTS.SENSOR_MODULE_KEY_PREFIX}${selectedModule.sensorModuleId}`,
+                    `${Constants.SENSOR_MODULE_KEY_PREFIX}${selectedModule.sensorModuleId}`,
                     params
                 ).then((response: any) => {
                     this.props.history.push('/devices');
