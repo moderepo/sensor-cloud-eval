@@ -3,6 +3,7 @@ import modeAPI, { ErrorResponse } from './ModeAPI';
 import User from './User';
 import { ConcreteObservable } from './Observer';
 import { AxiosResponse } from 'axios';
+import { Constants } from '../utils/Constants';
 
 export interface LoginInfo {
   user: User;
@@ -110,7 +111,7 @@ export class AppContext {
         resolve(loginInfo);
       })
       .catch(function (resp: any) {
-        var err = (resp.data && resp.data.reason) ? resp.data.reason : 'CONNECTION_ERROR';
+        var err = (resp.data && resp.data.reason) ? resp.data.reason : Constants.ERROR_CONNECTION_ERROR;
         console.warn('Failed to fetch user:', err);
         reject(err);
       });
@@ -137,14 +138,14 @@ export class AppContext {
             if (res.data && res.data.reason) {
               // Remove invalid/obsolete login credentials.
               ClientStorage.deleteItem(AppContext.entryName);
-              reject('USER_NOT_FOUND');
+              reject(Constants.ERROR_USER_NOT_FOUND);
             } else {
-              reject('CONNECTION_ERROR');
+              reject(Constants.ERROR_CONNECTION_ERROR);
             }
           });
 
         } else {
-          reject('LOGIN_CREDENTIALS_NOT_PRESENT');
+          reject(Constants.ERROR_LOGIN_CREDENTIALS_NOT_PRESENT);
         }
       }
     );

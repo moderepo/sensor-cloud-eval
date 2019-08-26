@@ -12,10 +12,18 @@ export interface RouteDeclarationsProps {
 
 export enum RouteKeys {
   Home,
+  Login,
+  Register,
+  ResetPassword,
   Settings,
+  EmailSent,
   EmailLogin,
   EmailResetPassword,
   EmailRegister,
+  MyAccount,
+  Devices,
+  SensorModules,
+  AddSensorModule,
 }
 
 export default class RouteDeclarations extends React.Component<RouteDeclarationsProps, any> {
@@ -33,7 +41,7 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
       ),
       (
         <Route
-          key={RouteKeys.Home}
+          key={RouteKeys.Login}
           exact={true}
           path="/login"
           component={() => (
@@ -48,7 +56,7 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
       ),
       (
         <Route
-          key={RouteKeys.Home}
+          key={RouteKeys.ResetPassword}
           exact={true}
           path="/reset_password"
           component={() => (
@@ -60,7 +68,7 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
       ),
       (
         <Route
-          key={RouteKeys.Home}
+          key={RouteKeys.Register}
           exact={true}
           path="/register"
           component={() => (
@@ -75,7 +83,7 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
       ),
       (
         <Route
-          key={RouteKeys.Home}
+          key={RouteKeys.EmailSent}
           exact={true}
           path="/email_sent"
           component={() => (
@@ -87,7 +95,7 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
       ),
       (
         <Route
-          key={RouteKeys.Home}
+          key={RouteKeys.Devices}
           exact={true}
           path="/devices"
           component={() => (
@@ -102,7 +110,7 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
       ),
       (
         <Route
-          key={RouteKeys.Home}
+          key={RouteKeys.MyAccount}
           exact={true}
           path="/my_account"
           component={() => (
@@ -117,7 +125,7 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
       ),
       (
         <Route
-          key={RouteKeys.Home}
+          key={RouteKeys.SensorModules}
           exact={true}
           path="/sensor_modules/:id"
           component={() => (
@@ -132,7 +140,7 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
       ),
       (
         <Route
-          key={RouteKeys.Home}
+          key={RouteKeys.AddSensorModule}
           exact={true}
           path="/devices/:gatewayId/add_sensor_modules"
           component={() => (
