@@ -1,9 +1,10 @@
 import React, { Fragment, useState } from 'react';
 import { NavLink, Redirect } from 'react-router-dom';
 import LoginHeader from '../components/LoginHeader';
-import { AppContext, LoginInfo } from '../controllers/AppContext';
+import { AppContext } from '../controllers/AppContext';
 import handleErrors from '../utils/ErrorMessages';
-import { ErrorResponse } from '../controllers/ModeAPI';
+import { ErrorResponse } from '../components/entities/API';
+import { LoginInfo } from '../components/entities/User';
 
 interface LoginProps extends React.Props<any> {
     onLogIn: () => void;
@@ -11,20 +12,24 @@ interface LoginProps extends React.Props<any> {
 }
 
 const Login: React.FC<LoginProps> = (props: LoginProps) => {
-    const [email, setEmail] = useState(''),
+    const [email, setEmail] = useState(''), 
         [password, setPassword] = useState(''),
         [emailValid, setEmailValid] = useState(false),
         [error, setError] = useState('');
+
+    // Validation method for checking email
     const validateEmail = (event: React.ChangeEvent<HTMLInputElement>) => {
         const input = event.target.value;
         const re = /\S+@\S+\.\S+/;
         setEmail(input);
         setEmailValid(re.test(input));
     };
+    // password-update handler on user-input change
     const passwordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const input = event.target.value;
         setPassword(input);
     };
+    // submit handler for form
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
         AppContext.postLoginForm(email, password)
@@ -40,6 +45,7 @@ const Login: React.FC<LoginProps> = (props: LoginProps) => {
                 setError(transformedErr);
             });
     };
+    // if the user is already logged in, prevent them from accessing login
     if (props.isLoggedIn) {
         return <Redirect to="/devices" />;
     }

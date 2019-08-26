@@ -4,7 +4,9 @@ import LeftNav from '../components/LeftNav';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import ModeConnection from '../controllers/ModeConnection';
 import AppContext from '../controllers/AppContext';
-import modeAPI, { KeyValueStore } from '../controllers/ModeAPI';
+import modeAPI from '../controllers/ModeAPI';
+import { KeyValueStore } from '../components/entities/API';
+import { AddSensorModuleState } from '../components/entities/SensorModule';
 import { Context, ContextConsumer } from '../context/Context';
 import { Progress } from 'antd';
 import 'antd/dist/antd.css';
@@ -20,17 +22,7 @@ interface AddSensorModuleProps extends React.Props<any> {
     isLoggedIn: boolean;
     onLogIn: () => void;
     }
-    
-interface AddSensorModuleState {
-    availableModules: Array<any>;
-    associatedModules: Array<any>;
-    moduleMetadata: Array<any>;
-    selectedModules: Array<any>;
-    selectedGateway: string;
-    scanning: boolean;
-    scanningProgress: number;
-    noModules: boolean;
-}
+
 // TODO: Change into React.FC without breaking available sensors discovery (commented code below)
 export class AddSensorModule extends Component<AddSensorModuleProps & RouteComponentProps<any>, AddSensorModuleState> {
     constructor(props: AddSensorModuleProps & RouteComponentProps) {

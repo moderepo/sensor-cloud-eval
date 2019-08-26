@@ -4,7 +4,7 @@ import * as am4charts from '@amcharts/amcharts4/charts';
 import am4themes_animated from '@amcharts/amcharts4/themes/animated';
 import moment from 'moment';
 import { Context, context } from '../context/Context';
-import { TimeSeriesData } from '../controllers/ModeAPI';
+import { SensorDataBundle } from '../components/entities/SensorModule';
 am4core.useTheme(am4themes_animated);
 
 interface AmChartProps extends React.Props<any> {
@@ -13,11 +13,6 @@ interface AmChartProps extends React.Props<any> {
     newWebsocketData: (value: boolean) => void;
     timespanNumeric: number;
     timespan: string;
-}
-interface SensorDataBundle {
-    unit: string;
-    type: string;
-    TSDBData: TimeSeriesData;
 }
 
 export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {

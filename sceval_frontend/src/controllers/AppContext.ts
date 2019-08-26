@@ -1,20 +1,8 @@
 import ClientStorage from './ClientStorage';
-import modeAPI, { ErrorResponse } from './ModeAPI';
-import User from './User';
+import modeAPI from './ModeAPI';
+import { User, LoginInfo, ClientAuthInfo } from '../components/entities/User';
 import { ConcreteObservable } from './Observer';
-import { AxiosResponse } from 'axios';
 import { Constants } from '../utils/Constants';
-
-export interface LoginInfo {
-  user: User;
-  authToken: string;
-  projectId: number;
-}
-
-export interface ClientAuthInfo {
-  token: string;
-  userId: number;
-}
 
 export class UserNameChangeException {}
 

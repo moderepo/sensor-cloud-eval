@@ -1,17 +1,16 @@
 import React, { Fragment, useState, useEffect, useContext } from 'react';
 import { Redirect, RouteComponentProps, withRouter } from 'react-router';
 import { LeftNav } from '../components/LeftNav';
-import modeAPI, { ModeAPI, KeyValueStore, ErrorResponse, ModeConstants, Device } from '../controllers/ModeAPI';
-import ClientStorage from '../controllers/ClientStorage';
-import AppContext, { LoginInfo } from '../controllers/AppContext';
+import modeAPI,  { ModeConstants } from '../controllers/ModeAPI';
+import { KeyValueStore, Device } from '../components/entities/API';
+import { LoginInfo } from '../components/entities/User';
+import AppContext from '../controllers/AppContext';
 import SensorModuleSet, { SensorModuleInterface } from '../components/entities/SensorModule';
 import { evaluateSensorTypes } from '../utils/SensorTypes';
 import { Modal } from 'antd';
-import { Context, ContextConsumer, context } from '../context/Context';
+import { Context, context } from '../context/Context';
 import ModeConnection from '../controllers/ModeConnection';
-import { SensorModule } from './index';
 import { Constants } from '../utils/Constants';
-import User from '../controllers/User';
 import Home from '../controllers/Home';
 
 const { confirm } = Modal;

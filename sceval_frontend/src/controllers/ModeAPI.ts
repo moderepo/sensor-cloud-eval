@@ -1,44 +1,9 @@
 import Axios, { Method } from 'axios';
-import { AxiosRequestConfig, AxiosInstance, AxiosResponse, AxiosError } from 'axios';
+import { AxiosInstance, AxiosResponse } from 'axios';
+import { RequestConfig, Device, KeyValueStore, TimeSeriesData, TimeSeriesInfo, 
+  ErrorResponse } from '../components/entities/API';
 import Home from './Home';
-import moment from 'moment';
-import User from './User';
-
-export interface RequestConfig extends AxiosRequestConfig {
-}
-
-export interface Device {
-  id: number;
-  isConnected: boolean;
-  lastConnectTime: string;
-  name?: string;
-  deviceClass: string;
-}
-
-export interface KeyValueStore {
-  key: string;
-  modificationTime?: string;
-  value: any;
-}
-
-export interface TimeSeriesInfo {
-  homeId: number;
-  id: string;
-  moduleId: string;
-}
-export interface TimeSeriesData {
-  seriesId: string;
-  aggregation: string;
-  begin: string;
-  end: string;
-  resolution: string;
-  data: [][];
-}
-
-export interface ErrorResponse {
-  message: string;
-  status: number;
-}
+import { User } from '../components/entities/User';
 
 export namespace ModeConstants {
   export const MODE_API_BASE_URL: string = 'https://api.tinkermode.com/';

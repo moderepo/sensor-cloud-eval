@@ -1,10 +1,11 @@
 import React, { Fragment, useState } from 'react';
 import LoginHeader from '../components/LoginHeader';
 import { NavLink, Redirect } from 'react-router-dom';
-import modeAPI, { ErrorResponse } from '../controllers/ModeAPI';
+import modeAPI from '../controllers/ModeAPI';
+import { ErrorResponse } from '../components/entities/API';
 import AppContext from '../controllers/AppContext';
 import handleErrors from '../utils/ErrorMessages';
-import User from '../controllers/User';
+import { User } from '../components/entities/User';
 
 interface RegisterProps extends React.Props<any> {
     isLoggedIn: boolean;

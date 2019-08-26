@@ -1,9 +1,9 @@
-import { KeyValueStore, Device } from '../../controllers/ModeAPI';
+import { KeyValueStore, Device } from '../../components/entities/API';
+import { TimeSeriesData } from './API';
 export default interface SensorModuleSet {
     device: Device;
     sensorModules: Array<SensorModuleInterface>;
 }
-
 export interface SensorModuleInterface extends Omit<KeyValueStore, 'value'> {
     value: {
         id: string;
@@ -13,4 +13,30 @@ export interface SensorModuleInterface extends Omit<KeyValueStore, 'value'> {
         sensors: Array<any>;
         name: string;
     };
+}
+export interface AddSensorModuleState {
+    availableModules: Array<any>;
+    associatedModules: Array<any>;
+    moduleMetadata: Array<any>;
+    selectedModules: Array<any>;
+    selectedGateway: string;
+    scanning: boolean;
+    scanningProgress: number;
+    noModules: boolean;
+}
+export interface SensorDataBundle {
+    unit: string;
+    type: string;
+    TSDBData: TimeSeriesData;
+}
+export default interface Event {
+  eventType: string;
+  eventData: any;
+  timestamp: string;
+  homeId: number;
+  originDeviceId: number;
+  originDeviceClass: string;
+  originDeviceIp: string;
+  originProjectKeyId: string;
+  originProjectKeyName: string;
 }

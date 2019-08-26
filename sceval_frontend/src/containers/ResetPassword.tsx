@@ -2,7 +2,8 @@ import React, { Fragment, useState } from 'react';
 import LoginHeader from '../components/LoginHeader';
 import { NavLink } from 'react-router-dom';
 import { AppContext } from '../controllers/AppContext';
-import modeAPI, { ErrorResponse } from '../controllers/ModeAPI';
+import modeAPI from '../controllers/ModeAPI';
+import { ErrorResponse } from '../components/entities/API';
 
 const emailSent = require('../common_images/email_sent.svg');
 
