@@ -5,13 +5,13 @@ import modeAPI,  { ModeConstants } from '../controllers/ModeAPI';
 import { KeyValueStore, Device } from '../components/entities/API';
 import { LoginInfo } from '../components/entities/User';
 import AppContext from '../controllers/AppContext';
-import SensorModuleSet, { SensorModuleInterface } from '../components/entities/SensorModule';
+import { SensorModuleSet, SensorModuleInterface } from '../components/entities/SensorModule';
 import { evaluateSensorTypes } from '../utils/SensorTypes';
 import { Modal } from 'antd';
 import { Context, context } from '../context/Context';
 import ModeConnection from '../controllers/ModeConnection';
 import { Constants } from '../utils/Constants';
-import Home from '../controllers/Home';
+import Home from '../components/entities/Home';
 
 const { confirm } = Modal;
 

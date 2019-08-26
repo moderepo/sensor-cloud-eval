@@ -2,7 +2,7 @@ import Axios, { Method } from 'axios';
 import { AxiosInstance, AxiosResponse } from 'axios';
 import { RequestConfig, Device, KeyValueStore, TimeSeriesData, TimeSeriesInfo, 
   ErrorResponse } from '../components/entities/API';
-import Home from './Home';
+import Home from '../components/entities/Home';
 import { User } from '../components/entities/User';
 
 export namespace ModeConstants {

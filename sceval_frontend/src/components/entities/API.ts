@@ -2,7 +2,6 @@ import { AxiosRequestConfig } from 'axios';
 
 export interface RequestConfig extends AxiosRequestConfig {
 }
-
 export interface Device {
   id: number;
   isConnected: boolean;
@@ -10,7 +9,6 @@ export interface Device {
   name?: string;
   deviceClass: string;
 }
-
 export interface KeyValueStore {
   key: string;
   modificationTime?: string;
@@ -22,7 +20,6 @@ export interface TimeSeriesInfo {
   id: string;
   moduleId: string;
 }
-
 export interface TimeSeriesData {
   seriesId: string;
   aggregation: string;
@@ -31,8 +28,15 @@ export interface TimeSeriesData {
   resolution: string;
   data: [][];
 }
-
 export interface ErrorResponse {
   message: string;
   status: number;
+}
+export interface Observer<T> {
+  notify(obj: T): void;
+}
+export interface Observable<T> {
+  addObserver(o: Observer<T>): void;
+  removeObserver(o: Observer<T>): void;
+  notifyAll(obj: T): void;
 }

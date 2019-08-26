@@ -1,12 +1,4 @@
-export interface Observer<T> {
-  notify(obj: T): void;
-}
-
-export interface Observable<T> {
-  addObserver(o: Observer<T>): void;
-  removeObserver(o: Observer<T>): void;
-  notifyAll(obj: T): void;
-}
+import { Observable, Observer } from '../components/entities/API';
 
 export class ConcreteObservable<T> implements Observable<T> {
   protected observers: Observer<T>[];

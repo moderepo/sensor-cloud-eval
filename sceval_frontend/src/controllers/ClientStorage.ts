@@ -1,8 +1,4 @@
-interface ClientStorageData {
-  value: any;
-  expire?: number;
-}
-
+import { ClientStorageData } from '../components/entities/User'; 
 export default class ClientStorage {
   static setItem(key: string, value: any, ttl: number) {
     var data: ClientStorageData = {

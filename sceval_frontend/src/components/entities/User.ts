@@ -18,3 +18,7 @@ export interface ClientAuthInfo {
     token: string;
     userId: number;
 }
+export interface ClientStorageData {
+    value: any;
+    expire?: number;
+}

@@ -1,6 +1,6 @@
 import { KeyValueStore, Device } from '../../components/entities/API';
 import { TimeSeriesData } from './API';
-export default interface SensorModuleSet {
+export interface SensorModuleSet {
     device: Device;
     sensorModules: Array<SensorModuleInterface>;
 }
@@ -29,7 +29,7 @@ export interface SensorDataBundle {
     type: string;
     TSDBData: TimeSeriesData;
 }
-export default interface Event {
+export interface Event {
   eventType: string;
   eventData: any;
   timestamp: string;
