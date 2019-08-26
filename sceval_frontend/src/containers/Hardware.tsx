@@ -473,11 +473,17 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
           {linkedModules !== undefined && linkedModules.length > 0 ? (
             renderDevices()
           ) : (
-            <div className="gateway-row no-device">
-              You don't have any device. Please use the
-              <a href="https://console.tinkermode.com" target="blank"> Mode Console </a>
-              to create and add devices to your home.
-            </div>
+            // If linkedModules is empty AND we are not loading data, this mean the home
+            // does not have any device
+            !isLoading ? (
+              <div className="gateway-row no-device">
+                You don't have any device. Please use the
+                <a href="https://console.tinkermode.com" target="blank"> Mode Console </a>
+                to create and add devices to your home.
+              </div>
+            ) : (
+              <img src={loader} />
+            )
           )}
         </div>
       </div>
