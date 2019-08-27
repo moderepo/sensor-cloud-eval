@@ -2,11 +2,9 @@ import React, { Fragment, useState } from 'react';
 import LoginHeader from '../components/LoginHeader';
 import { NavLink } from 'react-router-dom';
 import { AppContext } from '../controllers/AppContext';
-import modeAPI from '../controllers/ModeAPI';
+import modeAPI, { ErrorResponse } from '../controllers/ModeAPI';
 
 const emailSent = require('../common_images/email_sent.svg');
-
-const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 
 const ResetPassword: React.FC = () => {
     const [input, setInput] = useState(''),
@@ -21,25 +19,16 @@ const ResetPassword: React.FC = () => {
     };
     const onSubmit = (event: React.FormEvent<HTMLElement>) => {
         event.preventDefault();
-        const data: { projectId: number; email: string } = {
-            projectId: AppContext.getProjectId(),
-            email: input
-        };
-        modeAPI
-            .request<any>(
-                'POST',
-                MODE_API_BASE_URL + 'auth/user/passwordReset/start',
-                data
-            )
-            .then(() => {
-                setIsSent(true);
-                setError('');
-            })
-            .catch((value: any) => {
-                setError(
-                    value.response.data ? value.response.data.reason : 'Error'
-                );
-            });
+        modeAPI.resetPassword(AppContext.getProjectId(), input)
+        .then((status: number) => {
+            setIsSent(true);
+            setError('');
+        })
+        .catch((errorRsponse: ErrorResponse) => {
+            setError(
+                errorRsponse.message ? errorRsponse.message : 'Error'
+            );
+        });
     };
 
     return (

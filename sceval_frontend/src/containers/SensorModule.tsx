@@ -10,6 +10,7 @@ import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
 import ModeConnection  from '../controllers/ModeConnection';
 import determinUnit from '../utils/SensorTypes';
 import { SensorModuleInterface } from '../components/entities/SensorModule';
+import { Constants } from '../utils/Constants';
 import Home from '../controllers/Home';
 
 const loader = require('../common_images/notifications/loading_ring.svg');
@@ -145,8 +146,9 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             if (homeId !== null && selectedGateway && selectedModule) {
 
                 // fetch module data from KV store
-                modeAPI.getDeviceKeyValueStore(selectedGateway, `sensorModule${selectedModule}`)
-                .then((keyValueStore: KeyValueStore) => {
+                modeAPI.getDeviceKeyValueStore(
+                    selectedGateway, `${Constants.SENSOR_MODULE_KEY_PREFIX}${selectedModule}`
+                ).then((keyValueStore: KeyValueStore) => {
                     setSelectedSensorModuleObj(keyValueStore);
                     
                     const moduleSensors = keyValueStore.value.sensors;

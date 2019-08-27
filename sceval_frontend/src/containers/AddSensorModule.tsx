@@ -4,18 +4,18 @@ import LeftNav from '../components/LeftNav';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import ModeConnection from '../controllers/ModeConnection';
 import AppContext from '../controllers/AppContext';
-import modeAPI from '../controllers/ModeAPI';
+import modeAPI, { KeyValueStore } from '../controllers/ModeAPI';
 import { Context, ContextConsumer } from '../context/Context';
 import { Progress } from 'antd';
 import 'antd/dist/antd.css';
 import ClientStorage from '../controllers/ClientStorage';
 import { evaluateSensorTypes } from '../utils/SensorTypes';
+import { Constants } from '../utils/Constants';
 
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const checkMark = require('../common_images/notifications/check-1.svg');
 const addModule1 = require('../common_images/add-module-1.svg');
 const addModule2 = require('../common_images/add-module-2.svg');
-const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 interface AddSensorModuleProps extends React.Props<any> {
     isLoggedIn: boolean;
     onLogIn: () => void;
@@ -90,18 +90,13 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
         });
         context.state.devices.forEach((device: any, index: any) => {
             // get already-associated modules
-            const url =
-            MODE_API_BASE_URL + 'devices/' + device.id + '/kv';
-            modeAPI
-            .request('GET', url, {})
-            .then((associatedResponse: any) => {
-                const associatedModules = associatedResponse.data.filter((sModule: any) => {
-                    return sModule.key !== 'firmwareVersion' && sModule.key !== 'firmwareDistribution';
-                }).map((sensor: any) => sensor.value.id);
+            modeAPI.getAllDeviceKeyValueStoreByPrefix(device.id, Constants.SENSOR_MODULE_KEY_PREFIX)
+            .then((associatedModules: KeyValueStore[]) => {
+                const associatedModulesIds: string[] = associatedModules.map((sensor: any) => sensor.value.id);
                 if (index === context.state.devices.length - 1) {
                     this.setState(() => {
                         return {
-                            associatedModules: associatedModules
+                            associatedModules: associatedModulesIds
                         };
                     });
                     if (associatedModules.length === 0) {
@@ -142,13 +137,8 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
         modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
         .then((homeResponse: any) => {
             this.state.selectedModules.forEach((selectedModule, index) => {
-                const url =
-                  MODE_API_BASE_URL +
-                  'devices/' +
-                   + context.state.selectedGateway +
-                  '/kv/sensorModule' +
-                  selectedModule.sensorModuleId;
-                const params = {
+                const params: KeyValueStore = {
+                  key: `${Constants.SENSOR_MODULE_KEY_PREFIX}${selectedModule.sensorModuleId}`,
                   value: {
                     id: selectedModule.sensorModuleId,
                     sensing: 'on',
@@ -158,14 +148,17 @@ export class AddSensorModule extends Component<AddSensorModuleProps & RouteCompo
                 };
                 ModeConnection.startSensor(homeResponse, selectedModule, context.state.selectedGateway);
                 ModeConnection.listSensorModules(context.state.selectedGateway);
-                modeAPI
-                  .request('PUT', url, params)
-                  .then((response: any) => {
+
+                modeAPI.setDeviceKeyValueStore(
+                    context.state.selectedGateway,
+                    `${Constants.SENSOR_MODULE_KEY_PREFIX}${selectedModule.sensorModuleId}`,
+                    params
+                ).then((response: any) => {
                     this.props.history.push('/devices');
-                  })
-                  .catch((reason: any) => {
+                })
+                .catch((reason: any) => {
                     console.log('error posting to the kv store', reason);
-                  });
+                });
                 
               });
         });

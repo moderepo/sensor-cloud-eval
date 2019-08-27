@@ -45,8 +45,8 @@ const MyAccount = withRouter((props: HardwareProps & RouteComponentProps<any>) =
     event.preventDefault();
     AppContext.restoreLogin();
     AppContext.UpdateUserInfo(username, passwordNew).then(
-      (response: any) => {
-        if (response.status === 204) {
+      (status: number) => {
+        if (status === 204) {
           setPasswordUpdated(true);
           setisEditing(false);
         }

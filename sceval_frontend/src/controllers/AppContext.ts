@@ -1,17 +1,12 @@
 import ClientStorage from './ClientStorage';
-import ModeAPI from './ModeAPI';
+import modeAPI, { ErrorResponse } from './ModeAPI';
 import User from './User';
 import { ConcreteObservable } from './Observer';
 import { AxiosResponse } from 'axios';
-
-const MODE_API_BASE_URL = 'https://api.tinkermode.com';
-
-export interface UserWithPassword extends User {
-  password: string;
-}
+import { Constants } from '../utils/Constants';
 
 export interface LoginInfo {
-  user: UserWithPassword;
+  user: User;
   authToken: string;
   projectId: number;
 }
@@ -67,35 +62,19 @@ export class AppContext {
     return AppContext.userChangeObservable;
   }
 
-  public static postLoginForm(username: string, password: string) {
-    return ModeAPI.postForm(
-      MODE_API_BASE_URL + '/auth/user',
-      {
-        projectId: AppContext.projectId,
-        appId: AppContext.appId,
-        email: username,
-        password: password
-      }
-    )
-    .then((resp: any) => {
-      return AppContext.setLogin(resp.data);
-    });
+  public static async postLoginForm(username: string, password: string): Promise<LoginInfo> {
+    const userInfo: any = await modeAPI.login(AppContext.projectId, AppContext.appId, username, password);
+    return AppContext.setLogin(userInfo);
   }
 
   public static changeUserName(newUsername: string) {
     if (AppContext.loginInfo !== null) {
-      const params = {
-        name: newUsername
-      };
       const user = AppContext.loginInfo.user;
-
-      return ModeAPI.request<UserWithPassword>(
-      'PATCH', 
-      MODE_API_BASE_URL + '/users/' + AppContext.loginInfo.user.id, params).then(
-        (response: AxiosResponse<UserWithPassword>) => {
+      modeAPI.updateUserInfo(AppContext.loginInfo.user.id.toString(), {name: newUsername})
+      .then((status: number) => {
           user.name = newUsername;
           AppContext.userChangeObservable.notifyAll(user);
-          return response;
+          return status;
         }
       );
     } else {
@@ -103,44 +82,36 @@ export class AppContext {
     }
   }
 
-  public static UpdateUserInfo(newUsername: string, newPassword: string) {
+  public static async UpdateUserInfo(newUsername: string, newPassword: string): Promise<number> {
     if (AppContext.loginInfo !== null) {
-      const params = {
-        name: newUsername,
-        password: newPassword
-      };
       const user = AppContext.loginInfo.user;
-
-      return ModeAPI.request<UserWithPassword>(
-      'PATCH', 
-      MODE_API_BASE_URL + '/users/' + AppContext.loginInfo.user.id, params).then(
-        (response: AxiosResponse<any>) => {
-          user.name = newUsername;
-          AppContext.userChangeObservable.notifyAll(user);
-          return response;
-        }
+      const status: number = await modeAPI.updateUserInfo(
+        AppContext.loginInfo.user.id.toString(), {name: newUsername, password: newPassword}
       );
+      user.name = newUsername;
+      AppContext.userChangeObservable.notifyAll(user);
+      return status;
     } else {
       throw new UserNameChangeException;
     }
   }
 
   public static setLogin(auth: ClientAuthInfo) {
-    ModeAPI.setAuthToken(auth.token);
+    modeAPI.setAuthToken(auth.token);
     return new Promise<LoginInfo>(function(resolve: (loginInfo: LoginInfo) => void, reject: (reason: any) => void) {
-      ModeAPI.request('GET', MODE_API_BASE_URL + '/users/' + auth.userId, {}, false)
-      .then(function (resp: any) {
+      modeAPI.getUserInfo(auth.userId)
+      .then(function (userInfo: User) {
         const loginInfo: LoginInfo = {
-          'user': resp.data,
-          'authToken': auth.token,
-          'projectId': AppContext.projectId
+          user: userInfo,
+          authToken: auth.token,
+          projectId: AppContext.projectId
         };
 
         AppContext.updateLoginInfo(loginInfo);
         resolve(loginInfo);
       })
       .catch(function (resp: any) {
-        var err = (resp.data && resp.data.reason) ? resp.data.reason : 'CONNECTION_ERROR';
+        var err = (resp.data && resp.data.reason) ? resp.data.reason : Constants.ERROR_CONNECTION_ERROR;
         console.warn('Failed to fetch user:', err);
         reject(err);
       });
@@ -155,10 +126,9 @@ export class AppContext {
 
         if (loginInfo && loginInfo.user && loginInfo.authToken) {
           console.log('Validating saved login for', loginInfo.user);
-          ModeAPI.setAuthToken(loginInfo.authToken);
-          ModeAPI.request('GET', MODE_API_BASE_URL + '/users/' + loginInfo.user.id, {}, false)
-          .then(function(res: any) {
-            const user = res.data as User;
+          modeAPI.setAuthToken(loginInfo.authToken);
+          modeAPI.getUserInfo(loginInfo.user.id)
+          .then(function(user: User) {
             // use latest user data because it may be different
             loginInfo.user = user;
             AppContext.updateLoginInfo(loginInfo);
@@ -168,21 +138,21 @@ export class AppContext {
             if (res.data && res.data.reason) {
               // Remove invalid/obsolete login credentials.
               ClientStorage.deleteItem(AppContext.entryName);
-              reject('USER_NOT_FOUND');
+              reject(Constants.ERROR_USER_NOT_FOUND);
             } else {
-              reject('CONNECTION_ERROR');
+              reject(Constants.ERROR_CONNECTION_ERROR);
             }
           });
 
         } else {
-          reject('LOGIN_CREDENTIALS_NOT_PRESENT');
+          reject(Constants.ERROR_LOGIN_CREDENTIALS_NOT_PRESENT);
         }
       }
     );
   }
 
   public static clearLogin() {
-    ModeAPI.setAuthToken('');
+    modeAPI.setAuthToken('');
     ClientStorage.deleteItem(AppContext.entryName);
   }
 

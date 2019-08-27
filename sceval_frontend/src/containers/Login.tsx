@@ -3,6 +3,7 @@ import { NavLink, Redirect } from 'react-router-dom';
 import LoginHeader from '../components/LoginHeader';
 import { AppContext, LoginInfo } from '../controllers/AppContext';
 import handleErrors from '../utils/ErrorMessages';
+import { ErrorResponse } from '../controllers/ModeAPI';
 
 interface LoginProps extends React.Props<any> {
     onLogIn: () => void;
@@ -32,19 +33,11 @@ const Login: React.FC<LoginProps> = (props: LoginProps) => {
                     props.onLogIn();
                 }
             })
-            .catch((reason: any) => {
-                if (
-                    reason.response &&
-                    reason.response.data &&
-                    reason.response.data.reason
-                ) {
-                    const transformedErr = handleErrors(
-                        reason.response.data.reason
-                    );
-                    setError(transformedErr);
-                } else {
-                    console.error(reason);
-                }
+            .catch((errorResponse: ErrorResponse) => {
+                const transformedErr = handleErrors(
+                    errorResponse.message
+                );
+                setError(transformedErr);
             });
     };
     if (props.isLoggedIn) {

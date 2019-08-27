@@ -1,7 +1,7 @@
 import React, { Fragment, useState, useEffect } from 'react';
 import { Redirect, RouteComponentProps, withRouter } from 'react-router';
 import { LeftNav } from '../components/LeftNav';
-import modeAPI, { ModeAPI, KeyValueStore, ErrorResponse } from '../controllers/ModeAPI';
+import modeAPI, { ModeAPI, KeyValueStore, ErrorResponse, ModeConstants } from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import AppContext from '../controllers/AppContext';
 import SensorModuleSet, { SensorModuleInterface } from '../components/entities/SensorModule';
@@ -10,6 +10,8 @@ import { Modal } from 'antd';
 import { Context, ContextConsumer } from '../context/Context';
 import ModeConnection from '../controllers/ModeConnection';
 import { SensorModule } from './index';
+import { Constants } from '../utils/Constants';
+
 const { confirm } = Modal;
 
 const loader = require('../common_images/notifications/loading_ring.svg');
@@ -17,7 +19,6 @@ const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const deviceImage = require('../common_images/devices/gateway.svg');
 const deviceLocation = require('../common_images/devices/location-pin.svg');
 
-const MODE_API_BASE_URL = 'https://api.tinkermode.com/';
 interface HardwareProps extends React.Props<any> {
   isLoggedIn: boolean;
   onLogIn: () => void;
@@ -50,7 +51,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
             deviceResponse.forEach((device: any, index: any) => {
               // for each device, set linked modules
               setIsLoading(true);
-              modeAPI.getAllDeviceKeyValueStoreByPrefix(device.id, 'sensorModule')
+              modeAPI.getAllDeviceKeyValueStoreByPrefix(device.id, Constants.SENSOR_MODULE_KEY_PREFIX)
                 .then((sensorModules: KeyValueStore[]) => {
                   const deviceBundle: SensorModuleSet = {
                     // create sensor module set
@@ -78,7 +79,9 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     // data for the module that triggered the event.
     const messageHandler: any = {
       notify: (message: any): void => {
-        if (message.eventType === '_keyValueSaved_' && message.eventData && linkedModules !== undefined) {
+        if (message.eventType === ModeConstants.EVENT_KEY_VALUE_SAVED &&
+          message.eventData && linkedModules !== undefined) {
+
           // message.eventData will be the key/value store for the sensorModule
           const updatedSensorModule: SensorModuleInterface = message.eventData;
 
@@ -204,12 +207,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     deviceID: string,
     index: number
   ): React.ReactNode => {
-    const ws = ModeConnection.openConnection();
-    if (ws !== undefined) {
-      setTimeout(() => {
-        context.actions.setWebsocket(ws);
-      },         2000);
-    }
+    ModeConnection.openConnection();
     if (linkedModules && linkedModules[index]) {
       const sortedLinkedModules = linkedModules.sort(function(a: any, b: any) {
         if (a.device < b.device) {
@@ -233,7 +231,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                     sessionStorage.setItem('selectedGateway', deviceID);
                     sessionStorage.setItem(
                       'selectedModule',
-                      sensor.key.split('sensorModule')[1]
+                      sensor.key.split(Constants.SENSOR_MODULE_KEY_PREFIX)[1]
                     );
                     goToSensorModule(event, sensor.key);
                   }}

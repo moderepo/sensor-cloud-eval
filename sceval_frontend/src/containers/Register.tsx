@@ -1,9 +1,10 @@
 import React, { Fragment, useState } from 'react';
 import LoginHeader from '../components/LoginHeader';
 import { NavLink, Redirect } from 'react-router-dom';
-import modeAPI from '../controllers/ModeAPI';
+import modeAPI, { ErrorResponse } from '../controllers/ModeAPI';
 import AppContext from '../controllers/AppContext';
 import handleErrors from '../utils/ErrorMessages';
+import User from '../controllers/User';
 
 interface RegisterProps extends React.Props<any> {
     isLoggedIn: boolean;
@@ -26,33 +27,17 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
         [error, setError] = useState('');
     const onSubmit = (event: React.FormEvent<HTMLElement>) => {
         event.preventDefault();
-        const params = {
-            projectId: AppContext.getProjectId(),
-            email: email,
-            password: password,
-            name: name
-        };
-        modeAPI
-            .request('POST', 'https://api.tinkermode.com/users', params, false)
-            .then((resp: any) => {
-                console.log(resp);
+        modeAPI.registerUser(AppContext.getProjectId(), name, email, password)
+            .then((userInfo: User) => {
+                console.log(userInfo);
                 setIsRedirectConfirmEmailVerification(true);
             })
-            .catch((reason: any) => {
-                if (
-                    reason.response &&
-                    reason.response.data &&
-                    reason.response.data.reason
-                ) {
-                    console.log(reason.response.data.reason);
-                    const transformedErr = handleErrors(
-                        reason.response.data.reason
-                    );
-                    setError(transformedErr);
-                } else {
-                    alert('Error! ' + reason);
-                    console.log(reason);
-                }
+            .catch((errorResponse: ErrorResponse) => {
+                console.log(errorResponse.message);
+                const transformedErr = handleErrors(
+                    errorResponse.message
+                );
+                setError(transformedErr);
             });
     };
     const setValidationTimer = () => {
