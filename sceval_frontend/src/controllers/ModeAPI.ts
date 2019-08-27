@@ -255,6 +255,22 @@ export class ModeAPI {
   }
 
   /**
+   * Log the user out
+   */
+  public async logout(): Promise<number> {
+    try {
+      const response: AxiosResponse<any> = await this.request(
+        'DELETE',
+        `userSession`,
+        {}
+      );
+      return response.status;
+    } catch (error) {
+      throw ModeAPI.getErrorResponse(error);
+    }
+  }
+
+  /**
    * Get user profile info
    */
   public async getUserInfo(userId: number): Promise<User> {

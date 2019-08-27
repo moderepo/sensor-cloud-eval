@@ -26,8 +26,14 @@ const MyAccount = withRouter(
       setUsername(user);
     },        []);
 
-    const logout = () => {
-      AppContext.clearLogin();
+    const logout = async () => {
+      try {
+        // need to wait until log out is done before redirecting the user or
+        // else the API call might be canceled.
+        await AppContext.logout(true);
+      } catch (error) {
+        console.log(error);
+      }
       setTimeout(() => {
         location.pathname = '/login';
       },         1000);
