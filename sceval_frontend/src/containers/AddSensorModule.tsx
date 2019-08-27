@@ -3,7 +3,7 @@ import LeftNav from '../components/LeftNav';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import ModeConnection from '../controllers/ModeConnection';
 import AppContext from '../controllers/AppContext';
-import modeAPI, { ModeConstants } from '../controllers/ModeAPI';
+import modeAPI from '../controllers/ModeAPI';
 import { KeyValueStore } from '../components/entities/API';
 import { Context, ContextConsumer, context } from '../context/Context';
 import { Progress } from 'antd';
@@ -101,34 +101,34 @@ export class AddSensorModule extends Component<
 
   async startScan(): Promise<void> {
     this.setState(() => {
-        return {
-            scanning: true
-        };
+      return {
+        scanning: true
+      };
     });
 
     // get all the modules that are already associated with the devices so that we can filter out these modules
     // Note: we are going to use async/await here to make sure we get all the associated modules first
     const associatedModulesIds: string[] = [];
     for (let device of this.context.state.devices) {
-        try {
-            const associatedModules: KeyValueStore[] = await modeAPI.getAllDeviceKeyValueStoreByPrefix(
-                device.id,
-                Constants.SENSOR_MODULE_KEY_PREFIX
-            );
-            
-            // get the modules' IDs and then insert them to the associatedModulesIds array
-            associatedModulesIds.push(...associatedModules.map((module: SensorModuleInterface): string => {
-                return module.value.id;
-            }));
-        } catch (error) {
-            console.log(error);
-        }
+      try {
+        const associatedModules: KeyValueStore[] = await modeAPI.getAllDeviceKeyValueStoreByPrefix(
+          device.id,
+          Constants.SENSOR_MODULE_KEY_PREFIX
+        );
+        
+        // get the modules' IDs and then insert them to the associatedModulesIds array
+        associatedModulesIds.push(...associatedModules.map((module: SensorModuleInterface): string => {
+          return module.value.id;
+        }));
+      } catch (error) {
+        console.log(error);
+      }
     }
 
     this.setState(() => {
-        return {
-            associatedModules: associatedModulesIds
-        };
+      return {
+        associatedModules: associatedModulesIds
+      };
     });
 
     // once we have all the list of assiociated modules, send a command to the selected device to search for modules
@@ -136,23 +136,23 @@ export class AddSensorModule extends Component<
 
     let requestCount: number = 0;
     const interval: number = window.setInterval(
-        () => {
-            requestCount++;
-            this.setState(() => {
-                return {
-                    scanningProgress: requestCount * 10
-                };
-            });
-            if (requestCount > 9) {
-                window.clearInterval(interval);
-                this.setState(() => {
-                    return {
-                        scanning: false
-                    };
-                });
-            }
-        },
-        1000
+      () => {
+        requestCount++;
+        this.setState(() => {
+          return {
+            scanningProgress: requestCount * 10
+          };
+        });
+        if (requestCount > 9) {
+          window.clearInterval(interval);
+          this.setState(() => {
+            return {
+              scanning: false
+            };
+          });
+        }
+      },
+      1000
     );
   }
 
