@@ -1,6 +1,6 @@
-import modeAPI, { ModeConstants, ErrorResponse, KeyValueStore } from './ModeAPI';
+import modeAPI, { ModeConstants } from './ModeAPI';
+import { ErrorResponse, KeyValueStore, Event } from '../components/entities/API';
 import { ConcreteObservable } from './Observer';
-import Event from './Event';
 
 export class ModeConnection extends ConcreteObservable<Event> {
   private webSocket: WebSocket | null;
@@ -25,7 +25,10 @@ export class ModeConnection extends ConcreteObservable<Event> {
       }
     }
 
-    const baseUrl: string = ModeConstants.MODE_API_BASE_URL.replace(/^http/, 'ws');
+    const baseUrl: string = ModeConstants.MODE_API_BASE_URL.replace(
+      /^http/,
+      'ws'
+    );
     const wsUrl: string = `${baseUrl}userSession/websocket?authToken=${modeAPI.getAuthToken()}`;
 
     this.webSocket = new WebSocket(wsUrl);
@@ -59,37 +62,44 @@ export class ModeConnection extends ConcreteObservable<Event> {
       }
     };
 
-    modeAPI.setHomeKeyValueStore(home.id, sensor.sensorModuleId, store)
-    .catch ((error: ErrorResponse): void => {
-      console.error('reason', error.message);
-    });
+    modeAPI
+      .setHomeKeyValueStore(home.id, sensor.sensorModuleId, store)
+      .catch((error: ErrorResponse): void => {
+        console.error('reason', error.message);
+      });
   }
 
   getSensorTSData(deviceID: number): void {
-    modeAPI.sendCommand(deviceID, {
-      action: 'timeSeriesData',
-    }).catch((error: ErrorResponse) => {
-      console.error('reason', error.message);
-    });
+    modeAPI
+      .sendCommand(deviceID, {
+        action: 'timeSeriesData'
+      })
+      .catch((error: ErrorResponse) => {
+        console.error('reason', error.message);
+      });
   }
 
   searchForSensorModules(deviceID: number): void {
-    modeAPI.sendCommand(deviceID, {
-      action: 'startDiscovery',
-      parameters: { timeout: 1000 }
-    }).catch((error: ErrorResponse) => {
-      console.error('reason', error.message);
-    });
+    modeAPI
+      .sendCommand(deviceID, {
+        action: 'startDiscovery',
+        parameters: { timeout: 1000 }
+      })
+      .catch((error: ErrorResponse) => {
+        console.error('reason', error.message);
+      });
   }
 
   listSensorModules(deviceID: number): void {
-    modeAPI.sendCommand(deviceID, {
-      action: 'listSensorModules',
-      parameters: { timeout: 1000 }
-    }).catch((error: ErrorResponse) => {
-      console.error('reason', error.message);
-    });
+    modeAPI
+      .sendCommand(deviceID, {
+        action: 'listSensorModules',
+        parameters: { timeout: 1000 }
+      })
+      .catch((error: ErrorResponse) => {
+        console.error('reason', error.message);
+      });
   }
 }
 
-export default new ModeConnection;
+export default new ModeConnection();

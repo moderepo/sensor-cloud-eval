@@ -3,7 +3,8 @@ import { NavLink } from 'react-router-dom';
 import AppContext from '../controllers/AppContext';
 import { AmChart } from '../components/AmChart';
 import { Context, context } from '../context/Context';
-import modeAPI, { KeyValueStore, ErrorResponse, TimeSeriesData, TimeSeriesInfo } from '../controllers/ModeAPI';
+import { KeyValueStore, ErrorResponse, TimeSeriesData, TimeSeriesInfo } from '../components/entities/API';
+import modeAPI from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import moment from 'moment';
 import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
@@ -11,7 +12,7 @@ import ModeConnection  from '../controllers/ModeConnection';
 import determinUnit from '../utils/SensorTypes';
 import { SensorModuleInterface } from '../components/entities/SensorModule';
 import { Constants } from '../utils/Constants';
-import Home from '../controllers/Home';
+import { Home } from '../components/entities/API';
 
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
