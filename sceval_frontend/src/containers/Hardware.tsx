@@ -240,6 +240,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     deviceID: number,
     index: number
   ): React.ReactNode => {
+    ModeConnection.openConnection();
     if (linkedModules && linkedModules[index]) {
       const modules = linkedModules[index].sensorModules.map((sensor, key) => {
         ModeConnection.listSensorModules(deviceID);

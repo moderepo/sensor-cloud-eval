@@ -10,17 +10,16 @@ import {
 } from '../components/entities/API';
 import Home from '../components/entities/Home';
 import { User } from '../components/entities/User';
-
 export namespace ModeConstants {
   export const MODE_API_BASE_URL: string = 'https://api.tinkermode.com/';
-
+  
   export const EVENT_DEVICE_CONNECTED: string = '_deviceConnected_';
   export const EVENT_DEVICE_DISCONNECTED: string = '_deviceDisconnected_';
   export const EVENT_KEY_VALUE_SAVED: string = '_keyValueSaved_';
   export const EVENT_KEY_VALUE_DELETED: string = '_keyValueDeleted_';
   export const EVENT_DEVICE_KEY_VALUE_SAVED: string = '_deviceKVSaved_';
   export const EVENT_DEVICE_KEY_VALUE_DELETED: string = '_deviceKVDeleted_';
-
+  
   export const ERROR_UNKNOWN_EMAIL: string = 'UNKNOWN_EMAIL';
   export const ERROR_INVALID_EMAIL: string = 'INVALID_EMAIL';
   export const ERROR_INVALID_TOKEN: string = 'INVALID_TOKEN';
