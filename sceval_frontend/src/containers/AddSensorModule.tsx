@@ -99,11 +99,11 @@ export class AddSensorModule extends Component<
           Constants.SENSOR_MODULE_KEY_PREFIX
         )
         .then((associatedModules: KeyValueStore[]) => {
-          associatedModules.map((sensor: any) => sensor.value.id);
+          const associatedModulesIds: string[] = associatedModules.map((sensor: any) => sensor.value.id);
           if (index === context.state.devices.length - 1) {
             this.setState(() => {
               return {
-                associatedModules: associatedModules
+                associatedModules: associatedModulesIds
               };
             });
             if (associatedModules.length === 0) {
