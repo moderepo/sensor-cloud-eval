@@ -1,20 +1,26 @@
 import Axios, { Method } from 'axios';
 import { AxiosInstance, AxiosResponse } from 'axios';
-import { RequestConfig, Device, KeyValueStore, TimeSeriesData, TimeSeriesInfo, 
-  ErrorResponse } from '../components/entities/API';
+import {
+  RequestConfig,
+  Device,
+  KeyValueStore,
+  TimeSeriesData,
+  TimeSeriesInfo,
+  ErrorResponse
+} from '../components/entities/API';
 import Home from '../components/entities/Home';
 import { User } from '../components/entities/User';
 
 export namespace ModeConstants {
   export const MODE_API_BASE_URL: string = 'https://api.tinkermode.com/';
-  
+
   export const EVENT_DEVICE_CONNECTED: string = '_deviceConnected_';
   export const EVENT_DEVICE_DISCONNECTED: string = '_deviceDisconnected_';
   export const EVENT_KEY_VALUE_SAVED: string = '_keyValueSaved_';
   export const EVENT_KEY_VALUE_DELETED: string = '_keyValueDeleted_';
   export const EVENT_DEVICE_KEY_VALUE_SAVED: string = '_deviceKVSaved_';
   export const EVENT_DEVICE_KEY_VALUE_DELETED: string = '_deviceKVDeleted_';
-  
+
   export const ERROR_UNKNOWN_EMAIL: string = 'UNKNOWN_EMAIL';
   export const ERROR_INVALID_EMAIL: string = 'INVALID_EMAIL';
   export const ERROR_INVALID_TOKEN: string = 'INVALID_TOKEN';
@@ -56,12 +62,15 @@ export class ModeAPI {
    * Convert any error object to a standard generic ErrorResponse object. This error object is usually an
    * AxiosError but it can be other error types.
    */
-  public static getErrorResponse (error: any): ErrorResponse {
+  public static getErrorResponse(error: any): ErrorResponse {
     let message: string = 'Unknown error';
     let status: number = 400;
 
     if (error && error.response && error.response.data) {
-      if (typeof error.response.data === 'object' && error.response.data.reason) {
+      if (
+        typeof error.response.data === 'object' &&
+        error.response.data.reason
+      ) {
         message = error.response.data.reason;
       } else {
         message = error.response.data.toString();
@@ -76,7 +85,7 @@ export class ModeAPI {
 
     return {
       message: message,
-      status: status,
+      status: status
     };
   }
 
@@ -110,19 +119,22 @@ export class ModeAPI {
     });
   }
 
-  public _initRequest(method: Method, path: string, withCredentials?: boolean): RequestConfig {
+  public _initRequest(
+    method: Method,
+    path: string,
+    withCredentials?: boolean
+  ): RequestConfig {
     var url: string;
     if (path.indexOf('://') > -1) {
       url = path;
     } else {
       url = this.baseUrl + path;
     }
-    
+
     const config: RequestConfig = {
       method: method,
       url: url,
-      headers: {
-      }
+      headers: {}
     };
     if (withCredentials !== undefined) {
       config.withCredentials = withCredentials;
@@ -134,8 +146,17 @@ export class ModeAPI {
   }
 
   // Make a REST request. For POST/PUT/PATCH requests, body is encoded as JSON.
-  public request<T>(method: Method, path: string, data: string | Object, withCredentials?: boolean) {
-    const config: any = this._initRequest(method, `${ModeConstants.MODE_API_BASE_URL}${path}`, withCredentials);
+  public request<T>(
+    method: Method,
+    path: string,
+    data: string | Object,
+    withCredentials?: boolean
+  ) {
+    const config: any = this._initRequest(
+      method,
+      `${ModeConstants.MODE_API_BASE_URL}${path}`,
+      withCredentials
+    );
     if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
       config.data = data;
     } else {
@@ -149,10 +170,15 @@ export class ModeAPI {
 
   // Make a POST request as a web form submission.
   public postForm<T>(path: string, postData: Object) {
-    const config: any = this._initRequest('POST', `${ModeConstants.MODE_API_BASE_URL}${path}`, false);
+    const config: any = this._initRequest(
+      'POST',
+      `${ModeConstants.MODE_API_BASE_URL}${path}`,
+      false
+    );
 
     config.data = postData;
-    config.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
+    config.headers['Content-Type'] =
+      'application/x-www-form-urlencoded; charset=UTF-8';
 
     // This generates form encoded body
     config.transformRequest = function(data: any, headers: any) {
@@ -167,22 +193,31 @@ export class ModeAPI {
   }
 
   /**
-   * 
+   *
    * @param projectId Register a new user account
-   * @param name 
-   * @param email 
-   * @param password 
+   * @param name
+   * @param email
+   * @param password
    */
-  public async registerUser (projectId: number, name: string, email: string, password: string): Promise <User> {
+  public async registerUser(
+    projectId: number,
+    name: string,
+    email: string,
+    password: string
+  ): Promise<User> {
     try {
       const params: any = {
         projectId: projectId,
         name: name,
         email: email,
-        password: password,
+        password: password
       };
 
-      const response: AxiosResponse<any> = await this.request('POST', 'users', params);
+      const response: AxiosResponse<any> = await this.request(
+        'POST',
+        'users',
+        params
+      );
       return response.data as User;
     } catch (error) {
       throw ModeAPI.getErrorResponse(error);
@@ -192,20 +227,28 @@ export class ModeAPI {
   /**
    * Log user in
    * @param projectId
-   * @param appId 
-   * @param email 
-   * @param password 
+   * @param appId
+   * @param email
+   * @param password
    */
-  public async login (projectId: number, appId: string, email: string, password: string): Promise<any> {
+  public async login(
+    projectId: number,
+    appId: string,
+    email: string,
+    password: string
+  ): Promise<any> {
     try {
       const params: any = {
         projectId: projectId,
         appId: appId,
         email: email,
-        password: password,
+        password: password
       };
 
-      const response: AxiosResponse<any> = await this.postForm('auth/user', params);
+      const response: AxiosResponse<any> = await this.postForm(
+        'auth/user',
+        params
+      );
       return response.data;
     } catch (error) {
       throw ModeAPI.getErrorResponse(error);
@@ -215,9 +258,13 @@ export class ModeAPI {
   /**
    * Get user profile info
    */
-  public async getUserInfo (userId: number): Promise<User> {
+  public async getUserInfo(userId: number): Promise<User> {
     try {
-      const response: AxiosResponse<any> = await this.request('GET', `users/${userId}`, {});
+      const response: AxiosResponse<any> = await this.request(
+        'GET',
+        `users/${userId}`,
+        {}
+      );
       return response.data as User;
     } catch (error) {
       throw ModeAPI.getErrorResponse(error);
@@ -225,13 +272,17 @@ export class ModeAPI {
   }
 
   /**
-   * 
+   *
    * @param userId Update user info
    * @param params Should only contain the fields and values that need to be updated, not the entire User object
    */
-  public async updateUserInfo (userId: string, params: any): Promise<number> {
+  public async updateUserInfo(userId: string, params: any): Promise<number> {
     try {
-      const response: AxiosResponse<any> = await this.request('PATCH', `users/${userId}`, params);
+      const response: AxiosResponse<any> = await this.request(
+        'PATCH',
+        `users/${userId}`,
+        params
+      );
       return response.status;
     } catch (error) {
       throw ModeAPI.getErrorResponse(error);
@@ -241,9 +292,12 @@ export class ModeAPI {
   /**
    * Reset user password
    * @param projectId
-   * @param email 
+   * @param email
    */
-  public async resetPassword (projectId: number, email: string): Promise<number> {
+  public async resetPassword(
+    projectId: number,
+    email: string
+  ): Promise<number> {
     try {
       const response: AxiosResponse<any> = await this.request(
         'POST',
@@ -261,7 +315,9 @@ export class ModeAPI {
 
   public async getHomes(userId: number): Promise<Home[]> {
     try {
-      const response: AxiosResponse<any> = await this.request('GET', `homes`, {userId: userId});
+      const response: AxiosResponse<any> = await this.request('GET', `homes`, {
+        userId: userId
+      });
       return response.data as Home[];
     } catch (error) {
       throw ModeAPI.getErrorResponse(error);
@@ -270,7 +326,11 @@ export class ModeAPI {
 
   public async getHomeByHomeId(homeId: number) {
     try {
-      const response: AxiosResponse<any> = await this.request('GET', `homes/${homeId}`, {});
+      const response: AxiosResponse<any> = await this.request(
+        'GET',
+        `homes/${homeId}`,
+        {}
+      );
       return response.data as Home;
     } catch (error) {
       throw ModeAPI.getErrorResponse(error);
@@ -296,7 +356,11 @@ export class ModeAPI {
 
   public async getDevice(deviceId: number): Promise<Device> {
     try {
-      const response: AxiosResponse<any> = await this.request('GET', `${deviceId}`, {});
+      const response: AxiosResponse<any> = await this.request(
+        'GET',
+        `${deviceId}`,
+        {}
+      );
       return response.data as Device;
     } catch (error) {
       throw ModeAPI.getErrorResponse(error);
@@ -305,7 +369,11 @@ export class ModeAPI {
 
   public async getDevices(homeId: number): Promise<Device[]> {
     try {
-      const response: AxiosResponse<any> = await this.request('GET', `devices`, {homeId: homeId});
+      const response: AxiosResponse<any> = await this.request(
+        'GET',
+        `devices`,
+        { homeId: homeId }
+      );
       return response.data as Device[];
     } catch (error) {
       throw ModeAPI.getErrorResponse(error);
@@ -317,10 +385,13 @@ export class ModeAPI {
    * metadata data, not the actuel time series data.
    * @param homeID
    */
-  public async getTSDBInfo (homeID: number): Promise<TimeSeriesInfo[]> {
+  public async getTSDBInfo(homeID: number): Promise<TimeSeriesInfo[]> {
     try {
       const response: AxiosResponse<any> = await this.request(
-        'GET', `homes/${homeID}/smartModules/tsdb/timeSeries`, {});
+        'GET',
+        `homes/${homeID}/smartModules/tsdb/timeSeries`,
+        {}
+      );
       return response.data as TimeSeriesInfo[];
     } catch (error) {
       throw ModeAPI.getErrorResponse(error);
@@ -330,21 +401,25 @@ export class ModeAPI {
   /**
    * Get time series data for the specified seriesID
    * @param homeID
-   * @param seriesID 
-   * @param startTime 
-   * @param endTime 
-   * @param aggregation 
+   * @param seriesID
+   * @param startTime
+   * @param endTime
+   * @param aggregation
    */
-  public async getTSDBData (
-      homeID: number, seriesID: string, startTime: string, endTime: string, aggregation: string = 'avg'
-    ): Promise<TimeSeriesData> {
-
+  public async getTSDBData(
+    homeID: number,
+    seriesID: string,
+    startTime: string,
+    endTime: string,
+    aggregation: string = 'avg'
+  ): Promise<TimeSeriesData> {
     try {
       const response: AxiosResponse<any> = await this.request(
         'GET',
         `homes/${homeID}/smartModules/tsdb/timeSeries/${seriesID}` +
-        `/data?begin=${startTime}&end=${endTime}&aggregation=${aggregation}`,
-        {});
+          `/data?begin=${startTime}&end=${endTime}&aggregation=${aggregation}`,
+        {}
+      );
 
       return response.data as TimeSeriesData;
     } catch (error) {
@@ -353,12 +428,18 @@ export class ModeAPI {
   }
 
   /**
-   * 
+   *
    * @param deviceID Get every key value store for a specific device
    */
-  public async getAllDeviceKeyValueStore (deviceID: number): Promise<KeyValueStore[]> {
+  public async getAllDeviceKeyValueStore(
+    deviceID: number
+  ): Promise<KeyValueStore[]> {
     try {
-      const response: AxiosResponse<any> = await this.request('GET', `devices/${deviceID}/kv`, {});
+      const response: AxiosResponse<any> = await this.request(
+        'GET',
+        `devices/${deviceID}/kv`,
+        {}
+      );
       return response.data as KeyValueStore[];
     } catch (error) {
       throw ModeAPI.getErrorResponse(error);
@@ -367,12 +448,17 @@ export class ModeAPI {
 
   /**
    * @param deviceID Get the value of a key value store for a given key
-   * @param key 
+   * @param key
    */
-  public async getDeviceKeyValueStore (deviceID: number, key: string): Promise<KeyValueStore> {
+  public async getDeviceKeyValueStore(
+    deviceID: number,
+    key: string
+  ): Promise<KeyValueStore> {
     try {
       const response: AxiosResponse<any> = await this.request(
-        'GET', `devices/${deviceID}/kv/${key}`, {}
+        'GET',
+        `devices/${deviceID}/kv/${key}`,
+        {}
       );
       return response.data as KeyValueStore;
     } catch (error) {
@@ -383,12 +469,17 @@ export class ModeAPI {
   /**
    * Get all the key value stores for a specific device that has keys started with the specified keyPrefix
    * @param deviceID
-   * @param keyPrefix 
+   * @param keyPrefix
    */
-  public async getAllDeviceKeyValueStoreByPrefix (deviceID: number, keyPrefix: string): Promise<KeyValueStore[]> {
+  public async getAllDeviceKeyValueStoreByPrefix(
+    deviceID: number,
+    keyPrefix: string
+  ): Promise<KeyValueStore[]> {
     try {
       const response: AxiosResponse<any> = await this.request(
-        'GET', `devices/${deviceID}/kv?keyPrefix=${keyPrefix}`, {}
+        'GET',
+        `devices/${deviceID}/kv?keyPrefix=${keyPrefix}`,
+        {}
       );
       return response.data as KeyValueStore[];
     } catch (error) {
@@ -398,14 +489,20 @@ export class ModeAPI {
 
   /**
    * Add/Update a key value store for a device
-   * @param deviceID 
+   * @param deviceID
    * @param key
-   * @param store 
+   * @param store
    */
-  public async setDeviceKeyValueStore (deviceID: number, key: string, store: KeyValueStore): Promise<number> {
+  public async setDeviceKeyValueStore(
+    deviceID: number,
+    key: string,
+    store: KeyValueStore
+  ): Promise<number> {
     try {
       const response: AxiosResponse<any> = await this.request(
-        'PUT', `devices/${deviceID}/kv/${key}`, {
+        'PUT',
+        `devices/${deviceID}/kv/${key}`,
+        {
           value: store.value
         }
       );
@@ -417,13 +514,18 @@ export class ModeAPI {
 
   /**
    * @param deviceID Delete a key value store from a device
-   * @param key 
+   * @param key
    * @returns number response status
    */
-  public async deleteDeviceKeyValueStore (deviceID: number, key: string): Promise<number> {
+  public async deleteDeviceKeyValueStore(
+    deviceID: number,
+    key: string
+  ): Promise<number> {
     try {
       const response: AxiosResponse<any> = await this.request(
-        'DELETE', `devices/${deviceID}/kv/${key}`, {}
+        'DELETE',
+        `devices/${deviceID}/kv/${key}`,
+        {}
       );
       return response.status;
     } catch (error) {
@@ -432,12 +534,18 @@ export class ModeAPI {
   }
 
   /**
-   * 
+   *
    * @param homeID Get every key value store for a specific home
    */
-  public async getAllHomeKeyValueStore (homeID: number): Promise<KeyValueStore[]> {
+  public async getAllHomeKeyValueStore(
+    homeID: number
+  ): Promise<KeyValueStore[]> {
     try {
-      const response: AxiosResponse<any> = await this.request('GET', `homes/${homeID}/kv`, {});
+      const response: AxiosResponse<any> = await this.request(
+        'GET',
+        `homes/${homeID}/kv`,
+        {}
+      );
       return response.data as KeyValueStore[];
     } catch (error) {
       throw ModeAPI.getErrorResponse(error);
@@ -446,12 +554,17 @@ export class ModeAPI {
 
   /**
    * @param homeID Get the value of a key value store for a given key
-   * @param key 
+   * @param key
    */
-  public async getHomeKeyValueStore (homeID: number, key: string): Promise<KeyValueStore> {
+  public async getHomeKeyValueStore(
+    homeID: number,
+    key: string
+  ): Promise<KeyValueStore> {
     try {
       const response: AxiosResponse<any> = await this.request(
-        'GET', `homes/${homeID}/kv/${key}`, {}
+        'GET',
+        `homes/${homeID}/kv/${key}`,
+        {}
       );
       return response.data as KeyValueStore;
     } catch (error) {
@@ -462,12 +575,17 @@ export class ModeAPI {
   /**
    * Get all the key value stores for a specific home that has keys started with the specified keyPrefix
    * @param homeID
-   * @param keyPrefix 
+   * @param keyPrefix
    */
-  public async getAllHomeKeyValueStoreByPrefix (homeID: number, keyPrefix: string): Promise<KeyValueStore[]> {
+  public async getAllHomeKeyValueStoreByPrefix(
+    homeID: number,
+    keyPrefix: string
+  ): Promise<KeyValueStore[]> {
     try {
       const response: AxiosResponse<any> = await this.request(
-        'GET', `homes/${homeID}/kv?keyPrefix=${keyPrefix}`, {}
+        'GET',
+        `homes/${homeID}/kv?keyPrefix=${keyPrefix}`,
+        {}
       );
       return response.data as KeyValueStore[];
     } catch (error) {
@@ -477,14 +595,20 @@ export class ModeAPI {
 
   /**
    * Add/Update a key value store for a home
-   * @param homeID 
+   * @param homeID
    * @param key
-   * @param store 
+   * @param store
    */
-  public async setHomeKeyValueStore (homeID: number, key: string, store: KeyValueStore): Promise<number> {
+  public async setHomeKeyValueStore(
+    homeID: number,
+    key: string,
+    store: KeyValueStore
+  ): Promise<number> {
     try {
       const response: AxiosResponse<any> = await this.request(
-        'PUT', `homes/${homeID}/kv/${key}`, {
+        'PUT',
+        `homes/${homeID}/kv/${key}`,
+        {
           value: store.value
         }
       );
@@ -496,13 +620,18 @@ export class ModeAPI {
 
   /**
    * @param homeID Delete a key value store from a home
-   * @param key 
+   * @param key
    * @returns number response status
    */
-  public async deleteHomeKeyValueStore (homeID: number, key: string): Promise<number> {
+  public async deleteHomeKeyValueStore(
+    homeID: number,
+    key: string
+  ): Promise<number> {
     try {
       const response: AxiosResponse<any> = await this.request(
-        'DELETE', `homes/${homeID}/kv/${key}`, {}
+        'DELETE',
+        `homes/${homeID}/kv/${key}`,
+        {}
       );
       return response.status;
     } catch (error) {
@@ -512,13 +641,15 @@ export class ModeAPI {
 
   /**
    * Send a command to a device
-   * @param deviceID 
-   * @param params 
+   * @param deviceID
+   * @param params
    */
-  public async sendCommand (deviceID: number, params: any): Promise<number> {
+  public async sendCommand(deviceID: number, params: any): Promise<number> {
     try {
       const response: AxiosResponse<any> = await this.request(
-        'PUT', `devices/${deviceID}/command`, params
+        'PUT',
+        `devices/${deviceID}/command`,
+        params
       );
       return response.status;
     } catch (error) {
@@ -528,16 +659,17 @@ export class ModeAPI {
 
   private makeHome() {
     if (this.makeHomePromise === null) {
-      this.makeHomePromise = this.request('POST', 'homes', {name: 'home'})
-        .then((response: any) => {
-          console.log('POST /homes success');
-          this.defaultHome = response.data;
-          return response.data;
-        });
+      this.makeHomePromise = this.request('POST', 'homes', {
+        name: 'home'
+      }).then((response: any) => {
+        console.log('POST /homes success');
+        this.defaultHome = response.data;
+        return response.data;
+      });
     }
-    
+
     return this.makeHomePromise;
   }
 }
 
-export default (new ModeAPI);
+export default new ModeAPI();

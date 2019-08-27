@@ -1,4 +1,4 @@
-import { ClientStorageData } from '../components/entities/User'; 
+import { ClientStorageData } from '../components/entities/User';
 export default class ClientStorage {
   static setItem(key: string, value: any, ttl: number) {
     var data: ClientStorageData = {
@@ -6,7 +6,7 @@ export default class ClientStorage {
     };
 
     if (typeof ttl === 'number' && ttl > 0) {
-      data.expire = Date.now() + (ttl * 1000);
+      data.expire = Date.now() + ttl * 1000;
     }
 
     window.localStorage.setItem(key, JSON.stringify(data));

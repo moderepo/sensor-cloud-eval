@@ -21,16 +21,13 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
             isRedirectConfirmEmailVerification,
             setIsRedirectConfirmEmailVerification
         ] = useState(false),
-        [passwordsMatch, setPasswordsMatch] = useState(false),
         [emailValid, setEmailValid] = useState(false),
         [formValid, setFormValid] = useState(false),
-        [isSent, setIsSent] = useState(false),
         [error, setError] = useState('');
     const onSubmit = (event: React.FormEvent<HTMLElement>) => {
         event.preventDefault();
         modeAPI.registerUser(AppContext.getProjectId(), name, email, password)
             .then((userInfo: User) => {
-                console.log(userInfo);
                 setIsRedirectConfirmEmailVerification(true);
             })
             .catch((errorResponse: ErrorResponse) => {
@@ -160,8 +157,6 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
                         </div>
                     </form>
                 </div>
-                {/* {this.getDoneElement(isSent)} */}
-                <div className="error">{/* {getErrorChild()} */}</div>
             </div>
             <div className="agreement-account-status">
                 <p>
