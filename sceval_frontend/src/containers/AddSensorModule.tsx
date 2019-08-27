@@ -39,7 +39,7 @@ export class AddSensorModule extends Component<
     // If context does not have selectedGateway value, which is caused by the user reloading the add
     // sensor module page, we need to get the gatewayId from the router params
     if (!this.context.state.selectedGateway) {
-        this.context.actions.setGateway(props.match.params.gatewayId);
+      this.context.actions.setGateway(props.match.params.gatewayId);
     }
     
     this.state = {
