@@ -15,9 +15,7 @@ export const LeftNav: React.FC = () => {
       <NavLink className="navigation-item account" to="/my_account">
         <img src={profile} className="icon avatar" />
         <p>
-          {
-            JSON.parse(`${localStorage.getItem('user-login')}`).value.user
-              .name}
+          {JSON.parse(`${localStorage.getItem('user-login')}`).value.user.name}
         </p>
       </NavLink>
       <NavLink className="navigation-item hardware" to="/devices">
