@@ -144,7 +144,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
     // React hook's componentDidMount and componentDidUpdate
     useEffect(
         () => {
-            if (homeId !== null && selectedGateway && selectedModule) {
+            if (homeId !== 0 && selectedGateway && selectedModule) {
 
                 // fetch module data from KV store
                 modeAPI.getDeviceKeyValueStore(
