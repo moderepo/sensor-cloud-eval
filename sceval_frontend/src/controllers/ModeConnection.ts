@@ -1,7 +1,6 @@
 import modeAPI, { ModeConstants } from './ModeAPI';
-import { ErrorResponse, KeyValueStore } from '../components/entities/API';
+import { ErrorResponse, KeyValueStore, Event } from '../components/entities/API';
 import { ConcreteObservable } from './Observer';
-import { Event } from '../components/entities/SensorModule';
 
 export class ModeConnection extends ConcreteObservable<Event> {
   private webSocket: WebSocket | null;

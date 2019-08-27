@@ -12,7 +12,7 @@ import ModeConnection  from '../controllers/ModeConnection';
 import determinUnit from '../utils/SensorTypes';
 import { SensorModuleInterface } from '../components/entities/SensorModule';
 import { Constants } from '../utils/Constants';
-import Home from '../components/entities/Home';
+import { Home } from '../components/entities/API';
 
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');

@@ -2,7 +2,7 @@ import React, { Fragment, useState, useEffect, useContext } from 'react';
 import { Redirect, RouteComponentProps, withRouter } from 'react-router';
 import { LeftNav } from '../components/LeftNav';
 import modeAPI, { ModeConstants } from '../controllers/ModeAPI';
-import { KeyValueStore, Device } from '../components/entities/API';
+import { KeyValueStore, Device, Home } from '../components/entities/API';
 import { LoginInfo } from '../components/entities/User';
 import AppContext from '../controllers/AppContext';
 import {
@@ -14,7 +14,6 @@ import { Modal } from 'antd';
 import { Context, context } from '../context/Context';
 import ModeConnection from '../controllers/ModeConnection';
 import { Constants } from '../utils/Constants';
-import Home from '../components/entities/Home';
 
 const { confirm } = Modal;
 

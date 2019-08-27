@@ -8,7 +8,7 @@ import {
   TimeSeriesInfo,
   ErrorResponse
 } from '../components/entities/API';
-import Home from '../components/entities/Home';
+import { Home } from '../components/entities/API';
 import { User } from '../components/entities/User';
 export namespace ModeConstants {
   export const MODE_API_BASE_URL: string = 'https://api.tinkermode.com/';

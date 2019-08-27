@@ -40,3 +40,20 @@ export interface Observable<T> {
   removeObserver(o: Observer<T>): void;
   notifyAll(obj: T): void;
 }
+export interface Event {
+  eventType: string;
+  eventData: any;
+  timestamp: string;
+  homeId: number;
+  originDeviceId: number;
+  originDeviceClass: string;
+  originDeviceIp: string;
+  originProjectKeyId: string;
+  originProjectKeyName: string;
+}
+export interface Home {
+  creationTime: string;
+  id: number;
+  name: string;
+  projectId: number;
+}
