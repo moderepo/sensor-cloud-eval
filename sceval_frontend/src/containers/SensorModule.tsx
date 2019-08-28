@@ -50,6 +50,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [moduleSettingsVisible, setModuleSettingsVisible] = useState<boolean>(false);
     const [editingModuleSettings, setEditingModuleSettings] = useState(false);
+    const [noTSDBData, setNoTSDBData] = useState<boolean>(false);
     const sensorContext: Context = useContext(context);
     
     const performTSDBFetch =  
@@ -70,51 +71,52 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             let maxVal = 0;
             let minVal = Infinity;
             let sum = 0;
-            
-            // for each set of TSDB data, perform a calculation
-            timeseriesData.data.forEach((datapoint: any, datapointIndex: any) => {
-                sum += datapoint[1];
-                if (datapoint[1] > maxVal) {
-                    maxVal = datapoint[1];
-                }
-                if (datapoint[1] < minVal) {
-                    minVal = datapoint[1];
-                }
-                if (datapointIndex === timeseriesData.data.length - 1) {
-                    const sensorData = {
-                        seriesID: seriesID,
-                        unit: unit,
-                        type: sType,
-                        TSDBData: timeseriesData,
-                        avgVal: sType !== 'uv' ? 
-                            (sum / datapointIndex).toFixed(1) : (sum / datapointIndex).toFixed(3),
-                        maxVal: sType !== 'uv' ?
-                            maxVal.toFixed(1) : maxVal.toFixed(3),
-                        minVal: sType !== 'uv' ?
-                            minVal.toFixed(1) : minVal.toFixed(3)
-                    };
-                    // push that data to sensorData
-                    sensors.push(sensorData);
-                }
-                // bundle data after going through sensor set
-                if (sensors.length === wsData.length) {
-                    // if all of the sensor data has been populated, sort it alphabetically by type
-                    const sortedTSDBData = sensors.sort((a: any, b: any) =>  {
-                        if (a.type < b.type) {
-                            return -1;
-                        }
-                        if (a.type > b.type) {
-                            return 1;
-                        }
-                        return 0;
-                    });
-                    // set TSDB values
-                    if (!TSDBDataFetched) {
-                        setSensorTypes(sortedTSDBData);
-                        setTSDBDataFetched(true);
+            if (timeseriesData.data.length > 0) {
+                // for each set of TSDB data, perform a calculation
+                timeseriesData.data.forEach((datapoint: any, datapointIndex: any) => {
+                    sum += datapoint[1];
+                    if (datapoint[1] > maxVal) {
+                        maxVal = datapoint[1];
                     }
-                }
-            });
+                    if (datapoint[1] < minVal) {
+                        minVal = datapoint[1];
+                    }
+                    if (datapointIndex === timeseriesData.data.length - 1) {
+                        const sensorData = {
+                            seriesID: seriesID,
+                            unit: unit,
+                            type: sType,
+                            TSDBData: timeseriesData,
+                            avgVal: sType !== 'uv' ? 
+                                (sum / datapointIndex).toFixed(1) : (sum / datapointIndex).toFixed(3),
+                            maxVal: sType !== 'uv' ?
+                                maxVal.toFixed(1) : maxVal.toFixed(3),
+                            minVal: sType !== 'uv' ?
+                                minVal.toFixed(1) : minVal.toFixed(3)
+                        };
+                        // push that data to sensorData
+                        sensors.push(sensorData);
+                    }
+                    // bundle data after going through sensor set
+                    if (sensors.length === wsData.length) {
+                        // if all of the sensor data has been populated, sort it alphabetically by type
+                        const sortedTSDBData = sensors.sort((a: any, b: any) =>  {
+                            if (a.type < b.type) {
+                                return -1;
+                            }
+                            if (a.type > b.type) {
+                                return 1;
+                            }
+                            return 0;
+                        });
+                        // set TSDB values
+                        if (!TSDBDataFetched) {
+                            setSensorTypes(sortedTSDBData);
+                            setTSDBDataFetched(true);
+                        }
+                    }
+                });
+            }
         });
     };
 
@@ -275,6 +277,12 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     }
                 }
             };
+            // check to see that TSDB data was fetched and set flag accordingly
+            if (sensorTypes && sensorTypes.length > 0) {
+                setNoTSDBData(false);
+            } else {
+                setNoTSDBData(true);
+            }
             ModeConnection.addObserver(webSocketMessageHandler);
             // Return cleanup function to be called when the component is unmounted
             return (): void => {
@@ -649,8 +657,12 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                 </div>
                             );
                         }) :
+                        !noTSDBData ?
                         <div className="sensor-data-loader">
                             <img src={loader} />
+                        </div> :
+                        <div className="sensor-data-loader">
+                            No Data Available For This Timeframe
                         </div>
                         }
                     </div>
