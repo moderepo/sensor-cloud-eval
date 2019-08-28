@@ -25,6 +25,10 @@ export enum RouteKeys {
   SensorModules,
   AddSensorModule,
 }
+export interface RouteParams {
+  deviceId?: string;
+  sensorModuleId?: string;
+}
 
 export default class RouteDeclarations extends React.Component<RouteDeclarationsProps, any> {
   render() {
@@ -127,7 +131,7 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
         <Route
           key={RouteKeys.SensorModules}
           exact={true}
-          path="/sensor_modules/:id"
+          path="/sensor_modules/:sensorModuleId"
           component={() => (
             <>
               <LeftNav />
@@ -142,7 +146,7 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
         <Route
           key={RouteKeys.AddSensorModule}
           exact={true}
-          path="/devices/:gatewayId/add_sensor_modules"
+          path="/devices/:deviceId/add_sensor_modules"
           component={() => (
             <>
               <AddSensorModule

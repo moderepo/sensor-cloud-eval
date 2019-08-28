@@ -12,6 +12,7 @@ import ClientStorage from '../controllers/ClientStorage';
 import { evaluateSensorTypes } from '../utils/SensorTypes';
 import { Constants } from '../utils/Constants';
 import { SensorModuleInterface, AddSensorModuleState } from '../components/entities/SensorModule';
+import { RouteParams } from '../routes/RouteDeclarations';
 
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const checkMark = require('../common_images/notifications/check-1.svg');
@@ -21,25 +22,21 @@ interface AddSensorModuleProps extends React.Props<any> {
   isLoggedIn: boolean;
   onLogIn: () => void;
 }
-
-interface RouteParam {
-    gatewayId: string;
-}
     
 // TODO: Change into React.FC without breaking available sensors discovery (commented code below)
 export class AddSensorModule extends Component<
-  AddSensorModuleProps & RouteComponentProps<RouteParam>,
+  AddSensorModuleProps & RouteComponentProps<RouteParams>,
   AddSensorModuleState
 > {
 
-  constructor(props: AddSensorModuleProps & RouteComponentProps<RouteParam>, sensorContext: Context) {
+  constructor(props: AddSensorModuleProps & RouteComponentProps<RouteParams>, sensorContext: Context) {
 
     super(props, sensorContext);
 
     // If context does not have selectedGateway value, which is caused by the user reloading the add
     // sensor module page, we need to get the gatewayId from the router params
     if (!this.context.state.selectedGateway) {
-      this.context.actions.setGateway(props.match.params.gatewayId);
+      this.context.actions.setGateway(props.match.params.deviceId);
     }
     
     this.state = {
