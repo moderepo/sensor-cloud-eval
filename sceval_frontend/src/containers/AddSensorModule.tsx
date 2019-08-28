@@ -4,7 +4,7 @@ import { withRouter, RouteComponentProps } from 'react-router-dom';
 import ModeConnection from '../controllers/ModeConnection';
 import AppContext from '../controllers/AppContext';
 import modeAPI from '../controllers/ModeAPI';
-import { KeyValueStore } from '../components/entities/API';
+import { KeyValueStore, Device } from '../components/entities/API';
 import { Context, ContextConsumer, context } from '../context/Context';
 import { Progress } from 'antd';
 import 'antd/dist/antd.css';
@@ -105,24 +105,23 @@ export class AddSensorModule extends Component<
         scanning: true
       };
     });
-
-    // get all the modules that are already associated with the devices so that we can filter out these modules
-    // Note: we are going to use async/await here to make sure we get all the associated modules first
+    
     const associatedModulesIds: string[] = [];
-    for (let device of this.context.state.devices) {
-      try {
-        const associatedModules: KeyValueStore[] = await modeAPI.getAllDeviceKeyValueStoreByPrefix(
-          device.id,
-          Constants.SENSOR_MODULE_KEY_PREFIX
-        );
-        
-        // get the modules' IDs and then insert them to the associatedModulesIds array
-        associatedModulesIds.push(...associatedModules.map((module: SensorModuleInterface): string => {
-          return module.value.id;
-        }));
-      } catch (error) {
-        console.log(error);
-      }
+    try {
+      // For each device, get all the modules associated with the device and combine them into an array of
+      // associatedModulesIds so that we can filter out these modules.
+      const associatedModules: KeyValueStore[] =
+        (await Promise.all(this.context.state.devices.map((device: Device): Promise<KeyValueStore[]> => {
+          // get the associated modules for the specified device
+          return modeAPI.getAllDeviceKeyValueStoreByPrefix(device.id, Constants.SENSOR_MODULE_KEY_PREFIX);
+        }))).flat();
+      
+      // get the modules' IDs and then insert them to the associatedModulesIds array
+      associatedModulesIds.push(...associatedModules.map((module: SensorModuleInterface): string => {
+        return module.value.id;
+      }));
+    } catch (error) {
+      console.log(error);
     }
 
     this.setState(() => {
