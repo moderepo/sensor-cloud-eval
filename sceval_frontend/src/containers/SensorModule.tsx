@@ -199,7 +199,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                 notify: (message: any): void => {
                     const moduleData = message;
                     // if app receives real time data, and it pertains to the selected Module:
-                    if (homeId && moduleData.eventType === 'realtimeData' 
+                    if (homeId && moduleData.eventType === Constants.EVENT_REALTIME_DATA
                     && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule)) {
                         setNewWebsocketData(false);
                         const wsData = moduleData.eventData.timeSeriesData;
@@ -260,10 +260,10 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                             }
                                             return 0;
                                         }); 
-                                        sensorContext.actions.setRTValues(rtNumbers);   
                                         setActiveSensors(sortedSensors); // set real time data
                                         setNewWebsocketData(true);
                                     }
+                                    sensorContext.actions.setRTValues(rtNumbers);   
                                 }
                             }
                         });

@@ -161,7 +161,22 @@ export class AppContext {
     });
   }
 
-  public static clearLogin() {
+  /**
+   * Log the user out. By default, this will log the user out from the backend as well by clearning the session.
+   * If we only need to log the user out from the front end, pass 'false' for clearSession.
+   * @param clearSession
+   */
+  public static async logout(clearSession: boolean = true) {
+    if (clearSession) {
+      // log the user out from the backend
+      try {
+        await modeAPI.logout();
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    // log the user out from the frontend
     modeAPI.setAuthToken('');
     ClientStorage.deleteItem(AppContext.entryName);
   }
