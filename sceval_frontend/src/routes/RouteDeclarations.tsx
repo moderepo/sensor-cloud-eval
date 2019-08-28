@@ -3,32 +3,7 @@ import { Route, Redirect } from 'react-router-dom';
 import { LeftNav } from '../components/LeftNav';
 import { Login, ResetPassword, Register, Hardware, 
   EmailSent, MyAccount, AddSensorModule, SensorModule } from '../containers/index';
-export interface RouteDeclarationsProps {
-  isSavedLoginPresent: boolean;
-  isLoggedIn: boolean;
-  isAuthenticated: boolean;
-  onLogin: () => void;
-}
-
-export enum RouteKeys {
-  Home,
-  Login,
-  Register,
-  ResetPassword,
-  Settings,
-  EmailSent,
-  EmailLogin,
-  EmailResetPassword,
-  EmailRegister,
-  MyAccount,
-  Devices,
-  SensorModules,
-  AddSensorModule,
-}
-export interface RouteParams {
-  deviceId?: string;
-  sensorModuleId?: string;
-}
+import { RouteKeys, RouteDeclarationsProps } from '../components/entities/Routes';
 
 export default class RouteDeclarations extends React.Component<RouteDeclarationsProps, any> {
   render() {

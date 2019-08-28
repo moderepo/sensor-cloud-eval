@@ -12,7 +12,7 @@ import ClientStorage from '../controllers/ClientStorage';
 import { evaluateSensorTypes } from '../utils/SensorTypes';
 import { Constants } from '../utils/Constants';
 import { SensorModuleInterface, AddSensorModuleState } from '../components/entities/SensorModule';
-import { RouteParams } from '../routes/RouteDeclarations';
+import { RouteParams } from '../components/entities/Routes';
 
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const checkMark = require('../common_images/notifications/check-1.svg');
