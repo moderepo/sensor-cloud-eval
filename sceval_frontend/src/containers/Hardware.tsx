@@ -157,8 +157,8 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     };
   },        [linkedModules]); // this argument outlines re-rendering dependencies
 
-  const goToSensorModule = (event: any, moduleID: string): void => {
-    props.history.push('/sensor_modules/' + moduleID);
+  const goToSensorModule = (event: any, deviceID: number, moduleID: string): void => {
+    props.history.push(`/sensor_modules/${deviceID}/${moduleID}`);
   };
 
   const handleOkUnlinkModule = async (
@@ -249,17 +249,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                 key={key}
                 className={`sensor-module ${sensor.value.sensing}`}
                 onClick={event => {
-                  sessionStorage.setItem(
-                    'selectedGateway',
-                    deviceID.toString()
-                  );
-                  sessionStorage.setItem(
-                    'selectedModule',
-                    sensor.key.substring(
-                      Constants.SENSOR_MODULE_KEY_PREFIX.length
-                    )
-                  );
-                  goToSensorModule(event, sensor.key);
+                  goToSensorModule(event, deviceID, sensor.key);
                 }}
               >
                 <img className="module-image" src={sensorGeneral} />
