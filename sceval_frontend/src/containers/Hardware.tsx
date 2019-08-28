@@ -249,7 +249,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                 key={key}
                 className={`sensor-module ${sensor.value.sensing}`}
                 onClick={event => {
-                  goToSensorModule(event, deviceID, sensor.key);
+                  goToSensorModule(event, deviceID, sensor.value.id);
                 }}
               >
                 <img className="module-image" src={sensorGeneral} />

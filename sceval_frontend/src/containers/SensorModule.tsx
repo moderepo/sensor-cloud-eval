@@ -137,7 +137,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
             // get selected device and module
             if (props.match.params.sensorModuleId) {
-                const sensorModule = props.match.params.sensorModuleId.split('sensorModule')[1];
+                const sensorModule = props.match.params.sensorModuleId;
                 setSelectedModule(sensorModule);
             }
             if (props.match.params.deviceId) {
