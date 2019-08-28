@@ -242,7 +242,6 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     ModeConnection.openConnection();
     if (linkedModules && linkedModules[index]) {
       const modules = linkedModules[index].sensorModules.map((sensor, key) => {
-        ModeConnection.listSensorModules(deviceID);
         return (
           <Fragment key={key}>
             {!isLoading ? (

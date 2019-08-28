@@ -176,7 +176,6 @@ export class AddSensorModule extends Component<
             selectedModule,
             this.context.state.selectedGateway
           );
-          ModeConnection.listSensorModules(this.context.state.selectedGateway);
 
           modeAPI
             .setDeviceKeyValueStore(
