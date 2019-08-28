@@ -1,13 +1,13 @@
-@import 'variables.scss';
+@import "variables.scss";
 
 #amchart {
-    max-height: 400px!important;
+  max-height: 400px;
 }
 
 .compress-button {
-    width: 65vw;
-    background-color: #3a3d45;
-    color: white;
-    font-size: 14px;
-    padding: 6px 0 4px;
+  width: 65vw;
+  background-color: $base-black;
+  color: $base-background;
+  font-size: 14px;
+  padding: 6px 0 4px;
 }

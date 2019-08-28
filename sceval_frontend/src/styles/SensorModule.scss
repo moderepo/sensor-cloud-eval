@@ -1,257 +1,254 @@
-@import 'variables.scss';
+@import "variables.scss";
 
 .module-section {
-    padding-top: 35px;
-    background-color: $section-background;
-    height: 100vh;
+  padding-top: 35px;
+  background-color: $section-background;
+  height: 100vh;
 
-    .back-button {
-        margin-left: 150px;
-        color: white;
-        border: 0 none !important;
+  .back-button {
+    margin-left: 150px;
+    color: $base-background;
+    border: 0 none;
+    background-color: $base-black;
+    font-size: 15px;
+    font-weight: 700;
+    height: 35px;
+    padding: 10px 15px 10px;
+    border-radius: 5px;
+
+    .back-arrow {
+      margin-right: 5px;
+      width: 7px;
+    }
+  }
+  .module-container {
+    background-color: $base-background;
+    border-radius: 4px;
+    box-shadow: $base-box-shadow;
+    margin-bottom: 30px;
+    min-width: 860px;
+    box-sizing: border-box;
+    margin-top: 40px;
+    margin-left: 150px;
+    margin-right: 30px;
+
+    .module-details {
+      display: flex;
+      padding: 20px;
+      margin-left: 0;
+      margin-right: 0;
+      border-bottom: 1px solid $border-grey;
+
+      .module-left-container {
+        background-color: $base-background;
+        border: solid 1px #b5c0d8;
+        border-radius: 2px;
+        min-width: 550px;
+        margin-right: 20px;
+
+        .dropdown-menu {
+          margin-right: 10px;
+          padding: 2px 8px;
+          float: right;
+          text-align: center;
+          background-color: $base-background;
+          background-clip: padding-box;
+          border: 1px solid rgba(0, 0, 0, 0.15);
+          border-radius: 4px;
+          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+          a {
+            color: $base-black;
+          }
+        }
+        img {
+          float: left;
+          padding: 20px;
+          max-width: 130px;
+        }
+
+        .info-section {
+          padding-top: 20px;
+          float: left;
+          .device-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: $base-black;
+            font-size: 20px;
+            margin-bottom: 10px;
+          }
+
+          .gateway-name,
+          .sensor-model {
+            text-align: left;
+            margin-top: 10px;
+            color: $base-black;
+          }
+        }
+
+        button {
+          margin: 20px 13px 0px 20px;
+          display: absolute;
+          float: right;
+          border: 2px solid $base-black;
+          border-radius: 4px;
+          color: $base-black;
+          padding: 4px 12px;
+          text-decoration: none;
+        }
+      }
+
+      .data-col {
+        margin: 0 20px;
+        background-color: $base-background;
+        border: solid 1px #b5c0d8;
+        border-radius: 2px;
+        width: 130px;
+        height: 135px;
+        padding: 18px 15px;
+        text-align: center;
+        .data-name {
+          font-size: 12px;
+          font-weight: 300;
+          color: $base-black;
+          border-bottom: 1px solid #b5c0d8;
+          padding-bottom: 16px;
+        }
+        .data-value {
+          padding-top: 16px;
+          font-size: 25px;
+          font-family: $font-family;
+          font-weight: 800;
+        }
+        .sensing {
+          padding-top: 8px;
+          font-size: 25px;
+        }
+      }
+    }
+    .sensor-graph-container {
+      padding-bottom: 20px;
+      box-sizing: border-box;
+      margin: 20px;
+      .sensor-data-loader {
+        text-align: center;
+      }
+    }
+    .sensor-container {
+      box-shadow: $base-box-shadow;
+      margin: 20px 0px;
+      background-color: $base-background;
+      border-radius: 2px;
+      border: solid 1px $border-grey;
+      display: flex;
+      .unit-rt-container,
+      .graph-container {
+        width: 175px;
+        margin: 20px;
+      }
+      .graph-container {
+        background-color: $base-background;
+        border: solid 1px $border-grey;
+        border-radius: 2px;
+      }
+      .unit-rt-container {
         background-color: $base-black;
-        font-size: 15px;
-        font-weight: 700;
-        height: 35px;
-        padding: 10px 15px 10px;
-        border-radius: 5px;
-
-        .back-arrow {
-            margin-right: 5px;
-            width: 7px;
+        border: 6px solid $base-black;
+        border-bottom-left-radius: 5px;
+        border-bottom-right-radius: 5px;
+        border-radius: 2px;
+        margin-bottom: 20px;
+        text-align: center;
+        .header {
+          color: $base-background;
+          font-size: 14px;
+          font-weight: 600;
+          padding: 5px;
         }
+        .unit-value {
+          background-color: $base-background;
+          color: $base-black;
+          font-weight: 600;
+          letter-spacing: 0.6px;
+          font-size: 35px;
+          border-bottom-left-radius: 2.5px;
+          border-bottom-right-radius: 2.5px;
+
+          span {
+            margin-left: 5px;
+            font-size: 14px;
+          }
+        }
+      }
+      .graph-container {
+        width: 65vw;
+        left: 0px;
+        top: -1px;
+        text-align: center;
+      }
+      .graph-info-container {
+        margin-top: 15px;
+        color: $base-background;
+        text-align: center;
+        height: auto;
+        font-size: 14px;
+        font-weight: 400;
+      }
     }
-    .module-container {
-        background-color: #fafbfd;
-        border-radius: 4px;
-        box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.1);
-        margin-bottom: 30px;
-        min-width: 860px;
-        box-sizing: border-box;
-        margin-top: 40px;
-        margin-left: 150px;
-        margin-right: 30px;
-
-        .module-details {
-            display: flex;
-            padding: 20px;
-            margin-left: 0;
-            margin-right: 0;
-            border-bottom: 1px solid #d8d8d8;
-        
-            .module-left-container {
-                background-color: white;
-                border: solid 1px #b5c0d8;
-                border-radius: 2px;
-                min-width: 550px;
-                margin-right: 20px;
-
-                .dropdown-menu {
-                    margin-right: 10px;
-                    padding: 2px 8px;
-                    float: right;
-                    text-align: center;
-                    background-color: #fff;
-                    -webkit-background-clip: padding-box;
-                    background-clip: padding-box;
-                    border: 1px solid rgba(0,0,0,.15);
-                    border-radius: 4px;
-                    -webkit-box-shadow: 0 6px 12px rgba(0,0,0,.175);
-                    box-shadow: 0 6px 12px rgba(0,0,0,.175);
-                    a {
-                        color: black;
-                    }
-
-                }
-                img {
-                    float: left;
-                    padding: 20px;
-                    max-width: 130px;
-                }
-
-                .info-section {
-                    padding-top: 20px;
-                    float: left;
-                    .device-name {
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        white-space: nowrap;
-                        color: #353d45;
-                        font-size: 20px;
-                        margin-bottom: 10px;  
-                    }
-
-                    .gateway-name, .sensor-model {
-                        text-align: left;
-                        margin-top: 10px;
-                        color: #353d45;
-                    }
-                }
-
-                button {
-                    margin: 20px 13px 0px 20px;
-                    display: absolute;
-                    float: right;
-                    border: 2px solid #353d45;
-                    border-radius: 4px;
-                    color: #353d45;
-                    padding: 4px 12px;
-                    text-decoration: none;
-                }
-
-            }
-
-            .data-col {
-                margin: 0 20px;
-                background-color: white;
-                border: solid 1px #b5c0d8;
-                border-radius: 2px;
-                width: 130px;
-                height: 135px;
-                padding: 18px 15px;
-                text-align: center;
-                .data-name {
-                    font-size: 12px;
-                    font-weight: 300;
-                    color: black;
-                    border-bottom: 1px solid #b5c0d8;
-                    padding-bottom: 16px;
-                }
-                .data-value {
-                    padding-top: 16px;
-                    font-size: 25px;
-                    font-family: "ProximaNova", "Helvetica Neue", Helvetica, Arial, sans-serif;
-                    font-weight: 800; 
-                }
-                .sensing {
-                    padding-top: 8px;
-                    font-size: 25px;
-                }
-            }
-        }
-        .sensor-graph-container {
-            padding-bottom: 20px;
-            box-sizing: border-box;
-            margin: 20px;
-            .sensor-data-loader {
-                text-align: center;
-            }
-        }
-        .sensor-container {
-            box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.1);
-            margin: 20px 0px;
-            background-color: white;
-            border-radius: 2px;
-            border: solid 1px #d8d8d8;
-            display: flex;
-            .unit-rt-container, .graph-container {
-                width: 175px;
-                margin: 20px;
-            }
-            .graph-container {
-                background-color: white;
-                border: solid 1px #b5c0d8;
-                border-radius: 2px;
-            }
-            .unit-rt-container {
-                background-color: #353d45;
-                border: 6px solid #353d45;
-                border-bottom-left-radius: 5px;
-                border-bottom-right-radius: 5px;
-                border-radius: 2px;
-                margin-bottom: 20px;
-                text-align: center;
-                .header {
-                    color: white;
-                    font-size: 14px;
-                    font-weight: 600;
-                    padding: 5px;
-                }
-                .unit-value {
-                    background-color: white;
-                    color: black;
-                    font-weight: 600;
-                    letter-spacing: 0.6px;
-                    font-size: 35px;
-                    border-bottom-left-radius: 2.5px;
-                    border-bottom-right-radius: 2.5px;
-
-                    span {
-                        margin-left: 5px;
-                        font-size: 14px;
-                    }
-                }
-            }
-            .graph-container {
-                width: 65vw;
-                left: 0px;
-                top: -1px;
-                text-align: center;
-            }
-            .graph-info-container {
-                margin-top: 15px;
-                color: white;
-                text-align: center;
-                height: auto;
-                font-size: 14px;
-                font-weight: 400;
-            }
-        }
-    }
+  }
 }
 
 // ANT OVERRIDES
 .dropdown {
-    border: 0 none;
-    width: 100%;
-    text-align: left;
-    font-size: 15px;
-    font-weight: 600;
-    color: #353d45;
-    font-family: "ProximaNova", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    text-decoration: none;
+  border: 0 none;
+  width: 100%;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 600;
+  color: $base-black;
+  font-family: $font-family;
+  text-decoration: none;
 }
 
 .col-dropdown {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 .ant-modal-content {
-    .ant-modal-header {
-        border-bottom: none;
-        padding: 50px 20px;
-        .ant-modal-title {
-            text-align: center;
-            font-size: 26px;
-            font-weight: 600;
-            letter-spacing: 0.4px;
-            color: #292e34;
-        }
+  .ant-modal-header {
+    border-bottom: none;
+    padding: 50px 20px;
+    .ant-modal-title {
+      text-align: center;
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      color: $base-black;
     }
-    .sensor-module-form {
-        text-align: center;
-        .label-title {
-            display: block;
-            color: #292e34;
-            font-weight: 600;
-        }
+  }
+  .sensor-module-form {
+    text-align: center;
+    .label-title {
+      display: block;
+      color: $base-black;
+      font-weight: 600;
+    }
 
-        .ant-input {
-            text-align: center;
-            margin-bottom: 20px;
-            input {
-                display: block;
-                margin-top: 5px;
-                margin-bottom: 20px;
-                width: auto;
-            }
-        }
-    
-        .ant-checkbox-wrapper {
-            margin: 5px;
-        }
-    } 
-    .ant-modal-footer {
-        text-align: center;
+    .ant-input {
+      text-align: center;
+      margin-bottom: 20px;
+      input {
+        display: block;
+        margin-top: 5px;
+        margin-bottom: 20px;
+        width: auto;
+      }
     }
-    
+
+    .ant-checkbox-wrapper {
+      margin: 5px;
+    }
+  }
+  .ant-modal-footer {
+    text-align: center;
+  }
 }

@@ -1,20 +1,24 @@
-// application-common variables
-$base-background: #FAFBFD;
-$section-background: #DADCE3;
-$base-black: #353D45;
-$base-turquoise: #7FCBCF;
+// application colors
+$base-background: #fafbfd;
+$section-background: #dadce3;
+$base-black: #353d45;
+$base-turquoise: #7fcbcf;
 $base-warning: red;
 $disabled-button: #bbbbbb;
+$base-box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.1);
+$border-grey: #d8d8d8;
 
+// application font
 $font-family: "ProximaNova", "Helvetica Neue", Helvetica, Arial, sans-serif;
 
+// common button format
 .action-button {
-    width: 120px;
-    border: 2px solid $base-black;
-    border-radius: 4px;
-    color: $base-black;
-    padding: 8px 8px;
-    text-decoration: none;
-    font-size: 14px !important;
-    font-weight: 700;
+  width: 120px;
+  border: 2px solid $base-black;
+  border-radius: 4px;
+  color: $base-black;
+  padding: 8px 8px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
 }
