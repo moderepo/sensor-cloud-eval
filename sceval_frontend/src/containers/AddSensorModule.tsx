@@ -40,14 +40,22 @@ export class AddSensorModule extends Component<
     }
     
     this.state = {
-      availableModules: [], // the modules available to pair with
-      associatedModules: [], // the modules already associated to a particular gateway
-      selectedModules: [], // modules selected to link (post-discovery)
-      selectedGateway: '', // the gateway to link to
-      moduleMetadata: [], // metadata associated with the modules
-      scanning: false, // gateway in scanning mode or not
-      scanningProgress: 0, // scanning progress (0-100)
-      noModules: false // no sensor modules discovered
+      // the modules available to pair with
+      availableModules: [],
+      // the modules already associated to a particular gateway
+      associatedModules: [],
+      // modules selected to link (post-discovery)
+      selectedModules: [],
+      // the gateway to link to
+      selectedGateway: '',
+      // metadata associated with the modules
+      moduleMetadata: [],
+      // gateway in scanning mode or not
+      scanning: false,
+      // scanning progress (0-100)
+      scanningProgress: 0,
+      // no sensor modules discovered
+      noModules: false
     };
     // bind methods to component
     this.cancelScan = this.cancelScan.bind(this);
@@ -361,7 +369,7 @@ export class AddSensorModule extends Component<
     );
   }
 }
-
-AddSensorModule.contextType = context; // This part is important to access context values
+// This part is important to access context values
+AddSensorModule.contextType = context;
 
 export default withRouter(AddSensorModule);

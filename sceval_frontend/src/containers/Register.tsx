@@ -13,17 +13,25 @@ interface RegisterProps extends React.Props<any> {
 }
 
 const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
-    const [name, setName] = useState(''), // name state
-        [email, setEmail] = useState(''), // email state
-        [password, setPassword] = useState(''), // password state
-        [confirmPassword, setConfirmPassword] = useState(''), // password confirm state
+    // name state
+    const [name, setName] = useState<string>(''),
+        // email state
+        [email, setEmail] = useState<string>(''),
+        // password state
+        [password, setPassword] = useState<string>(''),
+        // password confirm state
+        [confirmPassword, setConfirmPassword] = useState<string>(''),
+        // redirect state
         [
             isRedirectConfirmEmailVerification,
             setIsRedirectConfirmEmailVerification
-        ] = useState(false), // redirect state
-        [emailValid, setEmailValid] = useState(false), // email validity state
-        [formValid, setFormValid] = useState(false), // form validity state
-        [error, setError] = useState(''); // error state
+        ] = useState<boolean>(false),
+        // email validity state
+        [emailValid, setEmailValid] = useState<boolean>(false),
+        // form validity state
+        [formValid, setFormValid] = useState<boolean>(false),
+        // error state
+        [error, setError] = useState<string>('');
 
     // method for handling form submission
     const onSubmit = (event: React.FormEvent<HTMLElement>) => {
@@ -93,6 +101,8 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
                                 type="text"
                                 placeholder="Name"
                                 value={name}
+                                // handle setting name and validation check
+                                // for onBlur and onChange
                                 onChange={e => {
                                     setName(e.target.value);
                                     setValidationTimer();
@@ -110,6 +120,8 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
                                 placeholder="Email"
                                 value={email}
                                 onChange={e => {
+                                    // handle setting email and validation check
+                                    // for onBlur and onChange
                                     setEmail(e.target.value);
                                     setValidationTimer();
                                 }}
@@ -126,6 +138,8 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
                                 placeholder="Password"
                                 value={password}
                                 onChange={e => {
+                                    // handle setting password and validation check
+                                    // for onBlur and onChange
                                     setPassword(e.target.value);
                                     setValidationTimer();
                                 }}
@@ -142,6 +156,8 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
                                 placeholder="Confirm Password"
                                 value={confirmPassword}
                                 onChange={e => {
+                                    // handle setting confirmed password and validation check
+                                    // for onBlur and onChange
                                     setConfirmPassword(e.target.value);
                                     setValidationTimer();
                                 }}
@@ -159,7 +175,9 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
                             )}
                             <button
                                 type="submit"
+                                // set a custom class depending on form validity
                                 className={getSubmitButtonClassName(formValid)}
+                                // disable or enable button based on form validity
                                 disabled={!formValid}
                             >
                                 Sign Up

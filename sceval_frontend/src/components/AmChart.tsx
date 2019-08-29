@@ -10,7 +10,6 @@ am4core.useTheme(am4themes_animated);
 interface AmChartProps extends React.Props<any> {
   identifier: string;
   TSDB: SensorDataBundle;
-  newWebsocketData: (value: boolean) => void;
   timespanNumeric: number;
   timespan: string;
 }

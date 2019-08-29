@@ -8,18 +8,26 @@ import { ErrorResponse } from '../components/entities/API';
 const emailSent = require('../common_images/email_sent.svg');
 
 const ResetPassword: React.FC = () => {
-  const [input, setInput] = useState(''),
-    [emailValid, setEmailValid] = useState(false),
-    [isSent, setIsSent] = useState(false),
-    [error, setError] = useState('');
+  // email input state
+  const [input, setInput] = useState<string>(''),
+    // email validity state
+    [emailValid, setEmailValid] = useState<boolean>(false),
+    // email sent or not state
+    [isSent, setIsSent] = useState<boolean>(false),
+    // error on submission state
+    [error, setError] = useState<string>('');
+  // handler for email change and validity
   const onTxtEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     const re = /\S+@\S+\.\S+/;
     setInput(value);
     setEmailValid(re.test(value));
   };
+  // handler for on submit of reset password form
   const onSubmit = (event: React.FormEvent<HTMLElement>) => {
+    // prevent reload of page
     event.preventDefault();
+    // reset the password
     modeAPI
       .resetPassword(AppContext.getProjectId(), input)
       .then((status: number) => {

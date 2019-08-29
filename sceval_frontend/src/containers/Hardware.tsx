@@ -117,7 +117,6 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
             deviceId: number;
             sensorModule: SensorModuleInterface;
           }
-
           // First, build an array of Findable and then find the sensor module that has the same
           // key as the module that triggered the event
           const result = linkedModules
@@ -161,8 +160,10 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
       // remove websocket event listener
       ModeConnection.removeObserver(messageHandler);
     };
-  },        [linkedModules]); // this argument outlines re-rendering dependencies
+    // this argument outlines invoke dependencies
+  },        [linkedModules]);
 
+  // handler for redirecting the user to a particular sensor module view on sensor module click
   const goToSensorModule = (event: any, deviceId: number, moduleId: string): void => {
     props.history.push(`/sensor_modules/${deviceId}/${moduleId}`);
   };
@@ -382,9 +383,11 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
           isEditingDevice ? ' editing-module' : ''
         }`}
       >
-        {!isEditingDevice // if this gateway is not being edited
+        { // if this gateway is not being edited
+          !isEditingDevice
           ? renderSensorModules(deviceId, deviceIndex)
-          : isEditingDevice && // if this gateway is being edited
+          // if this gateway is being edited
+          : isEditingDevice &&
             sensorModules.map((sensor: SensorModuleInterface, key) => {
               return (
                 <a
