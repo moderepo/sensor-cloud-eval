@@ -1,195 +1,193 @@
-@import 'variables.scss';
+@import "variables.scss";
 
-.hardware-section, .scan-container {
-    display: inline-block;
-    width: 100%;
-    background-color: $section-background;
-    height: 100%;
-    .page-header {
-        margin-left: 150px;
-        font-size: 15px;
-        font-weight: 600;
-        letter-spacing: 0.4px;
-    }
+.hardware-section,
+.scan-container {
+  display: inline-block;
+  width: 100%;
+  background-color: $section-background;
+  height: 100%;
+  .page-header {
+    margin-left: 150px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+  }
 
-    .gateways-section {
-        margin: 5px 50px 5px 150px;
-        .gateway-row {
-            background-color: #fafbfd;
-            box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.1);
-            border-radius: 2px;
-            margin-bottom: 30px;
-            padding: 0;
-            min-height: 350px;
+  .gateways-section {
+    margin: 5px 50px 5px 150px;
+    .gateway-row {
+      background-color: $base-background;
+      box-shadow: $base-box-shadow;
+      border-radius: 2px;
+      margin-bottom: 30px;
+      padding: 0;
+      min-height: 350px;
 
-            .gateway-header {
-                color: black;
-                margin: 0;
-                border-bottom: 1px solid #d8d8d8;
-                padding: 30px 30px 30px 15px;
+      .gateway-header {
+        color: $base-black;
+        margin: 0;
+        border-bottom: 1px solid $border-grey;
+        padding: 30px 30px 30px 15px;
 
-                .gateway-info {
-                    display: inline-block;
+        .gateway-info {
+          display: inline-block;
 
-                    .gateway-id {
-                        color: $base-black;
-                        font-size: 20px;
-                        margin-top: 5px;
-                        font-weight: 700;
-                        padding-left: 15px;
-                        display: inline-block;
-                        vertical-align: top;
-                    }
+          .gateway-id {
+            color: $base-black;
+            font-size: 20px;
+            margin-top: 5px;
+            font-weight: 700;
+            padding-left: 15px;
+            display: inline-block;
+            vertical-align: top;
+          }
 
-                    .gateway-location {
-                        padding-left: 15px;
-                        vertical-align: top;
-                        padding-right: 8px;
-                        width: 15px;
-                    }
+          .gateway-location {
+            padding-left: 15px;
+            vertical-align: top;
+            padding-right: 8px;
+            width: 15px;
+          }
 
-                    .gateway-name {
-                        color: $base-black;
-                        font-size: 20px;
-                        padding-left: 60px;
+          .gateway-name {
+            color: $base-black;
+            font-size: 20px;
+            padding-left: 60px;
+          }
+        }
 
-                    }
-                    
-                }
+        .gateway-settings {
+          float: right;
+          .action-button {
+            margin-right: 5px;
+            min-width: 200px;
+          }
 
-                .gateway-settings {
-                    float: right;
-                    .action-button {
-                        margin-right: 5px;
-                        min-width: 200px;
-                    }
+          .done-button {
+            color: $base-background;
+            background-color: $base-black;
+            width: 120px;
+            border: 2px solid $base-black;
+            border-radius: 4px;
+            padding: 8px 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+          }
 
-                    .done-button {
-                        color: #fafbfd;
-                        background-color: #353d45;
-                        width: 120px;
-                        border: 2px solid $base-black;
-                        border-radius: 4px;
-                        padding: 8px 8px;
-                        text-decoration: none;
-                        font-size: 14px !important;
-                        font-weight: 700;
-                    }
+          .dropdown-menu {
+            top: 100%;
+            left: 0;
+            z-index: 1000;
+            min-width: 160px;
+            font-size: 14px;
+            text-align: left;
+            list-style: none;
+            background-color: $base-background;
+            background-clip: padding-box;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 4px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+            margin-top: 10px;
 
-                    .dropdown-menu {
-                        top: 100%;
-                        left: 0;
-                        z-index: 1000;
-                        min-width: 160px;
-                        font-size: 14px;
-                        text-align: left;
-                        list-style: none;
-                        background-color: #fff;
-                        -webkit-background-clip: padding-box;
-                        background-clip: padding-box;
-                        border: 1px solid rgba(0,0,0,.15);
-                        border-radius: 4px;
-                        -webkit-box-shadow: 0 6px 12px rgba(0,0,0,.175);
-                        box-shadow: 0 6px 12px rgba(0,0,0,.175);
-                        margin-top: 10px;
-
-                        a {
-                            text-decoration: none;
-                            color: black;
-                        }
-                    }
-
-                    .settings {
-                        width: 40px;
-                        min-width: 20px!important;
-                    }
-                }
+            a {
+              text-decoration: none;
+              color: $base-black;
             }
+          }
 
-            &.no-device {
-                min-height: auto;
-                padding: 20px;
-                font-size: 20px;
-            }
+          .settings {
+            width: 40px;
+            min-width: 20px;
+          }
         }
-        .editing-gateway {
-            background-color: #ddecf8;
-            border: 2px solid #2197fd; 
-        }
-        .editing-module {
-            background-color: #ddecf8;
-        }
+      }
+
+      &.no-device {
+        min-height: auto;
+        padding: 20px;
+        font-size: 20px;
+      }
     }
+    .editing-gateway {
+      background-color: $base-background;
+      border: 2px solid #2197fd;
+    }
+    .editing-module {
+      background-color: $base-background;
+    }
+  }
 }
 
-.gateway-sensor-modules, .available-sensors-section {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(80px, 350px));
-    text-align: center;
-    grid-gap: 1em;
-    margin: 15px 50px;
-    padding: 20px 0px;
+.gateway-sensor-modules,
+.available-sensors-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 350px));
+  text-align: center;
+  grid-gap: 1em;
+  margin: 15px 50px;
+  padding: 20px 0px;
 
-    .sensor-module {
-        min-width: 80px;
-        background-color: #fafbfd;
-        min-height: 120px;
-        border: 1px solid #d8d8d8;
-        padding: 12px;
-        border-radius: 2px;
-        box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.1);
-        cursor: pointer;
+  .sensor-module {
+    min-width: 80px;
+    background-color: $base-background;
+    min-height: 120px;
+    border: 1px solid $border-grey;
+    padding: 12px;
+    border-radius: 2px;
+    box-shadow: $base-box-shadow;
+    cursor: pointer;
 
-        .module-image {
-            float: left;
-            width: 100px;
-        }
-
-        .module-info {
-            margin-left: 112px;
-            text-align: left;
-            .sensor-module-name {
-                font-weight: bold;
-                color: $base-black;
-            }
-
-            .x-icon {
-                font-size: 20px;
-                float: right;
-                font-weight: 900;
-                width: 20px;
-                height: 20px;
-                position: flex;
-                height: 20px;
-                top: 3px;
-                right: 5px;
-                color: #8d8d8d;
-            }
-
-            .sensor-module-name, .sensor-module-model {
-                padding: 10px 0px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
-            
-            .sensor-type-image {
-                margin-top: 10px;
-                margin-right: 10px;
-            }
-        }
-
-        &.off {
-            opacity: 0.5;
-            filter: grayscale(1);
-        }
-
-    }
-    .selected {
-        border: 2px solid $base-black;
+    .module-image {
+      float: left;
+      width: 100px;
     }
 
-    .checked-module {
+    .module-info {
+      margin-left: 112px;
+      text-align: left;
+      .sensor-module-name {
+        font-weight: bold;
+        color: $base-black;
+      }
+
+      .x-icon {
+        font-size: 20px;
         float: right;
+        font-weight: 900;
+        width: 20px;
+        height: 20px;
+        position: flex;
+        height: 20px;
+        top: 3px;
+        right: 5px;
+        color: #8d8d8d;
+      }
+
+      .sensor-module-name,
+      .sensor-module-model {
+        padding: 10px 0px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .sensor-type-image {
+        margin-top: 10px;
+        margin-right: 10px;
+      }
     }
+
+    &.off {
+      opacity: 0.5;
+      filter: grayscale(1);
+    }
+  }
+  .selected {
+    border: 2px solid $base-black;
+  }
+
+  .checked-module {
+    float: right;
+  }
 }
