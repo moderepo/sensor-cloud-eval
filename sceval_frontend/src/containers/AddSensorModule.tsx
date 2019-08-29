@@ -29,6 +29,8 @@ export class AddSensorModule extends Component<
   AddSensorModuleState
 > {
 
+  private componentUnmounted: boolean = false;
+
   constructor(props: AddSensorModuleProps & RouteComponentProps<RouteParams>, sensorContext: Context) {
 
     super(props, sensorContext);
@@ -89,6 +91,7 @@ export class AddSensorModule extends Component<
   }
 
   componentWillUnmount() {
+    this.componentUnmounted = true;
     ModeConnection.removeObserver(this);
   }
 
@@ -133,6 +136,11 @@ export class AddSensorModule extends Component<
     let requestCount: number = 0;
     const interval: number = window.setInterval(
       () => {
+        if (this.componentUnmounted) {
+          window.clearInterval(interval);
+          return;
+        }
+
         requestCount++;
         this.setState(() => {
           return {
@@ -157,6 +165,10 @@ export class AddSensorModule extends Component<
     modeAPI
       .getHome(ClientStorage.getItem('user-login').user.id)
       .then((homeResponse: any) => {
+        if (this.componentUnmounted) {
+          return;
+        }
+        
         this.state.selectedModules.forEach((selectedModule, index) => {
           const params: KeyValueStore = {
             key: `${Constants.SENSOR_MODULE_KEY_PREFIX}${selectedModule.sensorModuleId}`,
