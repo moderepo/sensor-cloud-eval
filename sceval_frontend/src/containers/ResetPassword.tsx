@@ -47,18 +47,24 @@ const ResetPassword: React.FC = () => {
           <h1 className="title">
             {!isSent ? 'Password Reset' : 'Email sent.'}
           </h1>
-          {!isSent ? (
+          {!isSent ?
+          // if no email has been sent yet:
+          (
             <p id="login-text">
               To reset your password, enter the email address you use to sign
               in.
             </p>
-          ) : (
+          ) : 
+          // if email has been sent:
+          (
             <p id="login-text">
               We just sent an email to you. Click the link in the email to reset
               your password.
             </p>
           )}
-          {!isSent ? (
+          {!isSent ?
+          // if no email has been sent yet:
+          (
             <form className="form-group" onSubmit={onSubmit}>
               <div>
                 <input
@@ -84,10 +90,14 @@ const ResetPassword: React.FC = () => {
                 </button>
               </div>
             </form>
-          ) : (
+          ) : 
+          // if email has been sent:
+          (
             <img src={emailSent} />
           )}
-          {!isSent && (
+          {!isSent &&
+          // if no email has been sent yet:
+          (
             <Fragment>
               <NavLink to="/login" className="navlinks">
                 Go Back

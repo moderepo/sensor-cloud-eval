@@ -256,6 +256,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     deviceId: number,
     index: number
   ): React.ReactNode => {
+    // open a new websocket connection
     ModeConnection.openConnection();
     if (linkedModules && linkedModules[index]) {
       const modules = linkedModules[index].sensorModules.map((sensor, key) => {
@@ -276,6 +277,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                   </div>
                   <div className="sensor-module-model">{sensor.value.id}</div>
                   {sensor.value.sensors &&
+                    // render custom sensor images
                     sensor.value.sensors.map((sensorType, sensorIndex) => {
                       const type = sensorType.split(':')[0];
                       return (

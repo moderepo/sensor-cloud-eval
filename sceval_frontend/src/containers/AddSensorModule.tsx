@@ -23,7 +23,6 @@ interface AddSensorModuleProps extends React.Props<any> {
   isLoggedIn: boolean;
   onLogIn: () => void;
 }
-    
 export class AddSensorModule extends Component<
   AddSensorModuleProps & RouteComponentProps<RouteParams>,
   AddSensorModuleState
