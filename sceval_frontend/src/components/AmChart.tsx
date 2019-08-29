@@ -8,29 +8,43 @@ import { SensorDataBundle } from '../components/entities/SensorModule';
 am4core.useTheme(am4themes_animated);
 
 interface AmChartProps extends React.Props<any> {
+  // amchart chart identifier
   identifier: string;
+  // time series data passed to chart
   TSDB: SensorDataBundle;
   newWebsocketData: (value: boolean) => void;
+  // quantity of timespan
   timespanNumeric: number;
+  // timespan
   timespan: string;
 }
 
 export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
+  // expanded or closed mode state
   const [expandedMode, setExpandedMode] = useState<boolean>(false);
+  // graph height state
   const [graphHeight, setGraphHeight] = useState<string>('300px');
+  // graph data state
   const [graphData, setGraphData] = useState([]);
+  // latest real-time value state
   const [latestRTVal, setlatestRTVal] = useState();
+  // latest date state
   const [latestDate, setlatestDate] = useState();
+  // sensor chart state
   const [sensorChart, setSensorChart] = useState<am4charts.XYChart>();
+  // declare context hook
   const sensorContext: Context = useContext(context);
-
+  // declare useEffect hook
   useEffect(() => {
+    // create amChart instance with custom identifier
     const chart = am4core.create(props.identifier, am4charts.XYChart);
     setSensorChart(chart);
     var dbData: any = [];
     var dateArray: any = [];
     let value = 0;
+    // if TSDB data exists
     if (props.TSDB) {
+      // map over TSDB data and push data to dataArray
       props.TSDB.TSDBData.data.map((sensorDataPoint: any, index: any) => {
         if (!dateArray.includes(sensorDataPoint[0])) {
           value += sensorDataPoint[2];
@@ -128,6 +142,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
         });
       }
     }
+    // invoke dependencies
   },        [sensorChart, props.timespan, sensorContext.state.rtValues]);
 
   return (
