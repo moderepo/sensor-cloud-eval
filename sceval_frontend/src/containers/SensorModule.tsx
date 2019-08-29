@@ -10,41 +10,32 @@ import moment from 'moment';
 import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
 import ModeConnection  from '../controllers/ModeConnection';
 import determinUnit from '../utils/SensorTypes';
-import { SensorModuleInterface } from '../components/entities/SensorModule';
+import { SensorModuleInterface, SensingInterval } from '../components/entities/SensorModule';
 import { Constants } from '../utils/Constants';
 import { Home } from '../components/entities/API';
 // required images imported
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const backArrow = require('../common_images/navigation/back.svg');
-const fullALPsList = ['TEMPERATURE:0', 'HUMIDITY:0', 'UV:0', 'PRESSURE:0', 'AMBIENT:0', 
-    'MAGNETIC_X:0', 'ACCELERATION_Y:0', 'ACCELERATION_Z:0', 'MAGNETIC_Y:0', 
-    'MAGNETIC_Z:0', 'ACCELERATION_X:0'];
-
 // declare the SensorModuleProps interface
 interface SensorModuleProps extends React.Props<any> {
     isLoggedIn: boolean;
 }
-interface SensingInterval {
-    value: number;
-    unit: string;
-    multiplier: number;
-}
 
 export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModuleProps) => {
-    const [homeId, setHomeId] = useState<number>(0);
-    const [selectedModule, setSelectedModule] = useState<string|null>();
-    const [sensorModuleName, setSensorModuleName] = useState<string>();
+    const [homeId, setHomeId] = useState<number>(0); // ID of home
+    const [selectedModule, setSelectedModule] = useState<string|null>(); // moduleID of module selected
+    const [sensorModuleName, setSensorModuleName] = useState<string>(); // sensor module name
     const [selectedSensorModuleObj, setSelectedSensorModuleObj] = useState<SensorModuleInterface|null>();
-    const [selectedGateway, setSelectedGateway] = useState<number>(0);
-    const [TSDBDataFetched, setTSDBDataFetched] = useState<boolean>(false);
-    const [activeSensorQuantity, setActiveSensorQuantity] = useState<number>(0);
+    const [selectedGateway, setSelectedGateway] = useState<number>(0); // selected gateway state
+    const [TSDBDataFetched, setTSDBDataFetched] = useState<boolean>(false); // TSDBData fetched state
+    const [activeSensorQuantity, setActiveSensorQuantity] = useState<number>(0); // quantity of active sensors
     const [activeSensors, setActiveSensors] = useState<any>(); // contains RT Websocket data
     const [newWebsocketData, setNewWebsocketData] = useState<boolean>(false);
     const [sensorTypes, setSensorTypes] = useState<Array<any>>(); // contains data from TSDB fetch
     const [batteryPower, setBatteryPower] = useState<number>(0.1); // TODO: update battery power.
-    const [graphTimespanNumeric, setGraphTimespanNumeric] = useState<any>(15);
-    const [graphTimespan, setGraphTimespan] = useState<string>('minutes');
+    const [graphTimespanNumeric, setGraphTimespanNumeric] = useState<any>(15); // default 15 minute time horizon
+    const [graphTimespan, setGraphTimespan] = useState<string>('minutes'); // default 15 minute time horizon
     const [fullSensorList, setFullSensorList] = useState();
     const [offlineSensors, setOfflineSensors] = useState<Array<any>>([]);
     const [modalVisible, setModalVisible] = useState<boolean>(false);
@@ -162,7 +153,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                     setFullSensorList(moduleSensors);
                     setActiveSensorQuantity(moduleSensors.length);
                     // determine offline sensors
-                    let sensorsOffline: any = fullALPsList.filter((sensor: any): boolean => {
+                    let sensorsOffline: any = Constants.ALPS_SENSOR_SET.filter((sensor: any): boolean => {
                         return !keyValueStore.value.sensors.includes(sensor);
                     });
                     setOfflineSensors(sensorsOffline);
@@ -299,7 +290,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
         setSensorModuleName(event.target.value);
     };
     const handleOk = (event: any) => {
-        let filteredActiveSensors: any = fullALPsList.filter((sensor: any): boolean => {
+        let filteredActiveSensors: any = Constants.ALPS_SENSOR_SET.filter((sensor: any): boolean => {
             // if the user does not request the sensor to be turned off
             return !offlineSensors.includes(sensor);
         });
@@ -549,7 +540,7 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
                                         <label className="label-title">Select Types of Data to Collect</label>
                                         {
                                             sensorTypes && fullSensorList && 
-                                            fullALPsList.map((sensorType: any, index: any)  => {
+                                            Constants.ALPS_SENSOR_SET.map((sensorType: any, index: any)  => {
                                                 const displayed = sensorType.split(':')[0];
                                                 return (
                                                     <Checkbox 
