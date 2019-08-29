@@ -1,110 +1,109 @@
-@import 'variables.scss';
+@import "variables.scss";
 
 .scan-container {
-    background-color: $section-background; 
-    height: 100vh; 
-    .page-header {
-        margin-top: 40px;
-        font-size: 32px;
-        font-weight: 600;
-        letter-spacing: 0.4px;
-        color: #292e34;
+  background-color: $section-background;
+  height: 100vh;
+  .page-header {
+    margin-top: 40px;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    color: $base-black;
+  }
+  .scan-section {
+    text-align: center;
+    background-color: $base-background;
+    border-radius: 4px;
+    box-shadow: $base-box-shadow;
+    margin: 0 30px 30px;
+    margin-left: 150px;
+    margin-top: 15px;
+    min-height: 600px;
+    display: grid;
+    padding-bottom: 100px;
+
+    .scan-header {
+      padding-top: 50px;
+      text-align: center;
+      font-size: 25px;
+      margin-bottom: 50px;
+      font-weight: 600;
+      color: $base-black;
     }
-    .scan-section {
+
+    .directions {
+      display: flex;
+      justify-content: center;
+      margin-right: 200px;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 400px));
+      text-align: center;
+      background-color: $base-background;
+      text-align: center;
+    }
+    .step-1,
+    .step-2 {
+      display: block;
+      text-align: center;
+      margin-left: 100px;
+
+      .direction {
+        padding-left: 70px;
+        max-width: 300px;
         text-align: center;
-        background-color: #fafbfd;
-        border-radius: 4px;
-        box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.1);
-        margin: 0 30px 30px;
-        margin-left: 150px;
-        margin-top: 15px;
-        min-height: 600px;
-        display: grid;
-        padding-bottom: 100px;
-
-        .scan-header {
-            padding-top: 50px;
-            text-align: center;
-            font-size: 25px;
-            margin-bottom: 50px;
-            font-weight: 600;
-            color: #292e34;
+        p {
+          margin-top: 10px;
+          color: $base-black;
         }
-
-        .directions {
-            display: flex;
-            justify-content: center;
-            margin-right: 200px;
-            grid-template-columns: repeat(auto-fit, minmax(300px,400px));
-            text-align: center;
-            background-color: #fafbfd;
-            text-align: center;
-
-        }
-        .step-1, .step-2 {
-            display: block;
-            text-align: center;
-            margin-left: 100px;
-
-            .direction {
-                padding-left: 70px;
-                max-width: 300px;
-                text-align: center;
-                p {
-                    margin-top: 10px;
-                    color: $base-black;
-                }
-            }
-        }
-
-        .circled-number {
-            float: left;
-            width: 42px;
-            height: 42px;
-            text-align: center;
-            line-height: 32px;
-            border-color: #767676;
-            border-style: solid;
-            border-width: 4px;
-            border-radius: 30px;
-            font-size: 24px;
-            font-weight: 600;
-        }
-
-        .button-section {
-            margin-top: 50px;
-            text-align: center;
-            button {
-                box-sizing: border-box;
-                font-family: "ProximaNova", "Helvetica Neue", Helvetica, Arial, sans-serif;
-                font-weight: 600;
-                font-size: 14px;
-                height: 42px;
-                min-width: 180px;
-                padding: 8px 24px 8px 24px !important;
-                border-radius: 5px;
-            }
-
-            .cancel-scan {
-                margin-right: 20px;
-                background-color: #fafbfd;
-                border: 2px solid $base-black;
-                color: $base-black;
-            }
-            
-            .start-scan, .add-sensor-module {
-                color: #fafbfd;
-                background-color: $base-black;
-            }
-
-            .add-sensor-module:disabled {
-                opacity: 0.5;
-            }
-
-        }
-        .progress-bar {
-            padding: 20px 100px;
-        }
+      }
     }
-    
+
+    .circled-number {
+      float: left;
+      width: 42px;
+      height: 42px;
+      text-align: center;
+      line-height: 32px;
+      border-color: #767676;
+      border-style: solid;
+      border-width: 4px;
+      border-radius: 30px;
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .button-section {
+      margin-top: 50px;
+      text-align: center;
+      button {
+        box-sizing: border-box;
+        font-family: $font-family;
+        font-weight: 600;
+        font-size: 14px;
+        height: 42px;
+        min-width: 180px;
+        padding: 8px 24px 8px 24px;
+        border-radius: 5px;
+      }
+
+      .cancel-scan {
+        margin-right: 20px;
+        background-color: $base-background;
+        border: 2px solid $base-black;
+        color: $base-black;
+      }
+
+      .start-scan,
+      .add-sensor-module {
+        color: $base-background;
+        background-color: $base-black;
+      }
+
+      .add-sensor-module:disabled {
+        opacity: 0.5;
+      }
+    }
+    .progress-bar {
+      padding: 20px 100px;
+    }
+  }
 }

@@ -1,13 +1,13 @@
-@import 'variables.scss';
-@import 'Login.scss';
-@import 'LoginHeader.scss';
-@import 'LeftNav.scss';
-@import 'MyAccount.scss';
-@import 'Hardware.scss';
-@import 'AddSensorModules.scss';
-@import 'SensorModule.scss';
-@import 'AmChart.scss';
+@import "variables.scss";
+@import "Login.scss";
+@import "LoginHeader.scss";
+@import "LeftNav.scss";
+@import "MyAccount.scss";
+@import "Hardware.scss";
+@import "AddSensorModules.scss";
+@import "SensorModule.scss";
+@import "AmChart.scss";
 
 body {
-    background-color: $base-background;
+  background-color: $base-background;
 }
