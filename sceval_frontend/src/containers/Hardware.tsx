@@ -157,18 +157,18 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     };
   },        [linkedModules]); // this argument outlines re-rendering dependencies
 
-  const goToSensorModule = (event: any, moduleID: string): void => {
-    props.history.push('/sensor_modules/' + moduleID);
+  const goToSensorModule = (event: any, deviceId: number, moduleId: string): void => {
+    props.history.push(`/sensor_modules/${deviceId}/${moduleId}`);
   };
 
   const handleOkUnlinkModule = async (
     moduleID: string,
-    deviceID: number,
+    deviceId: number,
     deviceIndex: number
   ) => {
     try {
       const status: number = await modeAPI.deleteDeviceKeyValueStore(
-        deviceID,
+        deviceId,
         moduleID
       );
       if (status === 204) {
@@ -190,7 +190,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
   const renderDeleteModal = (
     event: any,
     moduleID: string,
-    deviceID: number,
+    deviceId: number,
     deviceIndex: number
   ): void => {
     confirm({
@@ -198,7 +198,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
       content:
         'Your existing data can still be accessed, but you will need to re-add your sensor module to \
              a gateway in order to receive new data.',
-      onOk: () => handleOkUnlinkModule(moduleID, deviceID, deviceIndex)
+      onOk: () => handleOkUnlinkModule(moduleID, deviceId, deviceIndex)
     });
   };
 
@@ -232,11 +232,11 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
 
   /**
    * Render ALL sensor modules for the specified device
-   * @param deviceID
+   * @param deviceId
    * @param index
    */
   const renderSensorModules = (
-    deviceID: number,
+    deviceId: number,
     index: number
   ): React.ReactNode => {
     ModeConnection.openConnection();
@@ -249,17 +249,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                 key={key}
                 className={`sensor-module ${sensor.value.sensing}`}
                 onClick={event => {
-                  sessionStorage.setItem(
-                    'selectedGateway',
-                    deviceID.toString()
-                  );
-                  sessionStorage.setItem(
-                    'selectedModule',
-                    sensor.key.substring(
-                      Constants.SENSOR_MODULE_KEY_PREFIX.length
-                    )
-                  );
-                  goToSensorModule(event, sensor.key);
+                  goToSensorModule(event, deviceId, sensor.value.id);
                 }}
               >
                 <img className="module-image" src={sensorGeneral} />

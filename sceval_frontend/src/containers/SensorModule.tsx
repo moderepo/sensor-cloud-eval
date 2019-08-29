@@ -1,5 +1,5 @@
 import React, { useEffect, useState, Fragment, useContext } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, withRouter, RouteComponentProps } from 'react-router-dom';
 import AppContext from '../controllers/AppContext';
 import { AmChart } from '../components/AmChart';
 import { Context, context } from '../context/Context';
@@ -13,6 +13,7 @@ import determinUnit from '../utils/SensorTypes';
 import { SensorModuleInterface } from '../components/entities/SensorModule';
 import { Constants } from '../utils/Constants';
 import { Home } from '../components/entities/API';
+import { RouteParams } from '../components/entities/Routes';
 
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
@@ -30,7 +31,7 @@ interface SensingInterval {
     multiplier: number;
 }
 
-export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModuleProps) => {
+export const SensorModule = withRouter((props: SensorModuleProps & RouteComponentProps<RouteParams>) => {
     const [homeId, setHomeId] = useState<number>(0);
     const [selectedModule, setSelectedModule] = useState<string|null>();
     const [sensorModuleName, setSensorModuleName] = useState<string>();
@@ -137,10 +138,14 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             });
 
             // get selected device and module
-            const gateway: number = Number(sessionStorage.getItem('selectedGateway'));
-            const sensorModule = sessionStorage.getItem('selectedModule');
-            setSelectedModule(sensorModule);
-            setSelectedGateway(gateway);
+            if (props.match.params.sensorModuleId) {
+                const sensorModule = props.match.params.sensorModuleId;
+                setSelectedModule(sensorModule);
+            }
+            if (props.match.params.deviceId) {
+                const gateway = props.match.params.deviceId;
+                setSelectedGateway(parseInt(gateway, 10));
+            }
     },  []);
 
     // React hook's componentDidMount and componentDidUpdate
@@ -303,10 +308,9 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             return !offlineSensors.includes(sensor);
         });
         // perform kv updates
-        const sensorModule = sessionStorage.getItem('selectedModule');
-        const device: number = Number(sessionStorage.getItem('selectedGateway'));
-        if (device && sensorModule) {
-           // copy the current selected sensor module object and replace the module's name and list of sensors
+        if (props.match.params.deviceId) {
+            const gateway = props.match.params.deviceId;
+            // copy the current selected sensor module object and replace the module's name and list of sensors
             const updatedSensorModuleObj: SensorModuleInterface = Object.assign({}, selectedSensorModuleObj);
             if (sensorModuleName) {
                 updatedSensorModuleObj.value.name = sensorModuleName;
@@ -314,17 +318,18 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             updatedSensorModuleObj.value.sensors = filteredActiveSensors;
 
             // update KV store for the device
-            modeAPI.setDeviceKeyValueStore(device, updatedSensorModuleObj.key, updatedSensorModuleObj)
+            modeAPI.setDeviceKeyValueStore(parseInt(gateway, 10), updatedSensorModuleObj.key, updatedSensorModuleObj)
             .then((deviceResponse: any) => {
                 setEditingModuleSettings(true);
                 return deviceResponse;
             }).catch((reason: any) => {
                 console.error('reason', reason);
             });
+
+            setEditingModuleSettings(false); // re-render changes
+            setModuleSettingsVisible(false); // hide module settings
+            setModalVisible(false); // hide modal
         }
-        setEditingModuleSettings(false); // re-render changes
-        setModuleSettingsVisible(false); // hide module settings
-        setModalVisible(false); // hide modal
     };
 
     const adjustOfflineSensors = (sensorType: string) => {
@@ -488,7 +493,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             <div className="module-section">
                 <NavLink 
                     to="/devices"
-                    onClick={() => sessionStorage.clear()}
                     className="back-button"
                 >
                 <img
@@ -666,6 +670,6 @@ export const SensorModule: React.FC<SensorModuleProps> = (props: SensorModulePro
             </div>
         </Fragment>
     );
-};
+});
 
 export default SensorModule;

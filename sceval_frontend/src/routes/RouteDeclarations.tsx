@@ -106,7 +106,7 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
         <Route
           key={RouteKeys.SensorModules}
           exact={true}
-          path="/sensor_modules/:sensorModuleId"
+          path="/sensor_modules/:deviceId/:sensorModuleId"
           component={() => (
             <>
               <LeftNav />
