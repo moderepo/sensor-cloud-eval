@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom';
 import { AppContext } from '../controllers/AppContext';
 import modeAPI from '../controllers/ModeAPI';
 import { ErrorResponse } from '../components/entities/API';
-
+// required images imported
 const emailSent = require('../common_images/email_sent.svg');
 
 const ResetPassword: React.FC = () => {

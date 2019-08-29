@@ -13,7 +13,7 @@ import determinUnit from '../utils/SensorTypes';
 import { SensorModuleInterface } from '../components/entities/SensorModule';
 import { Constants } from '../utils/Constants';
 import { Home } from '../components/entities/API';
-
+// required images imported
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const backArrow = require('../common_images/navigation/back.svg');
@@ -21,6 +21,7 @@ const fullALPsList = ['TEMPERATURE:0', 'HUMIDITY:0', 'UV:0', 'PRESSURE:0', 'AMBI
     'MAGNETIC_X:0', 'ACCELERATION_Y:0', 'ACCELERATION_Z:0', 'MAGNETIC_Y:0', 
     'MAGNETIC_Z:0', 'ACCELERATION_X:0'];
 
+// declare the SensorModuleProps interface
 interface SensorModuleProps extends React.Props<any> {
     isLoggedIn: boolean;
 }

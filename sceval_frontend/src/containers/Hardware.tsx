@@ -14,9 +14,9 @@ import { Modal } from 'antd';
 import { Context, context } from '../context/Context';
 import ModeConnection from '../controllers/ModeConnection';
 import { Constants } from '../utils/Constants';
-
+// use the confirm modal from AntD
 const { confirm } = Modal;
-
+// required images imported
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const deviceImage = require('../common_images/devices/gateway.svg');
@@ -38,19 +38,24 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
   >([]);
   const [editingGateways, setEditingGateways] = useState<Array<number>>([]);
   const sensorContext: Context = useContext(context);
-
+  // if the user isn't logged in, protect the route and redirect to /login
   if (!props.isLoggedIn) {
     return <Redirect to="/login" />;
   }
-
+  // initialize handler for opening the websocket and getting all devices and associated sensor modules
   const initialize = async (): Promise<void> => {
     setIsLoading(true);
+    // open websocket connection
     ModeConnection.openConnection();
+    // restore login
     const loginInfo: LoginInfo = await AppContext.restoreLogin();
+    // get home associated with project
     const home: Home = await modeAPI.getHome(loginInfo.user.id);
+    // get devices in home
     const devices: Device[] = await modeAPI.getDevices(home.id);
+    // declare linkedModules array of type SensorModuleSet
     const newLinkedModules: SensorModuleSet[] = [];
-
+    // if associated devices exist
     if (devices.length > 0) {
       // Load modules for each device. Because we need to wait until all the modules are loaded
       // before we can continue, we have to *await* AND we must use For loop, not .forEach because
@@ -72,7 +77,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
         }
       }
     }
-
+    // sort linked modules by ID and update state accordingly
     newLinkedModules.sort((a: SensorModuleSet, b: SensorModuleSet): number => {
       return a.device.id - b.device.id;
     });
@@ -148,30 +153,35 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
         }
       }
     };
-
+    // add websocket event listener
     ModeConnection.addObserver(messageHandler);
 
     // return a cleanup function to be called when the component is unmounted
     return (): void => {
+      // remove websocket event listener
       ModeConnection.removeObserver(messageHandler);
     };
   },        [linkedModules]); // this argument outlines re-rendering dependencies
 
+  // method invoked after clicking on a sensor module while not in edit-mode
   const goToSensorModule = (event: any, moduleID: string): void => {
     props.history.push('/sensor_modules/' + moduleID);
   };
-
+  // handler method for unlinking a sensor module from a gateway
   const handleOkUnlinkModule = async (
     moduleID: string,
     deviceID: number,
     deviceIndex: number
   ) => {
+    // try to delete the device
     try {
       const status: number = await modeAPI.deleteDeviceKeyValueStore(
         deviceID,
         moduleID
       );
+      // if the deletion is successful
       if (status === 204) {
+        // update linked modules in the UI with all linked modules not including the recently deleted one
         const filteredModules = linkedModules[deviceIndex].sensorModules.filter(
           sensor => {
             return sensor.key !== moduleID;
@@ -186,7 +196,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
       console.log(error);
     }
   };
-
+  // render delete modal handler function for clicking on a particular module while in delete-mode
   const renderDeleteModal = (
     event: any,
     moduleID: string,
@@ -201,25 +211,32 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
       onOk: () => handleOkUnlinkModule(moduleID, deviceID, deviceIndex)
     });
   };
-
+  // method invoked after clicking an "Add Sensor  Modules button for a particular gateway"
   const addSensorModules = (event: any, gatewayID: number): void => {
+    // direct the user to the "add_sensor_modules" route
     props.history.push(`/devices/${gatewayID}/add_sensor_modules`);
     setSelectedDevice(gatewayID);
+    // set the selected gateway
     sensorContext.actions.setGateway(gatewayID);
   };
-
+  // method invoked after clicking on a the gateway settings button (...)
   const showGatewayOptions = (gatewayID: number): void => {
+    // update display gateway options state value with this new gateway ID
     let selectedOptions: Array<number> = [...displayGatewayOptions, gatewayID];
+    // if it already exists, then remove it for toggling
     if (displayGatewayOptions.includes(gatewayID)) {
       selectedOptions = displayGatewayOptions.filter(gateway => {
         return gateway !== gatewayID;
       });
     }
+    // update state accordingly
     setdisplayGatewayOptions(selectedOptions);
   };
-
+  // method invoked after clicking on a the gateway options button to put gateway in edit-mode
   const toggleEditGateway = (gatewayID: number): void => {
+    // create a new array corresponding to the set of gateways in edit mode
     let gatewaySet: Array<number> = [...editingGateways, gatewayID];
+    // if the gateway ID already exists, remove it and update state accordingly
     if (editingGateways.includes(gatewayID)) {
       gatewaySet = editingGateways.filter(gateway => {
         return gateway !== gatewayID;
@@ -395,7 +412,6 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                     <div className="sensor-module-model">{sensor.value.id}</div>
                     {sensor.value.sensors &&
                       sensor.value.sensors.map((sensorType, sensorIndex) => {
-                        // TODO: add logic for rendering sensor type images
                         const type = sensorType.split(':')[0];
                         return (
                           <img
