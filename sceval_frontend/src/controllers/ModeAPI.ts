@@ -10,6 +10,7 @@ import {
 } from '../components/entities/API';
 import { Home } from '../components/entities/API';
 import { User } from '../components/entities/User';
+
 export namespace ModeConstants {
   export const MODE_API_BASE_URL: string = 'https://api.tinkermode.com/';
   
@@ -39,30 +40,47 @@ export namespace ModeConstants {
 }
 
 export class ModeAPI {
+  private static instance: ModeAPI;
+
   private baseUrl: string;
   private authToken: string;
   private axios: AxiosInstance;
   private makeHomePromise: Promise<any> | null = null;
   private defaultHome: Home | null = null;
 
-  constructor() {
-    this.baseUrl = '';
-    this.authToken = '';
-    this.axios = Axios.create();
+  public static getInstance (): ModeAPI {
+    if (!ModeAPI.instance) {
+      ModeAPI.instance = new ModeAPI();
+    }
+    return ModeAPI.instance;
   }
 
   public getAuthToken() {
     return this.authToken;
   }
 
+  /**
+   * Set the auth token which the backend will use for authenticating the user each time
+   * an API is called. This token will be sent along with the request for each call.
+   * To get this token, the user need to call "login" with the required params. If login
+   * is successful, the token will be returned with the response.
+   * @param authToken 
+   */
   public setAuthToken(authToken: string) {
     this.authToken = authToken;
   }
 
+  /**
+   * Get the base URL for mode rest API call
+   */
   public getBaseUrl() {
     return this.baseUrl;
   }
 
+  /**
+   * Change the default base URL.
+   * @param baseUrl 
+   */
   public setBaseUrl(baseUrl: string) {
     this.baseUrl = baseUrl;
 
@@ -660,7 +678,7 @@ export class ModeAPI {
   ) {
     const config: any = this._initRequest(
       method,
-      `${ModeConstants.MODE_API_BASE_URL}${path}`,
+      `${this.baseUrl}${path}`,
       withCredentials
     );
     if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
@@ -678,7 +696,7 @@ export class ModeAPI {
   private postForm<T>(path: string, postData: Object) {
     const config: any = this._initRequest(
       'POST',
-      `${ModeConstants.MODE_API_BASE_URL}${path}`,
+      `${this.baseUrl}${path}`,
       false
     );
 
@@ -698,6 +716,18 @@ export class ModeAPI {
     return this.axios.request<T>(config);
   }
 
+  /**
+   * Constructor will be private so that no one can instantiate an instance of
+   * ModeAPI. Use ModeAPI.getInstance() instead.
+   */
+  private constructor() {
+    this.baseUrl = ModeConstants.MODE_API_BASE_URL;
+    this.authToken = '';
+    this.axios = Axios.create({
+      baseURL: this.baseUrl
+    });
+  }
+
 }
 
-export default new ModeAPI();
+export default ModeAPI.getInstance();

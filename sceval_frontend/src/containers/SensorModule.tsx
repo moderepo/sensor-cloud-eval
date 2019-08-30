@@ -53,7 +53,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     const [noTSDBData, setNoTSDBData] = useState<boolean>(false);
     const sensorContext: Context = useContext(context);
     let componentUnmounted: boolean;
-    
+
     const performTSDBFetch =  
     (homeID: number, sensors: any, 
      sType: string, seriesID: string, unit: string, wsData: any ) => {
@@ -129,31 +129,30 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
      */
     useEffect(
         () => {
+            // run this code in an async function to make sure these are ran in this order.
             (async () => {
-                if (componentUnmounted) {
-                    return;
-                }
-                
                 // restore login
                 AppContext.restoreLogin();
     
                 // open new connection for refresh
                 ModeConnection.openConnection(); 
-    
+
                 // get home id
                 const home: Home = await modeAPI.getHome(ClientStorage.getItem('user-login').user.id);
-                setHomeId(home.id);
     
-                // get selected device and module
-                if (props.match.params.sensorModuleId) {
-                    const sensorModule = props.match.params.sensorModuleId;
-                    setSelectedModule(sensorModule);
+                if (!componentUnmounted) {
+                    setHomeId(home.id);
+
+                    // get selected device and module
+                    if (props.match.params.sensorModuleId) {
+                        const sensorModule = props.match.params.sensorModuleId;
+                        setSelectedModule(props.match.params.sensorModuleId);
+                    }
+                    if (props.match.params.deviceId) {
+                        const gateway = props.match.params.deviceId;
+                        setSelectedGateway(parseInt(gateway, 10));
+                    }
                 }
-                if (props.match.params.deviceId) {
-                    const gateway = props.match.params.deviceId;
-                    setSelectedGateway(parseInt(gateway, 10));
-                }
-    
             })();
     },  []);
 

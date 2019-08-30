@@ -4,7 +4,7 @@ import { withRouter, RouteComponentProps } from 'react-router-dom';
 import ModeConnection from '../controllers/ModeConnection';
 import AppContext from '../controllers/AppContext';
 import modeAPI from '../controllers/ModeAPI';
-import { KeyValueStore, Device } from '../components/entities/API';
+import { KeyValueStore, Device, ErrorResponse, Home } from '../components/entities/API';
 import { Context, ContextConsumer, context } from '../context/Context';
 import { Progress } from 'antd';
 import 'antd/dist/antd.css';
@@ -160,45 +160,39 @@ export class AddSensorModule extends Component<
     );
   }
 
-  addNewModules() {
-    AppContext.restoreLogin(); // restore user credentials and get home / associated devices
-    modeAPI
-      .getHome(ClientStorage.getItem('user-login').user.id)
-      .then((homeResponse: any) => {
-        if (this.componentUnmounted) {
-          return;
-        }
-        
-        this.state.selectedModules.forEach((selectedModule, index) => {
-          const params: KeyValueStore = {
-            key: `${Constants.SENSOR_MODULE_KEY_PREFIX}${selectedModule.sensorModuleId}`,
-            value: {
-              id: selectedModule.sensorModuleId,
-              sensing: 'on',
-              interval: 30,
-              sensors: selectedModule.moduleSchema
-            }
-          };
-          ModeConnection.startSensor(
-            homeResponse,
-            selectedModule,
-            this.context.state.selectedGateway
-          );
+  async addNewModules() {
+    await AppContext.restoreLogin(); // restore user credentials and get home / associated devices
+    const home: Home = await modeAPI.getHome(ClientStorage.getItem('user-login').user.id);
+    
+    try {
+      await Promise.all(this.state.selectedModules.map((selectedModule, index): Promise<any>[] => {
+        const key: string = `${Constants.SENSOR_MODULE_KEY_PREFIX}${selectedModule.sensorModuleId}`;
+        const params: KeyValueStore = {
+          key: key,
+          value: {
+            id: selectedModule.sensorModuleId,
+            gatewayID: this.context.state.selectedGateway,
+            sensing: 'on',
+            interval: 30,
+            modelId: selectedModule.modelId,
+            sensors: selectedModule.moduleSchema
+          }
+        };
 
-          modeAPI
-            .setDeviceKeyValueStore(
-              this.context.state.selectedGateway,
-              `${Constants.SENSOR_MODULE_KEY_PREFIX}${selectedModule.sensorModuleId}`,
-              params
-            )
-            .then((response: any) => {
-              this.props.history.push('/devices');
-            })
-            .catch((reason: any) => {
-              console.log('error posting to the kv store', reason);
-            });
-        });
-      });
+        return [
+          // Add key/value store for the home. NOTE: This might not be neccessary.
+          modeAPI.setHomeKeyValueStore(home.id, key, params),
+
+          // add key/value store for the device
+          modeAPI.setDeviceKeyValueStore(this.context.state.selectedGateway, key, params),
+        ];
+      }).flat());
+
+      this.props.history.push('/devices');
+
+    } catch (error) {
+      console.log('error posting to the kv store', error);
+    }
   }
 
   toggleModuleSelect(specificID: string) {
