@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-
+// import required images
 const modeLogo = require('../common_images/mode-logo.svg');
 const hardware = require('../common_images/navigation/nav-icon-hardware.svg');
 const profile = require('../common_images/navigation/default-avatar.svg');
