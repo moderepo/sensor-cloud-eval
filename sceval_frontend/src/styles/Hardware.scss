@@ -119,8 +119,21 @@
   }
 }
 
+.no-modules-section {
+  display: center;
+  .no-modules-header {
+    margin-top: 36px;
+    color: #767676;
+    font-size: 18px;
+    letter-spacing: 0.3px;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+}
+
 .gateway-sensor-modules,
 .available-sensors-section {
+  justify-content: center;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(80px, 350px));
   text-align: center;
