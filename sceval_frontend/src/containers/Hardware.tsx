@@ -258,7 +258,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
   ): React.ReactNode => {
     // open a new websocket connection
     ModeConnection.openConnection();
-    if (linkedModules && linkedModules[index]) {
+    if (linkedModules && linkedModules[index] && linkedModules[index].sensorModules.length > 0) {
       const modules = linkedModules[index].sensorModules.map((sensor, key) => {
         return (
           <Fragment key={key}>
@@ -298,7 +298,14 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
       });
       return modules;
     } else {
-      return <img src={loader} />;
+      return (
+        <div className="no-modules-section">
+          <div className="no-modules-header">No Sensor Modules</div>
+          <div className="no-modules-action">
+            Click the "Add Sensor Modules" button to set up new sensor modules.
+          </div>
+        </div>
+      );
     }
   };
 
