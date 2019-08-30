@@ -66,6 +66,16 @@
       }
     }
 
+    &.hardware {
+      .icon {
+        height: 50px;
+      }
+
+      p {
+        padding-top: 5px;
+      }
+    }
+
     &:hover {
       background: #4b4b4b;
     }
@@ -74,5 +84,6 @@
       background: #191c1f;
       color: $base-background;
     }
+
   }
 }
