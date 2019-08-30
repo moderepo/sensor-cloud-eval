@@ -20,6 +20,7 @@ export enum RouteKeys {
   EmailResetPassword,
   EmailRegister,
   MyAccount,
+  Misc,
   Devices,
   SensorModules,
   AddSensorModule,

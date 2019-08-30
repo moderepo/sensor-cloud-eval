@@ -20,7 +20,7 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
       ),
       (
         <Route
-          key={RouteKeys.Login}
+          key={RouteKeys.Misc}
           exact={true}
           path="*"
           component={() => {
