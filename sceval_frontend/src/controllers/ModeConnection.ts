@@ -47,7 +47,7 @@ export class ModeConnection extends ConcreteObservable<Event> {
     }
   }
 
-  startSensor(home: any, sensor: any, deviceID: number): void {
+  addNewSensors(home: any, sensor: any, deviceID: number): void {
     // TODO - Check if these info should be passed into this function instead and this function might not be neccessary
     const store: KeyValueStore = {
       key: `sensorModule${sensor.modelSpecificId}`,

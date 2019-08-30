@@ -4,22 +4,30 @@ import { NavLink } from 'react-router-dom';
 import { AppContext } from '../controllers/AppContext';
 import modeAPI from '../controllers/ModeAPI';
 import { ErrorResponse } from '../components/entities/API';
-
+// required images imported
 const emailSent = require('../common_images/email_sent.svg');
 
 const ResetPassword: React.FC = () => {
-  const [input, setInput] = useState(''),
-    [emailValid, setEmailValid] = useState(false),
-    [isSent, setIsSent] = useState(false),
-    [error, setError] = useState('');
+  // email input state
+  const [input, setInput] = useState<string>(''),
+    // email validity state
+    [emailValid, setEmailValid] = useState<boolean>(false),
+    // email sent or not state
+    [isSent, setIsSent] = useState<boolean>(false),
+    // error on submission state
+    [error, setError] = useState<string>('');
+  // handler for email change and validity
   const onTxtEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     const re = /\S+@\S+\.\S+/;
     setInput(value);
     setEmailValid(re.test(value));
   };
+  // handler for on submit of reset password form
   const onSubmit = (event: React.FormEvent<HTMLElement>) => {
+    // prevent reload of page
     event.preventDefault();
+    // reset the password
     modeAPI
       .resetPassword(AppContext.getProjectId(), input)
       .then((status: number) => {
@@ -39,18 +47,24 @@ const ResetPassword: React.FC = () => {
           <h1 className="title">
             {!isSent ? 'Password Reset' : 'Email sent.'}
           </h1>
-          {!isSent ? (
+          {!isSent ?
+          // if no email has been sent yet:
+          (
             <p id="login-text">
               To reset your password, enter the email address you use to sign
               in.
             </p>
-          ) : (
+          ) : 
+          // if email has been sent:
+          (
             <p id="login-text">
               We just sent an email to you. Click the link in the email to reset
               your password.
             </p>
           )}
-          {!isSent ? (
+          {!isSent ?
+          // if no email has been sent yet:
+          (
             <form className="form-group" onSubmit={onSubmit}>
               <div>
                 <input
@@ -76,10 +90,14 @@ const ResetPassword: React.FC = () => {
                 </button>
               </div>
             </form>
-          ) : (
+          ) : 
+          // if email has been sent:
+          (
             <img src={emailSent} />
           )}
-          {!isSent && (
+          {!isSent &&
+          // if no email has been sent yet:
+          (
             <Fragment>
               <NavLink to="/login" className="navlinks">
                 Go Back
