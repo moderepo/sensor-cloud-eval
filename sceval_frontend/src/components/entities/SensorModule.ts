@@ -48,3 +48,9 @@ export interface SensorDataBundle {
     // time-series data for sensor
     TSDBData: TimeSeriesData;
 }
+
+export interface SensingInterval {
+    value: number;
+    unit: string;
+    multiplier: number;
+}

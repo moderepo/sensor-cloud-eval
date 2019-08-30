@@ -12,8 +12,6 @@ interface AmChartProps extends React.Props<any> {
   identifier: string;
   // time series data passed to chart
   TSDB: SensorDataBundle;
-  newWebsocketData: (value: boolean) => void;
-  // quantity of timespan
   timespanNumeric: number;
   // timespan
   timespan: string;
