@@ -12,10 +12,10 @@ interface LoginProps extends React.Props<any> {
 }
 
 const Login: React.FC<LoginProps> = (props: LoginProps) => {
-  const [email, setEmail] = useState(''),
-    [password, setPassword] = useState(''),
-    [emailValid, setEmailValid] = useState(false),
-    [error, setError] = useState('');
+  const [email, setEmail] = useState<string>(''),
+    [password, setPassword] = useState<string>(''),
+    [emailValid, setEmailValid] = useState<boolean>(false),
+    [error, setError] = useState<string>('');
 
   // Validation method for checking email
   const validateEmail = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,16 +55,21 @@ const Login: React.FC<LoginProps> = (props: LoginProps) => {
         <p id="login-text">Your sensor data is just one log-in away</p>
         <form className="form-group" onSubmit={handleSubmit}>
           <input
+            // validate email on change
             onChange={event => validateEmail(event)}
             type="email"
             className="form-control"
           />
           <input
+            // handle password change on user keystroke
             onChange={event => passwordChange(event)}
             type="password"
             className="form-control"
           />
-          {error !== '' && <div className="error-message-login">{error}</div>}
+          {error !== '' && 
+            // display error if error exists
+            <div className="error-message-login">{error}</div>
+          }
           <button
             type="submit"
             className={
@@ -72,6 +77,7 @@ const Login: React.FC<LoginProps> = (props: LoginProps) => {
                 ? 'btn btn-primary btn-large'
                 : 'btn btn-primary btn-large disabled'
             }
+            // disable ability to login if the email is invalid
             disabled={!emailValid}
           >
             Log In

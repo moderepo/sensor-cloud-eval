@@ -2,7 +2,7 @@ import React, { Fragment, useState, useEffect } from 'react';
 import LeftNav from '../components/LeftNav';
 import { AppContext } from '../controllers/AppContext';
 import { Redirect, withRouter, RouteComponentProps } from 'react-router';
-
+// required images imported
 const email = require('../common_images/acct_email.svg');
 const name = require('../common_images/acct_name.svg');
 const password = require('../common_images/acct_password.svg');
@@ -19,13 +19,13 @@ const MyAccount = withRouter(
     const [passwordNew, setPasswordNew] = useState<string>('');
     const [passwordConfirm, setPasswordConfirm] = useState<string>('');
     const [formValid, setFormValid] = useState<boolean>(false);
-
+    // get user information on component mount
     useEffect(() => {
       const user = JSON.parse(`${localStorage.getItem('user-login')}`).value
         .user.name;
       setUsername(user);
     },        []);
-
+    // logout method on click of "Logout button"
     const logout = async () => {
       try {
         // need to wait until log out is done before redirecting the user or
@@ -38,11 +38,11 @@ const MyAccount = withRouter(
         location.pathname = '/login';
       },         1000);
     };
-
+    // toggle editing vs. non-editing mode handler
     const editUserInfo = (): void => {
       setisEditing(!isEditing);
     };
-
+    // updating changes made to user information on submit handler
     const saveChanges = (event: React.FormEvent): void => {
       event.preventDefault();
       AppContext.restoreLogin();
@@ -54,7 +54,7 @@ const MyAccount = withRouter(
         }
       );
     };
-
+    // handler for text change for name or password
     const handleInputChange = (event: React.FormEvent<HTMLElement>): void => {
       const target = event.target as HTMLInputElement;
       const input = target.value;
@@ -71,7 +71,7 @@ const MyAccount = withRouter(
         default:
           break;
       }
-
+      // set form valid depending on whether or not passwords match and name isn't blank
       if (
         passwordConfirm === passwordNew &&
         passwordConfirm !== '' &&
@@ -82,7 +82,7 @@ const MyAccount = withRouter(
         setFormValid(false);
       }
     };
-
+    // if the user isn't logged in, redirect them to login
     if (!props.isLoggedIn) {
       return <Redirect to="/login" />;
     }

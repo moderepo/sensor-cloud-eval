@@ -5,7 +5,7 @@ import ModeConnection from '../controllers/ModeConnection';
 import AppContext from '../controllers/AppContext';
 import modeAPI from '../controllers/ModeAPI';
 import { KeyValueStore, Device, ErrorResponse, Home } from '../components/entities/API';
-import { Context, ContextConsumer, context } from '../context/Context';
+import { Context, context } from '../context/Context';
 import { Progress } from 'antd';
 import 'antd/dist/antd.css';
 import ClientStorage from '../controllers/ClientStorage';
@@ -13,17 +13,16 @@ import { evaluateSensorTypes } from '../utils/SensorTypes';
 import { Constants } from '../utils/Constants';
 import { SensorModuleInterface, AddSensorModuleState } from '../components/entities/SensorModule';
 import { RouteParams } from '../components/entities/Routes';
-
+// required images imported
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const checkMark = require('../common_images/notifications/check-1.svg');
 const addModule1 = require('../common_images/add-module-1.svg');
 const addModule2 = require('../common_images/add-module-2.svg');
+// declared props interface
 interface AddSensorModuleProps extends React.Props<any> {
   isLoggedIn: boolean;
   onLogIn: () => void;
 }
-    
-// TODO: Change into React.FC without breaking available sensors discovery (commented code below)
 export class AddSensorModule extends Component<
   AddSensorModuleProps & RouteComponentProps<RouteParams>,
   AddSensorModuleState
@@ -42,27 +41,37 @@ export class AddSensorModule extends Component<
     }
     
     this.state = {
+      // the modules available to pair with
       availableModules: [],
+      // the modules already associated to a particular gateway
       associatedModules: [],
+      // modules selected to link (post-discovery)
       selectedModules: [],
+      // the gateway to link to
       selectedGateway: '',
+      // metadata associated with the modules
       moduleMetadata: [],
+      // gateway in scanning mode or not
       scanning: false,
+      // scanning progress (0-100)
       scanningProgress: 0,
+      // no sensor modules discovered
       noModules: false
     };
+    // bind methods to component
     this.cancelScan = this.cancelScan.bind(this);
     this.startScan = this.startScan.bind(this);
     this.addNewModules = this.addNewModules.bind(this);
-
+    // restore login, open websocket connection, and add event listener
     AppContext.restoreLogin();
     ModeConnection.openConnection();
     this.notify.bind(this);
     ModeConnection.addObserver(this);
   }
-
+  // method for handling device events
   notify(event: any): void {
     const moduleData = event;
+    // if in scanning mode and websocket receives a discovered module event:
     if (
       this.state.scanning &&
       moduleData &&
@@ -71,6 +80,7 @@ export class AddSensorModule extends Component<
       this.state.availableModules
     ) {
       let newAvailableModules: any = [];
+      // compare sensor modules discovered to pre-linked modules to determine available ones
       moduleData.eventData.sensorModules.forEach((sensorModule: any) => {
         if (
           !this.state.associatedModules.includes(sensorModule.sensorModuleId)
@@ -78,6 +88,7 @@ export class AddSensorModule extends Component<
           newAvailableModules.push(sensorModule);
         }
       });
+      // update the state accordingly
       this.setState(() => {
         return {
           availableModules:
@@ -89,23 +100,23 @@ export class AddSensorModule extends Component<
       });
     }
   }
-
+  // remove the event listener on unmount
   componentWillUnmount() {
     this.componentUnmounted = true;
     ModeConnection.removeObserver(this);
   }
-
+  // method invoked if the user cancels the scan
   cancelScan(event: React.MouseEvent<HTMLButtonElement>): void {
     this.props.history.push('/devices');
   }
-
+  // method for starting the scan
   async startScan(): Promise<void> {
     this.setState(() => {
       return {
         scanning: true
       };
     });
-    
+    // declare an array for populating pre-linked IDs
     const associatedModulesIds: string[] = [];
     try {
       // For each device, get all the modules associated with the device and combine them into an array of
@@ -160,8 +171,10 @@ export class AddSensorModule extends Component<
     );
   }
 
+  // method invoked once the user selects sensor modules and clicks "Add Sensor Modules"
   async addNewModules() {
-    await AppContext.restoreLogin(); // restore user credentials and get home / associated devices
+    // restore user credentials and get home / associated devices
+    await AppContext.restoreLogin();
     const home: Home = await modeAPI.getHome(ClientStorage.getItem('user-login').user.id);
     
     try {
@@ -180,9 +193,11 @@ export class AddSensorModule extends Component<
         };
 
         return [
+          // associate new sensors to the home
           // Add key/value store for the home. NOTE: This might not be neccessary.
           modeAPI.setHomeKeyValueStore(home.id, key, params),
 
+          // associate new sensors to the device
           // add key/value store for the device
           modeAPI.setDeviceKeyValueStore(this.context.state.selectedGateway, key, params),
         ];
@@ -195,18 +210,22 @@ export class AddSensorModule extends Component<
     }
   }
 
+  // method invoked when a user selects or deselects a sensor module to pair with
   toggleModuleSelect(specificID: string) {
     let updatedModuleSet = this.state.selectedModules;
     const selectedModule = this.state.availableModules.filter(sModule => {
       return sModule.modelSpecificId === specificID;
     });
+    // if this selected module already exists in state, remove it
     if (this.state.selectedModules.includes(selectedModule[0])) {
       updatedModuleSet = this.state.selectedModules.filter(sModule => {
         return sModule.modelSpecificId !== specificID;
       });
     } else {
+      // otherwise add it
       updatedModuleSet.push(...selectedModule);
     }
+    // update state accordingly
     this.setState(() => {
       return {
         selectedModules: updatedModuleSet
@@ -358,7 +377,7 @@ export class AddSensorModule extends Component<
     );
   }
 }
-
-AddSensorModule.contextType = context; // This part is important to access context values
+// This part is important to access context values
+AddSensorModule.contextType = context;
 
 export default withRouter(AddSensorModule);
