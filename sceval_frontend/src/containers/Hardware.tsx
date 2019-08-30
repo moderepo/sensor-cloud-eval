@@ -187,7 +187,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
             return sensor.key !== moduleID;
           }
         );
-        let updatedLinkedModules = linkedModules;
+        let updatedLinkedModules = [...linkedModules];
         updatedLinkedModules[deviceIndex].sensorModules = filteredModules;
         setlinkedModules(updatedLinkedModules);
       }

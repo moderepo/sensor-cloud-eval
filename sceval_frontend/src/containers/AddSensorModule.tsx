@@ -4,7 +4,7 @@ import { withRouter, RouteComponentProps } from 'react-router-dom';
 import ModeConnection from '../controllers/ModeConnection';
 import AppContext from '../controllers/AppContext';
 import modeAPI from '../controllers/ModeAPI';
-import { KeyValueStore, Device } from '../components/entities/API';
+import { KeyValueStore, Device, ErrorResponse, Home } from '../components/entities/API';
 import { Context, context } from '../context/Context';
 import { Progress } from 'antd';
 import 'antd/dist/antd.css';
@@ -27,6 +27,8 @@ export class AddSensorModule extends Component<
   AddSensorModuleProps & RouteComponentProps<RouteParams>,
   AddSensorModuleState
 > {
+
+  private componentUnmounted: boolean = false;
 
   constructor(props: AddSensorModuleProps & RouteComponentProps<RouteParams>, sensorContext: Context) {
 
@@ -100,6 +102,7 @@ export class AddSensorModule extends Component<
   }
   // remove the event listener on unmount
   componentWillUnmount() {
+    this.componentUnmounted = true;
     ModeConnection.removeObserver(this);
   }
   // method invoked if the user cancels the scan
@@ -144,6 +147,11 @@ export class AddSensorModule extends Component<
     let requestCount: number = 0;
     const interval: number = window.setInterval(
       () => {
+        if (this.componentUnmounted) {
+          window.clearInterval(interval);
+          return;
+        }
+
         requestCount++;
         this.setState(() => {
           return {
@@ -162,45 +170,46 @@ export class AddSensorModule extends Component<
       1000
     );
   }
+
   // method invoked once the user selects sensor modules and clicks "Add Sensor Modules"
-  addNewModules() {
+  async addNewModules() {
     // restore user credentials and get home / associated devices
-    AppContext.restoreLogin(); 
-    modeAPI
-      .getHome(ClientStorage.getItem('user-login').user.id)
-      .then((homeResponse: any) => {
-        this.state.selectedModules.forEach((selectedModule, index) => {
-          const params: KeyValueStore = {
-            key: `${Constants.SENSOR_MODULE_KEY_PREFIX}${selectedModule.sensorModuleId}`,
-            value: {
-              id: selectedModule.sensorModuleId,
-              sensing: 'on',
-              interval: 30,
-              sensors: selectedModule.moduleSchema
-            }
-          };
+    await AppContext.restoreLogin();
+    const home: Home = await modeAPI.getHome(ClientStorage.getItem('user-login').user.id);
+    
+    try {
+      await Promise.all(this.state.selectedModules.map((selectedModule, index): Promise<any>[] => {
+        const key: string = `${Constants.SENSOR_MODULE_KEY_PREFIX}${selectedModule.sensorModuleId}`;
+        const params: KeyValueStore = {
+          key: key,
+          value: {
+            id: selectedModule.sensorModuleId,
+            gatewayID: this.context.state.selectedGateway,
+            sensing: 'on',
+            interval: 30,
+            modelId: selectedModule.modelId,
+            sensors: selectedModule.moduleSchema
+          }
+        };
+
+        return [
           // associate new sensors to the home
-          ModeConnection.addNewSensors(
-            homeResponse,
-            selectedModule,
-            this.context.state.selectedGateway
-          );
+          // Add key/value store for the home. NOTE: This might not be neccessary.
+          modeAPI.setHomeKeyValueStore(home.id, key, params),
+
           // associate new sensors to the device
-          modeAPI
-            .setDeviceKeyValueStore(
-              this.context.state.selectedGateway,
-              `${Constants.SENSOR_MODULE_KEY_PREFIX}${selectedModule.sensorModuleId}`,
-              params
-            )
-            .then((response: any) => {
-              this.props.history.push('/devices');
-            })
-            .catch((reason: any) => {
-              console.log('error posting to the kv store', reason);
-            });
-        });
-      });
+          // add key/value store for the device
+          modeAPI.setDeviceKeyValueStore(this.context.state.selectedGateway, key, params),
+        ];
+      }).flat());
+
+      this.props.history.push('/devices');
+
+    } catch (error) {
+      console.log('error posting to the kv store', error);
+    }
   }
+
   // method invoked when a user selects or deselects a sensor module to pair with
   toggleModuleSelect(specificID: string) {
     let updatedModuleSet = this.state.selectedModules;

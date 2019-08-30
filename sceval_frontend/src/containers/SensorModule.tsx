@@ -62,6 +62,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     const [noTSDBData, setNoTSDBData] = useState<boolean>(false);
     // declaration of a useContext hook
     const sensorContext: Context = useContext(context);
+
+    // to keep track of component mounted/unmounted event so we don't call set state when component is unmounted
+    let componentUnmounted: boolean;
+
     // time-series data fetch handler method
     const performTSDBFetch =  
     (homeID: number, sensors: any, 
@@ -78,6 +82,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         // get time-series data for the provided time-range and series type
         modeAPI.getTSDBData(homeID, seriesID, startTime.toISOString(), endTime.toISOString())
         .then((timeseriesData: TimeSeriesData) => {
+            if (componentUnmounted) {
+                return;
+            }
             let maxVal = 0;
             let minVal = Infinity;
             let sum = 0;
@@ -141,38 +148,48 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
      */
     useEffect(
         () => {
-            // restore login
-            AppContext.restoreLogin();
+            // run this code in an async function to make sure these are ran in this order.
+            (async () => {
+                // restore login
+                AppContext.restoreLogin();
+    
+                // open new connection for refresh
+                ModeConnection.openConnection(); 
 
-            // open new connection for refresh
-            ModeConnection.openConnection(); 
+                // get home id
+                const home: Home = await modeAPI.getHome(ClientStorage.getItem('user-login').user.id);
+    
+                if (!componentUnmounted) {
+                    setHomeId(home.id);
 
-            // get home id
-            modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
-            .then((home: Home): void => {
-                setHomeId(home.id);
-            });
-
-            // get selected device and module
-            if (props.match.params.sensorModuleId) {
-                const sensorModule = props.match.params.sensorModuleId;
-                setSelectedModule(sensorModule);
-            }
-            if (props.match.params.deviceId) {
-                const gateway = props.match.params.deviceId;
-                setSelectedGateway(parseInt(gateway, 10));
-            }
+                    // get selected device and module
+                    if (props.match.params.sensorModuleId) {
+                        const sensorModule = props.match.params.sensorModuleId;
+                        setSelectedModule(props.match.params.sensorModuleId);
+                    }
+                    if (props.match.params.deviceId) {
+                        const gateway = props.match.params.deviceId;
+                        setSelectedGateway(parseInt(gateway, 10));
+                    }
+                }
+            })();
     },  []);
 
     // React hook's componentDidMount and componentDidUpdate
     useEffect(
         () => {
+            componentUnmounted = false;
+
             if (homeId !== 0 && selectedGateway && selectedModule) {
 
                 // fetch module data from KV store
                 modeAPI.getDeviceKeyValueStore(
                     selectedGateway, `${Constants.SENSOR_MODULE_KEY_PREFIX}${selectedModule}`
                 ).then((keyValueStore: KeyValueStore) => {
+                    if (componentUnmounted) {
+                        return;
+                    }
+
                     setSelectedSensorModuleObj(keyValueStore);
                     
                     const moduleSensors = keyValueStore.value.sensors;
@@ -188,6 +205,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     setOfflineSensors(sensorsOffline);
 
                     modeAPI.getTSDBInfo(homeId).then((tsdbInfo: TimeSeriesInfo[]) => {
+                            if (componentUnmounted) {
+                                return;
+                            }
                             // filter response initially by selected module
                             const filteredTSDBData: any = tsdbInfo.filter((tsdbData: any): boolean => {
                                 return tsdbData.id.includes(selectedModule);
@@ -221,6 +241,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             // websocket message handler for RT data
             const webSocketMessageHandler: any = {
                 notify: (message: any): void => {
+                    if (componentUnmounted) {
+                        return;
+                    }
                     const moduleData = message;
                     // if app receives real time data, and it pertains to the selected Module:
                     if (homeId && moduleData.eventType === Constants.EVENT_REALTIME_DATA
@@ -307,6 +330,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             ModeConnection.addObserver(webSocketMessageHandler);
             // Return cleanup function to be called when the component is unmounted
             return (): void => {
+                componentUnmounted = true;
                 ModeConnection.removeObserver(webSocketMessageHandler);
             };
     // method invoke dependencies
@@ -343,6 +367,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             // update KV store for the device
             modeAPI.setDeviceKeyValueStore(parseInt(gateway, 10), updatedSensorModuleObj.key, updatedSensorModuleObj)
             .then((deviceResponse: any) => {
+                if (componentUnmounted) {
+                    return;
+                }
                 setEditingModuleSettings(true);
                 return deviceResponse;
             }).catch((reason: any) => {
@@ -383,6 +410,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         setTSDBDataFetched(false);
         modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
         .then((response: any) => {
+            if (componentUnmounted) {
+                return;
+            }
+
             const homeID = response.id;
             // update the UI according to the new timespan
             if (sensorTypes !== undefined) {
@@ -450,6 +481,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             updatedSensorModuleObj.value.interval = interval.value * interval.multiplier;
             modeAPI.setDeviceKeyValueStore(selectedGateway, sensorModuleObj.key, updatedSensorModuleObj).then(
                 (status: number): void => {
+                if (componentUnmounted) {
+                    return;
+                }
+
                 // now update the state
                 setSelectedSensorModuleObj(updatedSensorModuleObj);
             },  (error: any): void => {
