@@ -22,6 +22,32 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
         <Route
           key={RouteKeys.Login}
           exact={true}
+          path="*"
+          component={() => {
+            if (this.props.isLoggedIn) {
+              return (
+                <>
+                  <Login
+                    isLoggedIn={this.props.isLoggedIn}
+                    onLogIn={this.props.onLogin}
+                  />
+                </>
+              );
+            } else {
+              return (
+                <Hardware
+                  isLoggedIn={this.props.isLoggedIn}
+                  onLogIn={this.props.onLogin}
+                />
+              );
+            }
+          }}
+        />
+      ),
+      (
+        <Route
+          key={RouteKeys.Login}
+          exact={true}
           path="/login"
           component={() => (
             <>

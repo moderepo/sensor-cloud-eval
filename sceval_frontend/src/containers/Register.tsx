@@ -77,7 +77,7 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
     };
     // if the user is logged in, redirect to hardware
     if (props.isLoggedIn) {
-        return <Redirect to="/hardware" />;
+        return <Redirect to="/devices" />;
     }
     // if email verification is true, send the user to the email_sent route
     if (isRedirectConfirmEmailVerification) {
