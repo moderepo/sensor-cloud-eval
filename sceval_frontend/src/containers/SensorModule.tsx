@@ -570,23 +570,25 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                 <div className="gateway-name">Gateway name: {selectedGateway}</div>
                                 <div className="sensor-model">Sensor model: {selectedModule} </div>
                             </div>
-                            <button
-                                onClick={toggleSensorModuleSettingsVisible}
-                            >
-                                •••
-                            </button>
-                            {   
-                                moduleSettingsVisible &&
-                                // if the module settings are visible:
-                                <ul className="dropdown-menu">
-                                <a
-                                    href="#"
-                                    onClick={toggleModalVisibility}
+                            <div className="dropdown-menu-container">
+                                <button
+                                    onClick={toggleSensorModuleSettingsVisible}
                                 >
-                                    Edit Settings
-                                </a>
-                                </ul>
-                            }
+                                    •••
+                                </button>
+                                {
+                                    moduleSettingsVisible &&
+                                    // if the module settings are visible:
+                                    <ul className="sce-dropdown-menu">
+                                    <a
+                                        href="#"
+                                        onClick={toggleModalVisibility}
+                                    >
+                                        Edit Settings
+                                    </a>
+                                    </ul>
+                                }
+                            </div>
                             {
                                 modalVisible &&
                                 // if the modal state is visible:

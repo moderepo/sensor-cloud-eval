@@ -56,21 +56,37 @@
         border: solid 1px #b5c0d8;
         border-radius: 2px;
         min-width: 550px;
+        position: relative;
 
-        .dropdown-menu {
-          margin-right: 10px;
-          padding: 2px 8px;
-          float: right;
-          text-align: center;
-          background-color: $base-background;
-          background-clip: padding-box;
-          border: 1px solid rgba(0, 0, 0, 0.15);
-          border-radius: 4px;
-          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
-          a {
+        .dropdown-menu-container {
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          text-align: right;
+
+          button {
+            border: 2px solid $base-black;
+            border-radius: 4px;
             color: $base-black;
+            padding: 4px 12px;
+            text-decoration: none;
+          }
+
+          .sce-dropdown-menu {
+            margin-top: 10px;
+            padding: 2px 8px;
+            text-align: center;
+            background-color: $base-background;
+            background-clip: padding-box;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 4px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+            a {
+              color: $base-black;
+            }
           }
         }
+
         img {
           float: left;
           padding: 20px;
@@ -95,17 +111,6 @@
             margin-top: 10px;
             color: $base-black;
           }
-        }
-
-        button {
-          margin: 20px 13px 0px 20px;
-          display: absolute;
-          float: right;
-          border: 2px solid $base-black;
-          border-radius: 4px;
-          color: $base-black;
-          padding: 4px 12px;
-          text-decoration: none;
         }
       }
 
