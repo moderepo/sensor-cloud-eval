@@ -1,4 +1,6 @@
-export default function determineUnit(sensorType: string) {
+import { MODULE_CATELOG } from './Constants';
+
+export function determineUnit(sensorType: string) {
   switch (sensorType) {
     case 'pressure':
       return 'hPa';
@@ -30,6 +32,17 @@ export default function determineUnit(sensorType: string) {
       return '';
     default:
       return;
+  }
+}
+
+export function evaluateModel(modelId: string): string {
+  const discoveredModule = MODULE_CATELOG.find((sensorModule: any): boolean => {
+    return sensorModule.modelId === modelId;
+  });
+  if (discoveredModule) {
+    return discoveredModule.name;
+  } else {
+    return '';
   }
 }
 

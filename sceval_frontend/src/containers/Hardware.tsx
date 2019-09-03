@@ -9,7 +9,7 @@ import {
   SensorModuleSet,
   SensorModuleInterface
 } from '../components/entities/SensorModule';
-import { evaluateSensorTypes } from '../utils/SensorTypes';
+import { evaluateSensorTypes, evaluateModel } from '../utils/SensorTypes';
 import { Modal } from 'antd';
 import { Context, context } from '../context/Context';
 import ModeConnection from '../controllers/ModeConnection';
@@ -267,8 +267,8 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
             {!isLoading ? (
               <div className="sensor-module-wrapper col-12">
                 <SensorModuleComp
-                  name={sensor.value.name ? sensor.value.name : sensor.key}
-                  id={sensor.value.id}
+                  name={sensor.value.name ? sensor.value.name : sensor.key.split('sensorModule')[1]}
+                  model={`${evaluateModel(sensor.value.id.split(':')[0])}`}
                   sensors={sensor.value.sensors}
                   isEditing={isEditingDevice}
                   onClick={
