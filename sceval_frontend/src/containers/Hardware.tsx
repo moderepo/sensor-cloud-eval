@@ -14,6 +14,8 @@ import { Modal } from 'antd';
 import { Context, context } from '../context/Context';
 import ModeConnection from '../controllers/ModeConnection';
 import { Constants } from '../utils/Constants';
+import SensorModuleComp from '../components/SensorModuleComp';
+
 // use the confirm modal from AntD
 const { confirm } = Modal;
 // required images imported
@@ -250,46 +252,36 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
   /**
    * Render ALL sensor modules for the specified device
    * @param deviceId
-   * @param index
+   * @param deviceIndex
    */
   const renderSensorModules = (
     deviceId: number,
-    index: number
+    deviceIndex: number
   ): React.ReactNode => {
-    // open a new websocket connection
-    ModeConnection.openConnection();
-    if (linkedModules && linkedModules[index] && linkedModules[index].sensorModules.length > 0) {
-      const modules = linkedModules[index].sensorModules.map((sensor, key) => {
+    const isEditingDevice: boolean = editingGateways.includes(deviceId);
+    
+    if (linkedModules && linkedModules[deviceIndex] && linkedModules[deviceIndex].sensorModules.length > 0) {
+      const modules = linkedModules[deviceIndex].sensorModules.map((sensor, key) => {
         return (
           <Fragment key={key}>
             {!isLoading ? (
-              <a
-                key={key}
-                className={`sensor-module ${sensor.value.sensing}`}
-                onClick={event => {
-                  goToSensorModule(event, deviceId, sensor.value.id);
-                }}
-              >
-                <img className="module-image" src={sensorGeneral} />
-                <div className="module-info">
-                  <div className="sensor-module-name">
-                    {sensor.value.name ? sensor.value.name : sensor.key}
-                  </div>
-                  <div className="sensor-module-model">{sensor.value.id}</div>
-                  {sensor.value.sensors &&
-                    // render custom sensor images
-                    sensor.value.sensors.map((sensorType, sensorIndex) => {
-                      const type = sensorType.split(':')[0];
-                      return (
-                        <img
-                          key={sensorIndex}
-                          className="sensor-type-image"
-                          src={evaluateSensorTypes(type)}
-                        />
-                      );
-                    })}
-                </div>
-              </a>
+              <div className="sensor-module-wrapper col-12">
+                <SensorModuleComp
+                  name={sensor.value.name ? sensor.value.name : sensor.key}
+                  id={sensor.value.id}
+                  sensors={sensor.value.sensors}
+                  isEditing={isEditingDevice}
+                  onClick={
+                    (event: React.MouseEvent<HTMLElement>): void => {
+                      if (isEditingDevice) {
+                        renderDeleteModal(event, sensor.key, deviceId, deviceIndex);
+                      } else {
+                        goToSensorModule(event, deviceId, sensor.value.id);
+                      }
+                    }
+                  }
+                />
+              </div>
             ) : (
               <img src={loader} />
             )}
@@ -361,7 +353,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
           </Fragment>
           {displayGatewayOptions.includes(deviceId) && (
             // if this gateway is being edited, show drop down
-            <ul className="dropdown-menu">
+            <ul className="device-dropdown-menu">
               <a href="#" onClick={() => toggleEditGateway(deviceId)}>
                 Unlink Sensor Modules
               </a>
@@ -388,44 +380,13 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
 
     return (
       <div
-        className={`gateway-sensor-modules ${
+        className={`gateway-sensor-modules row ${
           isEditingDevice ? ' editing-module' : ''
         }`}
       >
-        { // if this gateway is not being edited
-          !isEditingDevice
-          ? renderSensorModules(deviceId, deviceIndex)
-          // if this gateway is being edited
-          : isEditingDevice &&
-            sensorModules.map((sensor: SensorModuleInterface, key) => {
-              return (
-                <a
-                  key={key}
-                  className="sensor-module"
-                  onClick={event =>
-                    renderDeleteModal(event, sensor.key, deviceId, deviceIndex)
-                  }
-                >
-                  <img className="module-image" src={sensorGeneral} />
-                  <div className="module-info">
-                    <div className="x-icon">x</div>
-                    <div className="sensor-module-name">{sensor.key}</div>
-                    <div className="sensor-module-model">{sensor.value.id}</div>
-                    {sensor.value.sensors &&
-                      sensor.value.sensors.map((sensorType, sensorIndex) => {
-                        const type = sensorType.split(':')[0];
-                        return (
-                          <img
-                            key={sensorIndex}
-                            className="sensor-type-image"
-                            src={evaluateSensorTypes(type)}
-                          />
-                        );
-                      })}
-                  </div>
-                </a>
-              );
-            })}
+        {
+          renderSensorModules(deviceId, deviceIndex)
+        }
       </div>
     );
   };
