@@ -185,3 +185,12 @@
   font-size: 14px;
   font-weight: 700;
 }
+
+.menu-setting-item {
+  text-decoration: none!important;
+}
+
+.menu-setting-item:hover{
+  background-color: lighten($base-turquoise, 20%)!important;
+  color: $base-black;
+}

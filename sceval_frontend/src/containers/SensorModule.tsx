@@ -442,7 +442,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             <Menu>
                 {   timespanSet.map((timespan: any, index: any) => {
                         return (
-                            <Menu.Item key={index}>
+                            <Menu.Item 
+                                key={index}
+                                className="menu-setting-item"
+                            >
                                 <option 
                                     value={timespan.quantity}
                                     onClick={() => toggleGraphTimespan(
@@ -511,7 +514,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             <Menu>
                 {   intervalSet.map((interval: SensingInterval, index: any) => {
                         return (
-                            <Menu.Item key={index}>
+                            <Menu.Item 
+                                key={index}
+                                className="menu-setting-item"
+                            >
                                 <option 
                                     value={interval.value}
                                     onClick={() => setSensingInterval(sensorModuleObj, interval)}

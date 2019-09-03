@@ -1,7 +1,7 @@
 import React, { Fragment, useState, useEffect, useContext } from 'react';
 import { Redirect, RouteComponentProps, withRouter } from 'react-router';
 import { LeftNav } from '../components/LeftNav';
-import modeAPI, { ModeConstants } from '../controllers/ModeAPI';
+import modeAPI, { ModeConstants, ModeAPI } from '../controllers/ModeAPI';
 import { KeyValueStore, Device, Home } from '../components/entities/API';
 import { LoginInfo } from '../components/entities/User';
 import AppContext from '../controllers/AppContext';
@@ -201,8 +201,22 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
       console.log(error);
     }
   };
+
+  // render delete device modal handler function for clicking on the 'Delete Device' setting for a gateway
+  const renderDeleteDeviceModal = (
+    deviceId: number,
+  ): void => {
+    confirm({
+      title: `Are you sure you want to delete device #${deviceId}?`,
+      content:
+        'Please note that your device must be configured to allow On-Demand Device Provisioning \
+        in order to sucessfully remove the device from your home.',
+      onOk: () => modeAPI.deleteDevice(deviceId)
+    });
+  };
+
   // render delete modal handler function for clicking on a particular module while in delete-mode
-  const renderDeleteModal = (
+  const renderDeleteModuleModal = (
     event: any,
     moduleID: string,
     deviceId: number,
@@ -277,7 +291,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                   onClick={
                     (event: React.MouseEvent<HTMLElement>): void => {
                       if (isEditingDevice) {
-                        renderDeleteModal(event, sensor.key, deviceId, deviceIndex);
+                        renderDeleteModuleModal(event, sensor.key, deviceId, deviceIndex);
                       } else {
                         goToSensorModule(event, deviceId, sensor.value.id);
                       }
@@ -308,13 +322,21 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     const menu = (
       <Menu>
         <Menu.Item>
-          <a href="#" onClick={() => toggleEditGateway(deviceId)}>
+          <a
+            className="menu-setting-item" 
+            href="#" 
+            onClick={() => toggleEditGateway(deviceId)}
+          >
             Unlink Sensor Modules
           </a>
         </Menu.Item>
         <Menu.Item>
-          <a href="#" onClick={() => toggleEditGateway(deviceId)}>
-            Delete
+          <a 
+            className="menu-setting-item" 
+            href="#" 
+            onClick={() => renderDeleteDeviceModal(deviceId)}
+          >
+            Delete Device
           </a>
         </Menu.Item>
       </Menu>
