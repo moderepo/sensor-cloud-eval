@@ -462,9 +462,8 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         );
         return (
             <Dropdown overlay={menu} className="dropdown">
-                <a className="default-timespan-value sensing-interval">
-                    {`${graphTimespanNumeric} ${graphTimespan}`}
-                    <Icon type="down" />
+                <a className="default-timespan-value sensing-interval d-flex align-items-center justify-content-center">
+                    {`${graphTimespanNumeric} ${graphTimespan}`}<Icon type="down" />
                 </a>
             </Dropdown>
         );
@@ -538,7 +537,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
         return (
             <Dropdown overlay={menu} className="dropdown">
-                <a className="default-timespan-value">
+                <a className="default-timespan-value d-flex align-items-center justify-content-center">
                     {selectedInterval.value} {selectedInterval.unit.charAt(0)}
                     <Icon type="down" />
                 </a>
@@ -641,7 +640,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                             </div>
                             { selectedModule && selectedModule.split(':')[0] === '0101' &&
                             <div className="data-col">
-                                <div className="data-name">Sensing Interval</div>
+                                <div className="data-name col-dropdown">Sensing Interval</div>
                                 <div className="sensing">
                                     {renderSensingIntervalOptions(selectedSensorModuleObj)}
                                 </div>
