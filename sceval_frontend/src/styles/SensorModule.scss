@@ -38,6 +38,18 @@
       margin-right: 0;
       border-bottom: 1px solid $border-grey;
 
+      > * {
+        margin: 0 10px;
+
+        &:first-child {
+          margin-left: 20px;
+        }
+
+        &:last-child {
+          margin-right: 20px;
+        }
+      }
+
       .module-left-container {
         background-color: $base-background;
         border: solid 1px #b5c0d8;
