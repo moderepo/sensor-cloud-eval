@@ -61,17 +61,13 @@
         white-space: nowrap;
         text-overflow: ellipsis;
         line-height: 1.2em;
+        color: $base-black;
       }
 
       .sensor-module-name {
         font-weight: bold;
         color: $base-black;
         font-size: 16px;
-      }
-
-      .sensor-module-id,
-      .sensor-module-model {
-        color: #50abff;
       }
     }
 

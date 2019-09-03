@@ -9,11 +9,12 @@ import { Context, context } from '../context/Context';
 import { Progress } from 'antd';
 import 'antd/dist/antd.css';
 import ClientStorage from '../controllers/ClientStorage';
-import { evaluateSensorTypes } from '../utils/SensorTypes';
 import { Constants } from '../utils/Constants';
 import { SensorModuleInterface, AddSensorModuleState } from '../components/entities/SensorModule';
 import { RouteParams } from '../components/entities/Routes';
 import SensorModuleComp from '../components/SensorModuleComp';
+import { evaluateSensorTypes, evaluateModel } from '../utils/SensorTypes';
+
 // required images imported
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const checkMark = require('../common_images/notifications/check-1.svg');
@@ -296,7 +297,8 @@ export class AddSensorModule extends Component<
                       return (
                         <div className="sensor-module-wrapper col-12" key={index}>
                           <SensorModuleComp
-                            model={sModule.modelSpecificId}
+                            id={sModule.modelSpecificId}
+                            model={`${evaluateModel(sModule.modelId)}`}
                             sensors={sModule.moduleSchema}
                             isSelected={this.state.selectedModules.includes(sModule)}
                             onClick={
