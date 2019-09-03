@@ -62,7 +62,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     // push  new x-value axis
     let dateAxis = chart.xAxes.push(new am4charts.DateAxis());
     dateAxis.renderer.minGridDistance = 30;
-    dateAxis.title.text = 'Timeframe';
     dateAxis.renderer.grid.template.location = 0;
     dateAxis.renderer.labels.template.fill = am4core.color('#7FCBCF');
     dateAxis.renderer.labels.template.rotation = -90;
@@ -74,7 +73,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
     valueAxis.renderer.labels.template.fill = am4core.color('#7FCBCF');
     valueAxis.renderer.minWidth = 60;
-    valueAxis.title.text = props.TSDB.unit;
     valueAxis.extraMin = 0.1;
     if (props.timespan === 'minute') {
       valueAxis.extraMax = 1.0;
