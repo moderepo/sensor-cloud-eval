@@ -1,0 +1,102 @@
+@import "variables.scss";
+
+.sensor-module {
+  height: 100%;
+  background-color: $base-background;
+  border: 1px solid $border-grey;
+  padding: 12px;
+  border-radius: 2px;
+  box-shadow: $base-box-shadow;
+  cursor: pointer;
+  position: relative;
+
+  &:hover {
+    box-shadow: $hover-box-shadow;
+  }
+
+  .module-image {
+    width: 100px;
+    margin-right: 15px;
+  }
+
+  .checked-module {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 32px;
+    height: 32px;
+    display: none;
+  }
+
+  .x-icon {
+    display: none;
+    font-size: 20px;
+    font-weight: 900;
+    width: 20px;
+    height: 20px;
+    position: absolute;
+    height: 20px;
+    top: 0px;
+    right: 0px;
+    color: #8d8d8d;
+  }
+
+  .module-info {
+    flex: 1;
+    height: 100%;
+    position: relative;
+    min-width: 0;
+
+    .module-info-top {
+      flex: 1;
+      width: 100%;
+      text-align: left;
+
+      .sensor-module-name,
+      .sensor-module-id,
+      .sensor-module-model {
+        width: 100%;
+        padding: 0px 0px 10px 0px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        line-height: 1.2em;
+        color: $base-black;
+      }
+
+      .sensor-module-name {
+        font-weight: bold;
+        color: $base-black;
+        font-size: 16px;
+      }
+    }
+
+    .module-sensors {
+      width: 100%;
+      .sensor-type-image {
+        margin-top: 10px;
+        margin-right: 10px;
+      }
+
+    }
+  }
+
+  &.off {
+    opacity: 0.5;
+    filter: grayscale(1);
+  }
+
+  &.editing {
+    .x-icon {
+      display: block;
+    }
+  }
+
+  &.selected {
+    border: 2px solid $base-black;
+    .checked-module {
+      display: block;
+    }
+  }
+}
+

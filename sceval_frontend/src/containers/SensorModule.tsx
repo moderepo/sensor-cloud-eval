@@ -42,8 +42,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     const [activeSensors, setActiveSensors] = useState<any>();
     // contains data from TSDB fetch
     const [sensorTypes, setSensorTypes] = useState<Array<any>>();
-    // sensor module battery power state
-    const [batteryPower, setBatteryPower] = useState<number>(0.1);
     // default 15 unit time horizon
     const [graphTimespanNumeric, setGraphTimespanNumeric] = useState<any>(15);
     // default minute time horizon
@@ -575,23 +573,25 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                     `Sensor model: ${evaluateModel(selectedModule.split(':')[0])}`
                                 }</div>
                             </div>
-                            <button
-                                onClick={toggleSensorModuleSettingsVisible}
-                            >
-                                •••
-                            </button>
-                            {   
-                                moduleSettingsVisible &&
-                                // if the module settings are visible:
-                                <ul className="dropdown-menu">
-                                <a
-                                    href="#"
-                                    onClick={toggleModalVisibility}
+                            <div className="dropdown-menu-container">
+                                <button
+                                    onClick={toggleSensorModuleSettingsVisible}
                                 >
-                                    Edit Settings
-                                </a>
-                                </ul>
-                            }
+                                    •••
+                                </button>
+                                {
+                                    moduleSettingsVisible &&
+                                    // if the module settings are visible:
+                                    <ul className="sce-dropdown-menu">
+                                    <a
+                                        href="#"
+                                        onClick={toggleModalVisibility}
+                                    >
+                                        Edit Settings
+                                    </a>
+                                    </ul>
+                                }
+                            </div>
                             {
                                 modalVisible &&
                                 // if the modal state is visible:
@@ -640,10 +640,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                         <div className="data-col">
                             <div className="data-name">Sensors Active</div>
                             <div className="data-value">{activeSensorQuantity}</div>
-                        </div>
-                        <div className="data-col">
-                            <div className="data-name">Battery Strength</div>
-                            <div className="data-value">{batteryPower}</div>
                         </div>
                         { selectedModule && selectedModule.split(':')[0] === '0101' &&
                         <div className="data-col">
