@@ -10,7 +10,7 @@ import {
   SensorModuleInterface
 } from '../components/entities/SensorModule';
 import { evaluateSensorTypes, evaluateModel } from '../utils/SensorTypes';
-import { Modal } from 'antd';
+import { Modal, Menu, Dropdown, Icon } from 'antd';
 import { Context, context } from '../context/Context';
 import ModeConnection from '../controllers/ModeConnection';
 import { Constants } from '../utils/Constants';
@@ -164,7 +164,11 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
   },        [linkedModules]);
 
   // handler for redirecting the user to a particular sensor module view on sensor module click
-  const goToSensorModule = (event: any, deviceId: number, moduleId: string): void => {
+  const goToSensorModule = (
+    event: any,
+    deviceId: number,
+    moduleId: string
+  ): void => {
     props.history.push(`/sensor_modules/${deviceId}/${moduleId}`);
   };
   // handler method for unlinking a sensor module from a gateway
@@ -258,7 +262,11 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
   ): React.ReactNode => {
     // open a new websocket connection
     ModeConnection.openConnection();
-    if (linkedModules && linkedModules[index] && linkedModules[index].sensorModules.length > 0) {
+    if (
+      linkedModules &&
+      linkedModules[index] &&
+      linkedModules[index].sensorModules.length > 0
+    ) {
       const modules = linkedModules[index].sensorModules.map((sensor, key) => {
         return (
           <Fragment key={key}>
@@ -273,7 +281,9 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                 <img className="module-image" src={sensorGeneral} />
                 <div className="module-info">
                   <div className="sensor-module-name">
-                    {sensor.value.name ? sensor.value.name : sensor.key.split('sensorModule')[1]}
+                    {sensor.value.name
+                      ? sensor.value.name
+                      : sensor.key.split('sensorModule')[1]}
                   </div>
                   <div className="sensor-module-model">
                     {`Model: ${evaluateModel(sensor.value.id.split(':')[0])}`}
@@ -311,6 +321,33 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     }
   };
 
+  const renderDropDownSetting = (deviceId: number): React.ReactNode => {
+    const menu = (
+      <Menu>
+        <Menu.Item>
+          <a href="#" onClick={() => toggleEditGateway(deviceId)}>
+            Unlink Sensor Modules
+          </a>
+        </Menu.Item>
+        <Menu.Item>
+          <a href="#" onClick={() => toggleEditGateway(deviceId)}>
+            Delete
+          </a>
+        </Menu.Item>
+      </Menu>
+    );
+    return (
+      <Dropdown overlay={menu} trigger={['hover']}>
+        <a
+          onClick={() => showGatewayOptions(deviceId)}
+          className="ant-dropdown-link"
+          href="#"
+        >...
+        </a>
+      </Dropdown>
+    );
+  };
+
   /**
    * Render the device's header, the device icon, name, ID, and the option to add/remove modules
    */
@@ -342,12 +379,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                 >
                   + Add Sensor Modules
                 </button>
-                <button
-                  className="action-button settings"
-                  onClick={() => showGatewayOptions(deviceId)}
-                >
-                  ...
-                </button>
+                {renderDropDownSetting(deviceId)}
               </>
             ) : (
               // if it is being edited, show done button
@@ -361,14 +393,6 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
               </>
             )}
           </Fragment>
-          {displayGatewayOptions.includes(deviceId) && (
-            // if this gateway is being edited, show drop down
-            <ul className="dropdown-menu">
-              <a href="#" onClick={() => toggleEditGateway(deviceId)}>
-                Unlink Sensor Modules
-              </a>
-            </ul>
-          )}
         </div>
       </div>
     );
@@ -394,11 +418,11 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
           isEditingDevice ? ' editing-module' : ''
         }`}
       >
-        { // if this gateway is not being edited
-          !isEditingDevice
+        {// if this gateway is not being edited
+        !isEditingDevice
           ? renderSensorModules(deviceId, deviceIndex)
-          // if this gateway is being edited
-          : isEditingDevice &&
+          : // if this gateway is being edited
+            isEditingDevice &&
             sensorModules.map((sensor: SensorModuleInterface, key) => {
               return (
                 <a
@@ -411,8 +435,14 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                   <img className="module-image" src={sensorGeneral} />
                   <div className="module-info">
                     <div className="x-icon">x</div>
-                    <div className="sensor-module-name">{sensor.key}</div>
-                    <div className="sensor-module-model">{sensor.value.id}</div>
+                    <div className="sensor-module-name">
+                    {sensor.value.name
+                      ? sensor.value.name
+                      : sensor.key.split('sensorModule')[1]}
+                    </div>
+                    <div className="sensor-module-model">
+                      {`Model: ${evaluateModel(sensor.value.id.split(':')[0])}`}
+                    </div>
                     {sensor.value.sensors &&
                       sensor.value.sensors.map((sensorType, sensorIndex) => {
                         const type = sensorType.split(':')[0];
@@ -489,18 +519,19 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
         <div className="gateways-section">
           {linkedModules !== undefined && linkedModules.length > 0 ? (
             renderDevices()
+          ) : // If linkedModules is empty AND we are not loading data, this mean the home
+          // does not have any device
+          !isLoading ? (
+            <div className="gateway-row no-device">
+              You don't have any device. Please use the
+              <a href="https://console.tinkermode.com" target="blank">
+                {' '}
+                Mode Console{' '}
+              </a>
+              to create and add devices to your home.
+            </div>
           ) : (
-            // If linkedModules is empty AND we are not loading data, this mean the home
-            // does not have any device
-            !isLoading ? (
-              <div className="gateway-row no-device">
-                You don't have any device. Please use the
-                <a href="https://console.tinkermode.com" target="blank"> Mode Console </a>
-                to create and add devices to your home.
-              </div>
-            ) : (
-              <img src={loader} />
-            )
+            <img src={loader} />
           )}
         </div>
       </div>
