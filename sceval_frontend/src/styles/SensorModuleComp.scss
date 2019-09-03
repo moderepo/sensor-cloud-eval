@@ -28,34 +28,29 @@
     display: none;
   }
 
+  .x-icon {
+    display: none;
+    font-size: 20px;
+    font-weight: 900;
+    width: 20px;
+    height: 20px;
+    position: absolute;
+    height: 20px;
+    top: 0px;
+    right: 0px;
+    color: #8d8d8d;
+  }
+
   .module-info {
     flex: 1;
     height: 100%;
     position: relative;
+    min-width: 0;
 
     .module-info-top {
       flex: 1;
       width: 100%;
       text-align: left;
-
-      .sensor-module-name {
-        font-weight: bold;
-        color: $base-black;
-        font-size: 16px;
-      }
-
-      .x-icon {
-        display: none;
-        font-size: 20px;
-        font-weight: 900;
-        width: 20px;
-        height: 20px;
-        position: absolute;
-        height: 20px;
-        top: 0px;
-        right: 0px;
-        color: #8d8d8d;
-      }
 
       .sensor-module-name,
       .sensor-module-id,
@@ -63,8 +58,20 @@
         width: 100%;
         padding: 0px 0px 10px 0px;
         overflow: hidden;
-        word-break: break-word;
+        white-space: nowrap;
+        text-overflow: ellipsis;
         line-height: 1.2em;
+      }
+
+      .sensor-module-name {
+        font-weight: bold;
+        color: $base-black;
+        font-size: 16px;
+      }
+
+      .sensor-module-id,
+      .sensor-module-model {
+        color: #50abff;
       }
     }
 
@@ -84,12 +91,8 @@
   }
 
   &.editing {
-    .module-info {
-      .module-info-top {
-        .x-icon {
-          display: block;
-        }
-      }
+    .x-icon {
+      display: block;
     }
   }
 

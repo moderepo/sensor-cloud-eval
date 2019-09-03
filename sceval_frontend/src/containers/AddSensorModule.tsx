@@ -296,7 +296,7 @@ export class AddSensorModule extends Component<
                       return (
                         <div className="sensor-module-wrapper col-12" key={index}>
                           <SensorModuleComp
-                            id={sModule.modelSpecificId}
+                            model={sModule.modelSpecificId}
                             sensors={sModule.moduleSchema}
                             isSelected={this.state.selectedModules.includes(sModule)}
                             onClick={
