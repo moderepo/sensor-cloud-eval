@@ -560,8 +560,8 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 Back to Hardware Overview
                 </NavLink>
                 <div className="module-container">
-                    <div className="module-details">
-                        <div className="module-left-container">
+                    <div className="module-details row">
+                        <div className="module-left-container col-12 col-xl-6">
                             <img src={sensorGeneral} />
                             <div className="info-section">
                                 <div className="device-name">
@@ -632,24 +632,25 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
                             }
                         </div>
-                        <div className="data-col">
-                            <div className="data-name">Sensors Active</div>
-                            <div className="data-value">{activeSensorQuantity}</div>
-                        </div>
-                        { selectedModule && selectedModule.split(':')[0] === '0101' &&
-                        <div className="data-col">
-                            <div className="data-name">Sensing Interval</div>
-                            <div className="sensing">
-                                {renderSensingIntervalOptions(selectedSensorModuleObj)}
+                        <div className="data-cols col-12 col-xl-6 d-flex flex-row">
+                            <div className="data-col">
+                                <div className="data-name">Sensors Active</div>
+                                <div className="data-value">{activeSensorQuantity}</div>
+                            </div>
+                            { selectedModule && selectedModule.split(':')[0] === '0101' &&
+                            <div className="data-col">
+                                <div className="data-name">Sensing Interval</div>
+                                <div className="sensing">
+                                    {renderSensingIntervalOptions(selectedSensorModuleObj)}
+                                </div>
+                            </div>
+                            }
+                            <div className="data-col">
+                                <div className="data-name col-dropdown">Graph Timespan</div>
+                                {renderGraphTimespanToggle()}
                             </div>
                         </div>
-                        }
-                        <div className="data-col">
-                            <div className="data-name col-dropdown">Graph Timespan</div>
-                            {renderGraphTimespanToggle()}
-                        </div>
                     </div>
-                    
                     <div
                         className="sensor-graph-container"
                     >
