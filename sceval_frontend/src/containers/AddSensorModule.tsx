@@ -9,10 +9,12 @@ import { Context, context } from '../context/Context';
 import { Progress } from 'antd';
 import 'antd/dist/antd.css';
 import ClientStorage from '../controllers/ClientStorage';
-import { evaluateSensorTypes } from '../utils/SensorTypes';
 import { Constants } from '../utils/Constants';
 import { SensorModuleInterface, AddSensorModuleState } from '../components/entities/SensorModule';
 import { RouteParams } from '../components/entities/Routes';
+import SensorModuleComp from '../components/SensorModuleComp';
+import { evaluateSensorTypes, evaluateModel } from '../utils/SensorTypes';
+
 // required images imported
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const checkMark = require('../common_images/notifications/check-1.svg');
@@ -273,7 +275,7 @@ export class AddSensorModule extends Component<
                 <div className="scan-header">
                   Scanning for available sensor modules...
                 </div>
-                <div className="progress-bar">
+                <div className="add-sensor-progress-bar">
                   <Progress
                     percent={this.state.scanningProgress}
                     showInfo={true}
@@ -290,54 +292,22 @@ export class AddSensorModule extends Component<
                     Sensor modules discovered. Select modules to add to
                     your device.
                   </div>
-                  <div className="available-sensors-section">
+                  <div className="available-sensors-section row">
                     {this.state.availableModules.map((sModule, index) => {
                       return (
-                        <a
-                          key={index}
-                          className={
-                            !this.state.selectedModules.includes(sModule)
-                              ? `sensor-module`
-                              : `sensor-module selected`
-                          }
-                          onClick={() =>
-                            this.toggleModuleSelect(
-                              sModule.modelSpecificId
-                            )
-                          }
-                        >
-                          <img
-                            className="module-image"
-                            src={sensorGeneral}
-                          />
-                          {this.state.selectedModules.includes(
-                            sModule
-                          ) && (
-                            <img
-                              className="checked-module"
-                              src={checkMark}
-                            />
-                          )}
-                          <div className="module-info">
-                            <div className="sensor-module-model">
-                              Model: {sModule.modelSpecificId}
-                            </div>
-                            {sModule.moduleSchema.map(
-                              (sensorType: any, sIndex: any) => {
-                                const type = evaluateSensorTypes(
-                                  sensorType.split(':')[0]
-                                );
-                                return (
-                                  <img
-                                    key={sIndex}
-                                    className="sensor-type-image"
-                                    src={type}
-                                  />
-                                );
+                        <div className="sensor-module-wrapper col-12" key={index}>
+                          <SensorModuleComp
+                            id={sModule.modelSpecificId}
+                            model={`${evaluateModel(sModule.modelId)}`}
+                            sensors={sModule.moduleSchema}
+                            isSelected={this.state.selectedModules.includes(sModule)}
+                            onClick={
+                              (event: React.MouseEvent<HTMLElement>): void => {
+                                this.toggleModuleSelect(sModule.modelSpecificId);
                               }
-                            )}
-                          </div>
-                        </a>
+                            }
+                          />
+                        </div>
                       );
                     })}
                   </div>

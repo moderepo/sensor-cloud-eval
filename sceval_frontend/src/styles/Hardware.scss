@@ -8,6 +8,7 @@
   height: 100%;
   .page-header {
     margin-left: 150px;
+    margin-top: 20px;
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 0.4px;
@@ -36,7 +37,7 @@
             color: $base-black;
             font-size: 20px;
             margin-top: 5px;
-            font-weight: 700;
+            font-weight: 600;
             padding-left: 15px;
             display: inline-block;
             vertical-align: top;
@@ -75,7 +76,7 @@
             font-weight: 700;
           }
 
-          .dropdown-menu {
+          .sce-dropdown-menu {
             top: 100%;
             left: 0;
             z-index: 1000;
@@ -93,6 +94,7 @@
             a {
               text-decoration: none;
               color: $base-black;
+              padding: 10px;
             }
           }
 
@@ -108,19 +110,20 @@
         padding: 20px;
         font-size: 20px;
       }
-    }
-    .editing-gateway {
-      background-color: $base-background;
-      border: 2px solid #2197fd;
-    }
-    .editing-module {
-      background-color: $base-background;
+
+      &.editing-gateway {
+        background-color: #ddecf8;
+        border: 2px solid #2197fd;
+        .gateway-sensor-modules {
+          background-color: #ddecf8;
+        }
+      }
     }
   }
 }
 
 .no-modules-section {
-  display: center;
+  width: 100%;
   .no-modules-header {
     margin-top: 36px;
     color: #767676;
@@ -133,75 +136,40 @@
 
 .gateway-sensor-modules,
 .available-sensors-section {
-  justify-content: center;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 350px));
-  text-align: center;
-  grid-gap: 1em;
-  margin: 15px 50px;
-  padding: 20px 0px;
+  margin: 0;
+  padding: 15px;
+  width: 100%;
 
-  .sensor-module {
-    min-width: 80px;
+  &.editing-module {
     background-color: $base-background;
-    min-height: 120px;
-    border: 1px solid $border-grey;
-    padding: 12px;
-    border-radius: 2px;
-    box-shadow: $base-box-shadow;
-    cursor: pointer;
-
-    .module-image {
-      float: left;
-      width: 100px;
-    }
-
-    .module-info {
-      margin-left: 112px;
-      text-align: left;
-      .sensor-module-name {
-        font-weight: bold;
-        color: $base-black;
-      }
-
-      .x-icon {
-        font-size: 20px;
-        float: right;
-        font-weight: 900;
-        width: 20px;
-        height: 20px;
-        position: flex;
-        height: 20px;
-        top: 3px;
-        right: 5px;
-        color: #8d8d8d;
-      }
-
-      .sensor-module-name,
-      .sensor-module-model {
-        padding: 5px 0px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        color: $base-black;
-      }
-
-      .sensor-type-image {
-        margin-top: 10px;
-        margin-right: 10px;
-      }
-    }
-
-    &.off {
-      opacity: 0.5;
-      filter: grayscale(1);
-    }
-  }
-  .selected {
-    border: 2px solid $base-black;
   }
 
-  .checked-module {
-    float: right;
+  .sensor-module-wrapper {
+    padding: 15px;
+    min-height: 100%;
+
+    /* Medium screen size 2 columns */
+    @media (min-width: 1000px) {
+      flex: 0 0 50%;
+      min-width: 50%;
+    }
+
+    /* Large screen size 3 columns */
+    @media (min-width: 1500px) {
+      flex: 0 0 33.333333%;
+      min-width: 33.333333%;
+    }
+
+    /* Extra large screen 4 columns */
+    @media (min-width: 1800px) {
+      flex: 0 0 25%;
+      min-width: 25%;
+    }
+
+    /* Extra extra large screen, 5 columns */
+    @media (min-width: 2100px) {
+      flex: 0 0 20%;
+      min-width: 20%;
+    }
   }
 }
