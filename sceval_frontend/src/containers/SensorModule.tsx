@@ -9,7 +9,7 @@ import ClientStorage from '../controllers/ClientStorage';
 import moment from 'moment';
 import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
 import ModeConnection  from '../controllers/ModeConnection';
-import determinUnit from '../utils/SensorTypes';
+import { determineUnit, evaluateModel } from '../utils/SensorTypes';
 import { SensorModuleInterface, SensingInterval } from '../components/entities/SensorModule';
 import { Constants } from '../utils/Constants';
 import { Home } from '../components/entities/API';
@@ -224,7 +224,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                 onlineTSDBData.forEach((sensor: any, index: any) => {
                                     const format = sensor.id.split('-')[1];
                                     const sType = format.split(':')[0];
-                                    const unit = determinUnit(sType);
+                                    const unit = determineUnit(sType);
                                     if (unit !== undefined) {
                                         performTSDBFetch(homeId, sensors, sType, sensor.id, unit, onlineTSDBData);
                                     }
@@ -570,7 +570,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                 {sensorModuleName ? sensorModuleName : selectedModule}
                                 </div>
                                 <div className="gateway-name">Gateway name: {selectedGateway}</div>
-                                <div className="sensor-model">Sensor model: {selectedModule} </div>
+                                <div className="sensor-model">
+                                { selectedModule &&
+                                    `Sensor model: ${evaluateModel(selectedModule.split(':')[0])}`
+                                }</div>
                             </div>
                             <button
                                 onClick={toggleSensorModuleSettingsVisible}

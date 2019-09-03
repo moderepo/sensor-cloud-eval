@@ -179,10 +179,11 @@
 
       .sensor-module-name,
       .sensor-module-model {
-        padding: 10px 0px;
+        padding: 5px 0px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        color: $base-black;
       }
 
       .sensor-type-image {

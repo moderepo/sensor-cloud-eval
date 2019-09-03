@@ -9,7 +9,7 @@ import {
   SensorModuleSet,
   SensorModuleInterface
 } from '../components/entities/SensorModule';
-import { evaluateSensorTypes } from '../utils/SensorTypes';
+import { evaluateSensorTypes, evaluateModel } from '../utils/SensorTypes';
 import { Modal } from 'antd';
 import { Context, context } from '../context/Context';
 import ModeConnection from '../controllers/ModeConnection';
@@ -273,9 +273,11 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                 <img className="module-image" src={sensorGeneral} />
                 <div className="module-info">
                   <div className="sensor-module-name">
-                    {sensor.value.name ? sensor.value.name : sensor.key}
+                    {sensor.value.name ? sensor.value.name : sensor.key.split('sensorModule')[1]}
                   </div>
-                  <div className="sensor-module-model">{sensor.value.id}</div>
+                  <div className="sensor-module-model">
+                    {`Model: ${evaluateModel(sensor.value.id.split(':')[0])}`}
+                  </div>
                   {sensor.value.sensors &&
                     // render custom sensor images
                     sensor.value.sensors.map((sensorType, sensorIndex) => {
