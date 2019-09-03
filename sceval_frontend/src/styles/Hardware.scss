@@ -76,7 +76,7 @@
             font-weight: 700;
           }
 
-          .device-dropdown-menu {
+          .sce-dropdown-menu {
             top: 100%;
             left: 0;
             z-index: 1000;
@@ -112,15 +112,18 @@
       }
 
       &.editing-gateway {
-        background-color: $base-background;
+        background-color: #ddecf8;
         border: 2px solid #2197fd;
+        .gateway-sensor-modules {
+          background-color: #ddecf8;
+        }
       }
     }
   }
 }
 
 .no-modules-section {
-  display: center;
+  width: 100%;
   .no-modules-header {
     margin-top: 36px;
     color: #767676;

@@ -291,7 +291,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
       return modules;
     } else {
       return (
-        <div className="no-modules-section">
+        <div className="no-modules-section d-flex flex-column align-items-center justify-content-center">
           <div className="no-modules-header">No Sensor Modules</div>
           <div className="no-modules-action">
             Click the "Add Sensor Modules" button to set up new sensor modules.
@@ -353,7 +353,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
           </Fragment>
           {displayGatewayOptions.includes(deviceId) && (
             // if this gateway is being edited, show drop down
-            <ul className="device-dropdown-menu">
+            <ul className="sce-dropdown-menu">
               <a href="#" onClick={() => toggleEditGateway(deviceId)}>
                 Unlink Sensor Modules
               </a>
