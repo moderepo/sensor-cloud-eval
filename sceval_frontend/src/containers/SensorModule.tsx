@@ -538,7 +538,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         return (
             <Dropdown overlay={menu} className="dropdown">
                 <a className="default-timespan-value d-flex align-items-center justify-content-center">
-                    {selectedInterval.value} {selectedInterval.unit.charAt(0)}
+                    {selectedInterval.value} {selectedInterval.unit}
                     <Icon type="down" />
                 </a>
             </Dropdown>
@@ -560,13 +560,17 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 </NavLink>
                 <div className="module-container">
                     <div className="module-details row">
-                        <div className="module-left-container col-12 col-xl-6">
+                        <div className="module-left-container col-12 col-xl-6 d-flex flex-row align-items-center">
                             <img src={sensorGeneral} />
-                            <div className="info-section">
+                            <div className="info-section d-flex flex-column align-items-start justify-content-center">
                                 <div className="device-name">
                                 {sensorModuleName ? sensorModuleName : selectedModule}
                                 </div>
                                 <div className="gateway-name">Gateway name: {selectedGateway}</div>
+                                <div className="sensor-model">
+                                { selectedModule &&
+                                    `Sensor ID: ${selectedModule.split(':')[1]}`
+                                }</div>
                                 <div className="sensor-model">
                                 { selectedModule &&
                                     `Sensor model: ${evaluateModel(selectedModule.split(':')[0])}`
@@ -644,9 +648,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                             { selectedModule && selectedModule.split(':')[0] === '0101' &&
                             <div className="data-col">
                                 <div className="data-name col-dropdown">Sensing Interval</div>
-                                <div className="sensing">
-                                    {renderSensingIntervalOptions(selectedSensorModuleObj)}
-                                </div>
+                                {renderSensingIntervalOptions(selectedSensorModuleObj)}
                             </div>
                             }
                             <div className="data-col">

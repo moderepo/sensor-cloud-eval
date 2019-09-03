@@ -38,24 +38,13 @@
       margin-right: 0;
       border-bottom: 1px solid $border-grey;
 
-      > * {
-        margin: 0 10px;
-
-        &:first-child {
-          margin-left: 20px;
-        }
-
-        &:last-child {
-          margin-right: 20px;
-        }
-      }
-
       .module-left-container {
         background-color: $base-background;
         border: solid 1px #b5c0d8;
         border-radius: 2px;
-        min-width: 550px;
         position: relative;
+        padding: 20px;
+        margin: 0;
 
         .dropdown-menu-container {
           position: absolute;
@@ -87,14 +76,14 @@
         }
 
         img {
-          float: left;
           padding: 20px;
           max-width: 130px;
         }
 
         .info-section {
-          padding-top: 20px;
-          float: left;
+          flex: 1;
+          min-width: 0;
+
           .device-name {
             overflow: hidden;
             text-overflow: ellipsis;
@@ -102,12 +91,14 @@
             color: $base-black;
             font-size: 20px;
             margin-bottom: 10px;
+            width: 100%;
           }
 
           .gateway-name,
           .sensor-model {
+            width: 100%;
             text-align: left;
-            margin-top: 10px;
+            margin-top: 5px;
             color: $base-black;
           }
         }
