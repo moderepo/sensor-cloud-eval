@@ -36,10 +36,14 @@ export function determineUnit(sensorType: string) {
 }
 
 export function evaluateModel(modelId: string): string {
-  const discoveredModule = MODULE_CATELOG.filter((sensorModule: any): boolean => {
+  const discoveredModule = MODULE_CATELOG.find((sensorModule: any): boolean => {
     return sensorModule.modelId === modelId;
   });
-  return discoveredModule[0].name;
+  if (discoveredModule) {
+    return discoveredModule.name;
+  } else {
+    return '';
+  }
 }
 
 export function evaluateSensorTypes(sensorType: any): string | undefined {
