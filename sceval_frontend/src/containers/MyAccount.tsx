@@ -22,9 +22,9 @@ const MyAccount = withRouter(
     // get user information on component mount
     useEffect(() => {
       const user = JSON.parse(`${localStorage.getItem('user-login')}`).value
-        .user.name;
-      setUsername(user);
-    },        []);
+        .user;
+      setUsername(user.name);
+    },        [isEditing]);
     // logout method on click of "Logout button"
     const logout = async () => {
       try {
@@ -72,13 +72,14 @@ const MyAccount = withRouter(
           break;
       }
       // set form valid depending on whether or not passwords match and name isn't blank
-      if (
-        passwordConfirm === passwordNew &&
-        passwordConfirm !== '' &&
-        name !== ''
-      ) {
+      if (target.value !== '' && target.value !== 
+        JSON.parse(`${localStorage.getItem('user-login')}`).value.user.name) {
         setFormValid(true);
-      } else {
+      } 
+      if ((passwordConfirm === passwordNew &&
+        passwordConfirm !== '' && passwordNew !== '')) {
+          setFormValid(true);
+        } else {
         setFormValid(false);
       }
     };
@@ -125,7 +126,7 @@ const MyAccount = withRouter(
               <img src={name} />
               <h4>Name:</h4>
               {!isEditing ? (
-                <div className="user-data">{userData.value.user.name}</div>
+                <div className="user-data">{username}</div>
               ) : (
                 <input
                   type="text"
@@ -138,17 +139,7 @@ const MyAccount = withRouter(
               )}
               <img className="mail" src={email} />
               <h4> Email:</h4>
-              {!isEditing ? (
-                <div className="user-data">{userData.value.user.email}</div>
-              ) : (
-                <input
-                  type="text"
-                  className="user-data edit-box"
-                  value={userData.value.user.email}
-                  disabled={true}
-                  name="email"
-                />
-              )}
+              <div className="user-data">{userData.value.user.email}</div>
               <img src={password} />
               <h4>Password:</h4>
               {!isEditing ? (
