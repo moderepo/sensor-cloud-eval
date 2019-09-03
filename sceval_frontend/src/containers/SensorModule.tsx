@@ -42,8 +42,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     const [activeSensors, setActiveSensors] = useState<any>();
     // contains data from TSDB fetch
     const [sensorTypes, setSensorTypes] = useState<Array<any>>();
-    // sensor module battery power state
-    const [batteryPower, setBatteryPower] = useState<number>(0.1);
     // default 15 unit time horizon
     const [graphTimespanNumeric, setGraphTimespanNumeric] = useState<any>(15);
     // default minute time horizon
@@ -637,10 +635,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                         <div className="data-col">
                             <div className="data-name">Sensors Active</div>
                             <div className="data-value">{activeSensorQuantity}</div>
-                        </div>
-                        <div className="data-col">
-                            <div className="data-name">Battery Strength</div>
-                            <div className="data-value">{batteryPower}</div>
                         </div>
                         { selectedModule && selectedModule.split(':')[0] === '0101' &&
                         <div className="data-col">
