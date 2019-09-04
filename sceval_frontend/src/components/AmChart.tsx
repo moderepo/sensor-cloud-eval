@@ -22,8 +22,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
   const [expandedMode, setExpandedMode] = useState<boolean>(false);
   // graph height state
   const [graphHeight, setGraphHeight] = useState<string>('300px');
-  // graph data state
-  const [graphData, setGraphData] = useState([]);
   // latest real-time value state
   const [latestRTVal, setlatestRTVal] = useState();
   // latest date state
@@ -33,31 +31,28 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
   // declare context hook
   const sensorContext: Context = useContext(context);
   // declare useEffect hook
+
   useEffect(() => {
     // create amChart instance with custom identifier
     const chart = am4core.create(props.identifier, am4charts.XYChart);
     setSensorChart(chart);
+    const graphData: Array<any> = [];
     var dbData: any = [];
     var dateArray: any = [];
-    let value = 0;
     // if TSDB data exists
     if (props.TSDB) {
       // map over TSDB data and push data to dataArray
       props.TSDB.TSDBData.data.map((sensorDataPoint: any, index: any) => {
         if (!dateArray.includes(sensorDataPoint[0])) {
-          value += sensorDataPoint[2];
           dbData.push({
             date: moment(sensorDataPoint[0]).toISOString(),
             value: sensorDataPoint[1].toFixed(2)
           });
           dateArray.push(sensorDataPoint[0]);
         }
-        if (index === props.TSDB.TSDBData.data.length - 1) {
-          setGraphData(dbData);
-          chart.data = dbData;
-        }
       });
     }
+    chart.data = dbData;
 
     // push  new x-value axis
     let dateAxis = chart.xAxes.push(new am4charts.DateAxis());
