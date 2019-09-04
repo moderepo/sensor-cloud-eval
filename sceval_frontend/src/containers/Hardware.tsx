@@ -39,7 +39,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
   >([]);
   const [deletionMode, setDeletionMode] = useState<boolean>(false);
   const [deviceDeleted, setDeviceDeleted] = useState<boolean>(false);
-  const [deviceDeleteMessage, setDeviceDeleteMessage] = useState<string>('');
+  const [deviceDeleteError, setDeviceDeleteError] = useState<boolean>(false);
   const [editingGateways, setEditingGateways] = useState<Array<number>>([]);
   const sensorContext: Context = useContext(context);
   // if the user isn't logged in, protect the route and redirect to /login
@@ -215,15 +215,22 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
         'Please note that your device must be configured to allow On-Demand Device Provisioning \
         in order to sucessfully remove the device from your home.',
       onOk: async () => {
+        setDeletionMode(true);
         const status = await modeAPI.deleteDevice(deviceId);
         if (status === 204) {
           setDeviceDeleted(true);
-          setDeviceDeleteMessage('Successfully deleted device.');
+          setDeviceDeleteError(false);
         } else {
           setDeviceDeleted(false);
-          setDeviceDeleteMessage('Failed to delete device');
+          setDeviceDeleteError(true);
         }
-        setDeletionMode(false);
+        // show message for 3 seconds
+        setTimeout(
+          () => {
+            setDeletionMode(false);
+          },
+          3000
+        );
       }
     });
   };
@@ -349,8 +356,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
             href="#" 
             onClick={() => {
               renderDeleteDeviceModal(deviceId);
-              setDeviceDeleteMessage('');
-              setDeletionMode(true);
+              setDeviceDeleteError(false);
             }}
           >
             Delete Device
@@ -381,6 +387,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     const isEditingDevice: boolean = editingGateways.includes(deviceId);
 
     return (
+      
       <div className="gateway-header">
         <div className="gateway-info">
           <img src={deviceImage} />
@@ -390,12 +397,6 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
             {device.name}
           </div>
         </div>
-        {
-          deviceDeleteMessage &&
-          <div className="deletion-response">
-            
-          </div>
-        }
         <div className="gateway-settings">
           <Fragment>
             {!isEditingDevice ? (
@@ -507,6 +508,12 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
             <h1>Add Sensor Modules</h1>
           )}
         </div>
+        {
+          deletionMode &&
+          <div className={deviceDeleteError ? 'warning-animation fade-out' : 'save-animation fade-out'}>
+            {deviceDeleteError ? 'Failed to delete device.' : 'Successfully deleted device.'}
+          </div>
+        }
         <div className="gateways-section">
           {linkedModules !== undefined && linkedModules.length > 0 ? (
             renderDevices()
