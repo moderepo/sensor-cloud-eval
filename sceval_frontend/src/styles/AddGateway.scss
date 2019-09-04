@@ -1,0 +1,76 @@
+@import 'variables.scss';
+
+.directions {
+    border-bottom: 2px solid $base-turquoise;
+    box-shadow: $base-box-shadow;
+    border-radius: 4px;
+    padding: 20px 50px 10px 50px;
+    margin: 5vh 10vw;
+    display: grid;
+    grid-template-columns: repeat('auto-fit', minmax(200px, 200px));
+    grid-auto-flow: column;
+    justify-content: space-around;
+    text-align: center;
+    p {
+        margin-top: 1em;
+        display: block;
+        max-width: 200px;
+        text-align: center;
+        margin-left: 5vw;
+    }
+    .direction-image {
+        margin-left: 3vw;
+        max-width: 200px;
+    }
+}
+.device-table {
+    margin: 20px 50px;
+    .table-header {
+        width: 100%;
+        #tableTitle {
+            margin-top: 20px;
+            display: inline-block;
+        }
+        .add-gateway {
+            float: right;
+            background-color: $base-black;
+            color: $base-background;
+            font-family: $font-family;
+            margin: 20px 10px 0 5px;
+            font-size: 14px !important;
+            font-weight: 500;
+            height: 35px;
+            padding: 5px 15px 6px;
+            line-height: 1.7;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            border-radius: 4px;
+        }
+        .claim-code-section {
+            margin-top: 10vh;
+            margin-bottom: 20px;
+            display: flex;
+            float: right;
+            .claim-code-entry {
+                max-width: 200px;
+            }
+        }
+        .claim-code-entry, .add-button, .cancel-button {
+            margin: 0px 5px;
+            float: right;
+
+        }
+    }
+    .device-row:hover {
+        background-color: lighten($base-turquoise, 20%);
+    }
+    // .connected {
+    //     border: 1px solid green;
+    //     color: $base-background;
+    // }
+    // .disconnected {
+    //     background-color: red;
+    //     color: $base-background;
+    // }
+}
