@@ -37,6 +37,9 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
   const [displayGatewayOptions, setdisplayGatewayOptions] = useState<
     Array<number>
   >([]);
+  const [deletionMode, setDeletionMode] = useState<boolean>(false);
+  const [deviceDeleted, setDeviceDeleted] = useState<boolean>(false);
+  const [deviceDeleteMessage, setDeviceDeleteMessage] = useState<string>('');
   const [editingGateways, setEditingGateways] = useState<Array<number>>([]);
   const sensorContext: Context = useContext(context);
   // if the user isn't logged in, protect the route and redirect to /login
@@ -211,7 +214,17 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
       content:
         'Please note that your device must be configured to allow On-Demand Device Provisioning \
         in order to sucessfully remove the device from your home.',
-      onOk: () => modeAPI.deleteDevice(deviceId)
+      onOk: async () => {
+        const status = await modeAPI.deleteDevice(deviceId);
+        if (status === 204) {
+          setDeviceDeleted(true);
+          setDeviceDeleteMessage('Successfully deleted device.');
+        } else {
+          setDeviceDeleted(false);
+          setDeviceDeleteMessage('Failed to delete device');
+        }
+        setDeletionMode(false);
+      }
     });
   };
 
@@ -334,7 +347,11 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
           <a 
             className="menu-setting-item" 
             href="#" 
-            onClick={() => renderDeleteDeviceModal(deviceId)}
+            onClick={() => {
+              renderDeleteDeviceModal(deviceId);
+              setDeviceDeleteMessage('');
+              setDeletionMode(true);
+            }}
           >
             Delete Device
           </a>
@@ -373,6 +390,12 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
             {device.name}
           </div>
         </div>
+        {
+          deviceDeleteMessage &&
+          <div className="deletion-response">
+            
+          </div>
+        }
         <div className="gateway-settings">
           <Fragment>
             {!isEditingDevice ? (
