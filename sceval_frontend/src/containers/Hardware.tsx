@@ -440,9 +440,15 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
       <div className="hardware-section">
         <div className="page-header">
           {selectedDevice === 0 ? (
-            <h1>Hardware</h1>
+            <h1>Hardware
+            <button
+              className="add-gateway-button"
+            >
+            Add Gateway
+            </button>
+            </h1>
           ) : (
-            <h1>Add Sensor Modules</h1>
+            <h1 className="header">Add Sensor Modules</h1>
           )}
         </div>
         <div className="gateways-section">

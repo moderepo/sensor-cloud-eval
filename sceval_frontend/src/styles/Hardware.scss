@@ -12,6 +12,12 @@
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 0.4px;
+    .header {
+      max-width: 500px;
+    }
+    .add-gateway-button {
+      float: right;
+    }
   }
 
   .gateways-section {
