@@ -15,6 +15,7 @@ import { Context, context } from '../context/Context';
 import ModeConnection from '../controllers/ModeConnection';
 import { Constants } from '../utils/Constants';
 import SensorModuleComp from '../components/SensorModuleComp';
+import { NavLink } from 'react-router-dom';
 
 // use the confirm modal from AntD
 const { confirm } = Modal;
@@ -23,6 +24,7 @@ const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const deviceImage = require('../common_images/devices/gateway.svg');
 const deviceLocation = require('../common_images/devices/location-pin.svg');
+const plus = require('../common_images/buttons/plus.svg');
 
 interface HardwareProps extends React.Props<any> {
   isLoggedIn: boolean;
@@ -441,11 +443,13 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
         <div className="page-header">
           {selectedDevice === 0 ? (
             <h1>Hardware
-            <button
+            <NavLink
               className="add-gateway-button"
+              to="/add_gateway"
             >
+            <img src={plus} className="plus" />
             Add Gateway
-            </button>
+            </NavLink>
             </h1>
           ) : (
             <h1 className="header">Add Sensor Modules</h1>
