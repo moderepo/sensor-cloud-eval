@@ -102,24 +102,4 @@
     }
   }
 
-  .footer {
-    box-shadow: $base-box-shadow;
-    border-radius: 4px;
-    background-color: $base-background;
-    padding: 22px;
-    margin: 0 30px 30px;
-    text-align: center;
-    font-size: 12px;
-    letter-spacing: 0.2px;
-    margin-left: 150px;
-    display: flex;
-    justify-content: center;
-
-    a {
-      padding: 0px 10px;
-      display: inline;
-      text-decoration: none;
-      color: $base-black;
-    }
-  }
 }
