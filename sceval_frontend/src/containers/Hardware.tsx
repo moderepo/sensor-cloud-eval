@@ -218,6 +218,10 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
         setDeletionMode(true);
         const status = await modeAPI.deleteDevice(deviceId);
         if (status === 204) {
+          const updatedLinkedModules = linkedModules.filter((sensorModule: any): boolean => {
+            return sensorModule.device.id !== deviceId;
+          });
+          setlinkedModules(updatedLinkedModules);
           setDeviceDeleted(true);
           setDeviceDeleteError(false);
         } else {
