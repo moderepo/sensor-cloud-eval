@@ -6,7 +6,7 @@ import { Context, context } from '../context/Context';
 import { KeyValueStore, ErrorResponse, TimeSeriesData, TimeSeriesInfo } from '../components/entities/API';
 import modeAPI from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
-import moment from 'moment';
+import moment, { Moment } from 'moment';
 import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
 import ModeConnection  from '../controllers/ModeConnection';
 import { determineUnit, evaluateModel } from '../utils/SensorTypes';
@@ -45,7 +45,12 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     // default 15 unit time horizon
     const [graphTimespanNumeric, setGraphTimespanNumeric] = useState<any>(15);
     // default minute time horizon
-    const [graphTimespan, setGraphTimespan] = useState<string>('minutes');
+    const [graphTimespan, setGraphTimespan] = useState<any>('minutes');
+    // current stop time (end time of data)
+    const [currentStop, setCurrentStop] = useState<Moment>(moment(new Date()));
+    // current start time (start time of data)
+    const [currentStart, setCurrentStart] = 
+    useState<Moment>(moment(new Date()).subtract(graphTimespanNumeric, graphTimespan));
     // full sensor list associated to sensor module
     const [fullSensorList, setFullSensorList] = useState();
     // list of sensors offline
@@ -67,16 +72,23 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     // time-series data fetch handler method
     const performTSDBFetch =  
     (homeID: number, sensors: any, 
-     sType: string, seriesID: string, unit: string, wsData: any ) => {
+     sType: string, seriesID: string, 
+     unit: string, wsData: any, stop?: Moment, start?: Moment,
+     direction?: string
+     ) => {
         // set now as reference point
         const now = new Date();
-        const endTime = moment(now);
+        let endTime = moment(now);
         // determine start time
-        const startTime = moment(now).subtract(
+        let startTime = moment(now).subtract(
             graphTimespanNumeric === '' ?
                 1 : graphTimespanNumeric, 
             graphTimespan === 'real-time' ?
                 'minute' : graphTimespan);
+        if (stop && start) {
+            endTime = stop;
+            startTime = start;
+        }
         // get time-series data for the provided time-range and series type
         modeAPI.getTSDBData(homeID, seriesID, startTime.toISOString(), endTime.toISOString())
         .then((timeseriesData: TimeSeriesData) => {
@@ -139,6 +151,25 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 });
             }
         });
+    };
+
+    const toggleTimeSeriesState = (direction: string) => {
+        let sensors: Array<any> = [];
+        if (sensorTypes) {
+            sensorTypes.forEach((sensor: any) =>  {
+                const now =  moment(new Date());
+                const stopDifference = now.diff(currentStop.toISOString(), graphTimespan);
+                const newStart = currentStart.subtract(graphTimespanNumeric, graphTimespan);
+                const newStop = currentStop.subtract(graphTimespan, graphTimespanNumeric);
+                if (direction === 'forward') {
+                    performTSDBFetch(homeId, sensors, sensor.type, sensor.seriesID, sensor.unit, sensorTypes);
+                } else {
+                    performTSDBFetch(
+                        homeId, sensors, sensor.type, sensor.seriesID, 
+                        sensor.unit, sensorTypes, newStop, newStart);
+                }
+            });
+        }
     };
 
     /**
@@ -224,7 +255,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                     const sType = format.split(':')[0];
                                     const unit = determineUnit(sType);
                                     if (unit !== undefined) {
-                                        performTSDBFetch(homeId, sensors, sType, sensor.id, unit, onlineTSDBData);
+                                        console.log('invoked.');
+                                        performTSDBFetch(
+                                            homeId, sensors, sType, sensor.id, unit, 
+                                            onlineTSDBData);
                                     }
                                 });
                             }
@@ -402,7 +436,14 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         setModuleSettingsVisible(!moduleSettingsVisible);
     };
     // handler for toggling the graph timespan dropdown
-    const toggleGraphTimespan = (quantity: number, timespan: string): void => {
+    const toggleGraphTimespan = (quantity: any, timespan: string): void => {
+        const start = moment(new Date());
+        let stop: any;
+        if (timespan === 'real-time') {
+            stop = start.subtract(1, 'minute');
+        } else {
+            stop = start.subtract(quantity, timespan);
+        }
         let sensorSet: any = [];
         // set TSDB data flag to false
         setTSDBDataFetched(false);
@@ -419,7 +460,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 sensorTypes.forEach((sensor: any, index: any) => {
                     performTSDBFetch(
                     homeID, sensorSet, sensor.type, sensor.seriesID,
-                    sensorTypes[index].unit, sensorTypes);
+                    sensorTypes[index].unit, sensorTypes, stop, start);
                 });
             }
         });
@@ -705,12 +746,26 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                     // if TSDB data for particular sensor exists:
                                     <Fragment>
                                         <div className="graph-container">
-                                            <AmChart
-                                                TSDB={sensorTypes[index]}
-                                                identifier={sensorTypes[index].type}
-                                                timespanNumeric={graphTimespanNumeric}
-                                                timespan={graphTimespan}
-                                            />
+                                            <div>
+                                                <AmChart
+                                                    TSDB={sensorTypes[index]}
+                                                    identifier={sensorTypes[index].type}
+                                                    timespanNumeric={graphTimespanNumeric}
+                                                    timespan={graphTimespan}
+                                                />
+                                                <div className="back-arrow">
+                                                    <button
+                                                        onClick={() => toggleTimeSeriesState('back')}
+                                                    >Back
+                                                    </button>
+                                                </div>
+                                                <div className="forward-arrow">
+                                                    <button
+                                                        onClick={() => toggleTimeSeriesState('forward')}
+                                                    >Forward
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div> 
                                     </Fragment>
                                     :

@@ -146,11 +146,25 @@
       padding-bottom: 20px;
       box-sizing: border-box;
       margin: 20px;
+      .back-arrow, .forward-arrow {
+        position: absolute;
+      }
+
+      .back-arrow {
+        top: 15vh;
+        left: 7vw;
+      }
+
+      .forward-arrow {
+        right: 1vw;
+        top: 15vh;
+      }
       .sensor-data-loader {
         text-align: center;
       }
     }
     .sensor-container {
+      position: relative;
       box-shadow: $base-box-shadow;
       margin: 20px;
       padding: 20px;
@@ -160,6 +174,7 @@
       display: flex;
       .unit-rt-container,
       .graph-container {
+        position: relative;
         width: 175px;
         background-color: $base-background;
         border: solid 1px $border-grey;
