@@ -199,3 +199,24 @@
     }
   }
 }
+
+.ant-dropdown-link {
+  font-weight: 700;
+  width: 120px;
+  border: 2px solid $base-black;
+  border-radius: 4px;
+  color: $base-black;
+  padding: 9.5px 10px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.menu-setting-item {
+  text-decoration: none!important;
+}
+
+.menu-setting-item:hover{
+  background-color: lighten($base-turquoise, 20%)!important;
+  color: $base-black;
+}

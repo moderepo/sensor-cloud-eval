@@ -17,6 +17,7 @@ import  { Input, Button } from 'antd';
 
 const connect = require('../common_images/devices/1-plug.svg');
 const claimMode = require('../common_images/devices/device_logo.png');
+const code = require('../common_images/devices/qr.jpg');
 
 const createData = (
     id: number,  name: string, classId: string, tag: string, status: boolean) => {
@@ -80,7 +81,7 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
                     Devices
                 </Typography>
                 <button
-                    className="add-gateway"
+                    className={!claimCodeDDVisible ? 'add-gateway' : 'add-gateway disabled'}
                     disabled={claimCodeDDVisible}
                     onClick={() => renderClaimCodeDropdown()}
                 >
@@ -140,7 +141,7 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
             </div>
             <div>
             <span className="circled-number">3</span>
-            <img className="direction-image" src={claimMode} />
+            <img className="direction-qr" src={code} />
             <p>Enter the claim code found on your device and click 'Add' to add the device.</p>
             </div>
         </div>
@@ -171,9 +172,12 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
               <TableCell align="right">{row.tag}</TableCell>
               <TableCell 
                 align="right" 
-                className={row.status ? 'connected' : 'disconnected'}
               >
-              {row.status ? 'Connected' : 'Disconnected'}
+                <div
+                    className={row.status ? 'connected' : 'disconnected'}
+                >
+                {row.status ? 'Connected' : 'Disconnected'}
+                </div>
               </TableCell>
             </TableRow>
           ))}

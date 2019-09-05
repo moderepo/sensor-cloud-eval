@@ -4,10 +4,21 @@ $section-background: #dadce3;
 $base-black: #353d45;
 $base-turquoise: #7fcbcf;
 $base-warning: red;
+$base-success: green;
 $disabled-button: #bbbbbb;
 $base-box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.1);
 $hover-box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.4);
 $border-grey: #d8d8d8;
+$saveRadius: 50px;
+$saveMargin: auto;
+$saveMarginTop: 20px;
+$savePadding: 0px 15px;
+$saveWidth: fit-content;
+$saveTransition: opacity .5s ease-out; // apply to webkit, moz, o
+$saveVisibility: visible;
+$saveTransition: visibility 0s 2s, opacity 2s;
+$saveDuration: 3s; // apply to webkit and animation
+$saveFillMode: forwards;
 
 // application font
 $font-family: "ProximaNova", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -25,6 +36,7 @@ $font-family: "ProximaNova", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .circled-number {
+  background-color: lighten($base-turquoise, 20%);
   float: left;
   width: 42px;
   height: 42px;
@@ -36,4 +48,50 @@ $font-family: "ProximaNova", "Helvetica Neue", Helvetica, Arial, sans-serif;
   border-radius: 30px;
   font-size: 24px;
   font-weight: 600;
+}
+
+$animationName: fade-out; // apply to webkit and animation
+
+// fade out (just include variables.scss to leverage)
+ @keyframes fade-out {
+    0% {opacity: 1;}
+    100% {opacity: 0;}
+ }
+.save-animation, .warning-animation {
+  text-align: center;
+  border-radius: $saveRadius;
+  margin: $saveMargin;
+  margin-top: $saveMarginTop;
+  padding: $savePadding;
+  width: $saveWidth;
+  transition: $saveTransition;
+  visibility: $saveVisibility;
+  transition: $saveTransition;
+  animation-fill-mode: $saveFillMode;
+}
+
+.save-animation {
+  background-color: $base-success;
+  color: $base-background;
+  border: $base-success;
+  animation-duration: 5s;
+}
+
+.warning-animation {
+  background-color: $base-warning;
+  border: $base-warning;
+  animation-duration:  5s;
+  color: $base-background;
+}
+
+.fade-out {
+  animation-name: $animationName;
+}
+
+@mixin drop-shadow-alpha2($length, $alpha) {
+  box-shadow: 0px $length ($length * 2) 0 rgba(0, 0, 0, $alpha);
+}
+
+@mixin standard-drop-shadow() {
+  @include drop-shadow-alpha2(2px, 0.2);
 }

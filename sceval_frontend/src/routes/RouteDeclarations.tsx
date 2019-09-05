@@ -105,6 +105,7 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
           path="/devices"
           component={() => (
             <>
+              <LeftNav isLoggedIn={this.props.isLoggedIn}/>
               <Hardware
                 isLoggedIn={this.props.isLoggedIn}
                 onLogIn={this.props.onLogin}
@@ -120,6 +121,7 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
           path="/my_account"
           component={() => (
             <>
+              <LeftNav isLoggedIn={this.props.isLoggedIn}/>
               <MyAccount
                 isLoggedIn={this.props.isLoggedIn}
                 onLogIn={this.props.onLogin}
@@ -135,7 +137,7 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
           path="/sensor_modules/:deviceId/:sensorModuleId"
           component={() => (
             <>
-              <LeftNav />
+              <LeftNav isLoggedIn={this.props.isLoggedIn}/>
               <SensorModule
                 isLoggedIn={this.props.isLoggedIn}
               />
@@ -150,6 +152,7 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
           path="/devices/:deviceId/add_sensor_modules"
           component={() => (
             <>
+              <LeftNav isLoggedIn={this.props.isLoggedIn}/>
               <AddSensorModule
                 isLoggedIn={this.props.isLoggedIn}
                 onLogIn={this.props.onLogin}

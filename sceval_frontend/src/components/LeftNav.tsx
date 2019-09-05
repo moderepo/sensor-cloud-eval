@@ -1,11 +1,19 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Redirect, RouteComponentProps } from 'react-router-dom';
 // import required images
 const modeLogo = require('../common_images/mode-logo.svg');
 const hardware = require('../common_images/navigation/nav-gateway.svg');
 const profile = require('../common_images/navigation/default-avatar.svg');
 
-export const LeftNav: React.FC = () => {
+interface LeftNavProps {
+  isLoggedIn: boolean;
+}
+
+export const LeftNav: React.FC<LeftNavProps & React.Props<any>> = (props: LeftNavProps & React.Props<any>) => {
+  if (!props.isLoggedIn) {
+    return <Redirect to="/login" />;
+  }
+
   return (
     <div className="navigation-bar">
       <div className="sidebar-head">
