@@ -19,19 +19,20 @@ const MyAccount = withRouter(
     const [passwordNew, setPasswordNew] = useState<string>('');
     const [passwordConfirm, setPasswordConfirm] = useState<string>('');
     const [formValid, setFormValid] = useState<boolean>(false);
-    const [updated, setUpdated] = useState<string>('');
+    const [updated, setUpdated] = useState<boolean>(false);
     const [updateError, setUpdateError] = useState<boolean>(false);
+
     const appContext: Context = useContext(context);
-    
+
     // get user information on component mount
     useEffect(() => {
       const userInfo = appContext.state.userData;
       if (username !== '') {
         setUsername(username);
-      } else  {
-          if  (userInfo) {
-            setUsername(userInfo.user.name);
-          }
+      } else {
+        if (userInfo) {
+          setUsername(userInfo.user.name);
+        }
       }
     },        [isEditing]);
     // logout method on click of "Logout button"
@@ -50,6 +51,8 @@ const MyAccount = withRouter(
     // toggle editing vs. non-editing mode handler
     const editUserInfo = (): void => {
       setisEditing(!isEditing);
+      setUpdateError(false);
+      setUpdated(false);
     };
     // updating changes made to user information on submit handler
     const saveChanges = async (event: React.FormEvent) => {
@@ -60,7 +63,7 @@ const MyAccount = withRouter(
         if (status === 204) {
           appContext.actions.setUsername(username);
           setUsername(username);
-          setUpdated('username');
+          setUpdated(true);
           setisEditing(false);
         } else {
           setUpdateError(true);
@@ -71,13 +74,16 @@ const MyAccount = withRouter(
           passwordNew
         );
         if (status === 204) {
-          setUpdated('both');
           setUsername(username);
+          setUpdated(true);
           setisEditing(false);
         } else {
           setUpdateError(true);
         }
       }
+      setTimeout(() => {
+        setUpdated(false);
+      },         2000);
     };
     // handler for text change for name or password
     const handleInputChange = (event: React.FormEvent<HTMLElement>): void => {
@@ -132,18 +138,6 @@ const MyAccount = withRouter(
         <div className="account-section">
           <div className="page-header">
             <h1>My Account</h1>
-              <div className={updateError ? 'warning' : 'success'}>
-              {
-                updated !== '' && !isEditing ?
-                updated === 'username' ? 
-                  'username successfully updated.' : 
-                  username === userData.value.user.name ?
-                  'password successfully updated.' :
-                  'username and password successfully updated.' :
-                  updateError &&
-                  'There was an error updating your information.'
-              }
-              </div>
           </div>
           <div className="info-container">
             <div
@@ -172,6 +166,20 @@ const MyAccount = withRouter(
                   </Fragment>
                 )}
               </h3>
+              <div
+                className={
+                  updateError
+                    ? 'warning-animation fade-out'
+                    : updated
+                    ? 'save-animation fade-out'
+                    : ''
+                }
+              >
+                {updated && !isEditing
+                  ? 'Successfully updated.'
+                  : updateError &&
+                    'There was an error updating your information.'}
+              </div>
               <img src={name} />
               <h4>Name:</h4>
               {!isEditing ? (
