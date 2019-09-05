@@ -1,6 +1,6 @@
-import React, { Fragment, useState, useEffect } from 'react';
-import LeftNav from '../components/LeftNav';
+import React, { Fragment, useState, useEffect, useContext } from 'react';
 import { AppContext } from '../controllers/AppContext';
+import { Context, context } from '../context/Context';
 import { Redirect, withRouter, RouteComponentProps } from 'react-router';
 // required images imported
 const email = require('../common_images/acct_email.svg');
@@ -19,11 +19,20 @@ const MyAccount = withRouter(
     const [passwordNew, setPasswordNew] = useState<string>('');
     const [passwordConfirm, setPasswordConfirm] = useState<string>('');
     const [formValid, setFormValid] = useState<boolean>(false);
+    const [updated, setUpdated] = useState<string>('');
+    const [updateError, setUpdateError] = useState<boolean>(false);
+    const appContext: Context = useContext(context);
+    
     // get user information on component mount
     useEffect(() => {
-      const user = JSON.parse(`${localStorage.getItem('user-login')}`).value
-        .user;
-      setUsername(user.name);
+      const userInfo = appContext.state.userData;
+      if (username !== '') {
+        setUsername(username);
+      } else  {
+          if  (userInfo) {
+            setUsername(userInfo.user.name);
+          }
+      }
     },        [isEditing]);
     // logout method on click of "Logout button"
     const logout = async () => {
@@ -49,12 +58,24 @@ const MyAccount = withRouter(
       if (passwordNew === '') {
         const status: number = await AppContext.changeUserName(username);
         if (status === 204) {
+          appContext.actions.setUsername(username);
+          setUsername(username);
+          setUpdated('username');
           setisEditing(false);
+        } else {
+          setUpdateError(true);
         }
       } else {
-        const status: number = await AppContext.UpdateUserInfo(username, passwordNew);
+        const status: number = await AppContext.UpdateUserInfo(
+          username,
+          passwordNew
+        );
         if (status === 204) {
+          setUpdated('both');
+          setUsername(username);
           setisEditing(false);
+        } else {
+          setUpdateError(true);
         }
       }
     };
@@ -76,20 +97,28 @@ const MyAccount = withRouter(
           break;
       }
       // if the username is new and not blank:
-      if (target.name === 'name' && target.value !== '' && target.value !== 
-        JSON.parse(`${localStorage.getItem('user-login')}`).value.user.name) {
+      const userName = JSON.parse(`${localStorage.getItem('user-login')}`).value
+        .user.name;
+      if (
+        target.name === 'name' &&
+        target.value !== '' &&
+        target.value !== userName
+      ) {
         setFormValid(true);
-      } else { // otherewise set form to false
+      } else {
+        // otherewise set form to false
         setFormValid(false);
       }
-      if ((target.name === 'passwordNew' || target.name ===  'passwordConfirm') &&
-          passwordConfirm === passwordNew &&
-        passwordConfirm !== '' && passwordNew !== '') {
-          setFormValid(true);
-        }  else if (target.value === '' || target.value === 
-        JSON.parse(`${localStorage.getItem('user-login')}`).value.user.name)  {
-          setFormValid(false);
-        }
+      if (
+        (target.name === 'passwordNew' || target.name === 'passwordConfirm') &&
+        passwordConfirm === passwordNew &&
+        passwordConfirm !== '' &&
+        passwordNew !== ''
+      ) {
+        setFormValid(true);
+      } else if (target.value === '' || target.value === userName) {
+        setFormValid(false);
+      }
     };
     // if the user isn't logged in, redirect them to login
     if (!props.isLoggedIn) {
@@ -103,6 +132,18 @@ const MyAccount = withRouter(
         <div className="account-section">
           <div className="page-header">
             <h1>My Account</h1>
+              <div className={updateError ? 'warning' : 'success'}>
+              {
+                updated !== '' && !isEditing ?
+                updated === 'username' ? 
+                  'username successfully updated.' : 
+                  username === userData.value.user.name ?
+                  'password successfully updated.' :
+                  'username and password successfully updated.' :
+                  updateError &&
+                  'There was an error updating your information.'
+              }
+              </div>
           </div>
           <div className="info-container">
             <div
