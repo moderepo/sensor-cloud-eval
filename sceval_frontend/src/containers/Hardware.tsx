@@ -1,7 +1,7 @@
 import React, { Fragment, useState, useEffect, useContext } from 'react';
 import { Redirect, RouteComponentProps, withRouter } from 'react-router';
 import { LeftNav } from '../components/LeftNav';
-import modeAPI, { ModeConstants } from '../controllers/ModeAPI';
+import modeAPI, { ModeConstants, ModeAPI } from '../controllers/ModeAPI';
 import { KeyValueStore, Device, Home } from '../components/entities/API';
 import { LoginInfo } from '../components/entities/User';
 import AppContext from '../controllers/AppContext';
@@ -9,8 +9,8 @@ import {
   SensorModuleSet,
   SensorModuleInterface
 } from '../components/entities/SensorModule';
-import { evaluateSensorTypes, evaluateModel } from '../utils/SensorTypes';
-import { Modal } from 'antd';
+import { evaluateModel } from '../utils/SensorTypes';
+import { Modal, Menu, Dropdown } from 'antd';
 import { Context, context } from '../context/Context';
 import ModeConnection from '../controllers/ModeConnection';
 import { Constants } from '../utils/Constants';
@@ -20,7 +20,6 @@ import SensorModuleComp from '../components/SensorModuleComp';
 const { confirm } = Modal;
 // required images imported
 const loader = require('../common_images/notifications/loading_ring.svg');
-const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const deviceImage = require('../common_images/devices/gateway.svg');
 const deviceLocation = require('../common_images/devices/location-pin.svg');
 
@@ -38,6 +37,9 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
   const [displayGatewayOptions, setdisplayGatewayOptions] = useState<
     Array<number>
   >([]);
+  const [deletionMode, setDeletionMode] = useState<boolean>(false);
+  const [deviceDeleted, setDeviceDeleted] = useState<boolean>(false);
+  const [deviceDeleteError, setDeviceDeleteError] = useState<boolean>(false);
   const [editingGateways, setEditingGateways] = useState<Array<number>>([]);
   const sensorContext: Context = useContext(context);
   // if the user isn't logged in, protect the route and redirect to /login
@@ -166,7 +168,11 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
   },        [linkedModules]);
 
   // handler for redirecting the user to a particular sensor module view on sensor module click
-  const goToSensorModule = (event: any, deviceId: number, moduleId: string): void => {
+  const goToSensorModule = (
+    event: any,
+    deviceId: number,
+    moduleId: string
+  ): void => {
     props.history.push(`/sensor_modules/${deviceId}/${moduleId}`);
   };
   // handler method for unlinking a sensor module from a gateway
@@ -198,8 +204,43 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
       console.log(error);
     }
   };
+
+  // render delete device modal handler function for clicking on the 'Delete Device' setting for a gateway
+  const renderDeleteDeviceModal = (
+    deviceId: number,
+  ): void => {
+    confirm({
+      title: `Are you sure you want to delete device #${deviceId}?`,
+      content:
+        'Please note that your device must be configured to allow On-Demand Device Provisioning \
+        in order to sucessfully remove the device from your home.',
+      onOk: async () => {
+        setDeletionMode(true);
+        const status = await modeAPI.deleteDevice(deviceId);
+        if (status === 204) {
+          const updatedLinkedModules = linkedModules.filter((sensorModule: any): boolean => {
+            return sensorModule.device.id !== deviceId;
+          });
+          setlinkedModules(updatedLinkedModules);
+          setDeviceDeleted(true);
+          setDeviceDeleteError(false);
+        } else {
+          setDeviceDeleted(false);
+          setDeviceDeleteError(true);
+        }
+        // show message for 3 seconds
+        setTimeout(
+          () => {
+            setDeletionMode(false);
+          },
+          3000
+        );
+      }
+    });
+  };
+
   // render delete modal handler function for clicking on a particular module while in delete-mode
-  const renderDeleteModal = (
+  const renderDeleteModuleModal = (
     event: any,
     moduleID: string,
     deviceId: number,
@@ -274,7 +315,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                   onClick={
                     (event: React.MouseEvent<HTMLElement>): void => {
                       if (isEditingDevice) {
-                        renderDeleteModal(event, sensor.key, deviceId, deviceIndex);
+                        renderDeleteModuleModal(event, sensor.key, deviceId, deviceIndex);
                       } else {
                         goToSensorModule(event, deviceId, sensor.value.id);
                       }
@@ -301,6 +342,44 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     }
   };
 
+  const renderDropDownSetting = (deviceId: number): React.ReactNode => {
+    const menu = (
+      <Menu>
+        <Menu.Item>
+          <a
+            className="menu-setting-item" 
+            href="#" 
+            onClick={() => toggleEditGateway(deviceId)}
+          >
+            Unlink Sensor Modules
+          </a>
+        </Menu.Item>
+        <Menu.Item>
+          <a 
+            className="menu-setting-item" 
+            href="#" 
+            onClick={() => {
+              renderDeleteDeviceModal(deviceId);
+              setDeviceDeleteError(false);
+            }}
+          >
+            Delete Device
+          </a>
+        </Menu.Item>
+      </Menu>
+    );
+    return (
+      <Dropdown overlay={menu} trigger={['hover']}>
+        <a
+          onClick={() => showGatewayOptions(deviceId)}
+          className="ant-dropdown-link"
+          href="#"
+        >...
+        </a>
+      </Dropdown>
+    );
+  };
+
   /**
    * Render the device's header, the device icon, name, ID, and the option to add/remove modules
    */
@@ -312,6 +391,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     const isEditingDevice: boolean = editingGateways.includes(deviceId);
 
     return (
+      
       <div className="gateway-header">
         <div className="gateway-info">
           <img src={deviceImage} />
@@ -332,12 +412,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                 >
                   + Add Sensor Modules
                 </button>
-                <button
-                  className="action-button settings"
-                  onClick={() => showGatewayOptions(deviceId)}
-                >
-                  ...
-                </button>
+                {renderDropDownSetting(deviceId)}
               </>
             ) : (
               // if it is being edited, show done button
@@ -351,14 +426,6 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
               </>
             )}
           </Fragment>
-          {displayGatewayOptions.includes(deviceId) && (
-            // if this gateway is being edited, show drop down
-            <ul className="sce-dropdown-menu">
-              <a href="#" onClick={() => toggleEditGateway(deviceId)}>
-                Unlink Sensor Modules
-              </a>
-            </ul>
-          )}
         </div>
       </div>
     );
@@ -436,7 +503,6 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
    */
   return (
     <div>
-      <LeftNav />
       <div className="hardware-section">
         <div className="page-header">
           {selectedDevice === 0 ? (
@@ -445,21 +511,28 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
             <h1>Add Sensor Modules</h1>
           )}
         </div>
+        {
+          deletionMode &&
+          <div className={deviceDeleteError ? 'warning-animation fade-out' : 'save-animation fade-out'}>
+            {deviceDeleteError ? 'Failed to delete device.' : 'Successfully deleted device.'}
+          </div>
+        }
         <div className="gateways-section">
           {linkedModules !== undefined && linkedModules.length > 0 ? (
             renderDevices()
+          ) : // If linkedModules is empty AND we are not loading data, this mean the home
+          // does not have any device
+          !isLoading ? (
+            <div className="gateway-row no-device">
+              You don't have any device. Please use the
+              <a href="https://console.tinkermode.com" target="blank">
+                {' '}
+                Mode Console{' '}
+              </a>
+              to create and add devices to your home.
+            </div>
           ) : (
-            // If linkedModules is empty AND we are not loading data, this mean the home
-            // does not have any device
-            !isLoading ? (
-              <div className="gateway-row no-device">
-                You don't have any device. Please use the
-                <a href="https://console.tinkermode.com" target="blank"> Mode Console </a>
-                to create and add devices to your home.
-              </div>
-            ) : (
-              <img src={loader} />
-            )
+            <img src={loader} />
           )}
         </div>
       </div>

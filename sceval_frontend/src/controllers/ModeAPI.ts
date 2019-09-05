@@ -305,6 +305,23 @@ export class ModeAPI {
   }
 
   /**
+   * Delete device with a specified device Id
+   * @param deviceId 
+   */
+  public async deleteDevice(deviceId: number): Promise<number> {
+    try {
+      const response: AxiosResponse<any> = await this.request(
+        'DELETE',
+        `devices/${deviceId}`,
+        {}
+      );
+      return response.status;
+    } catch (error) {
+      throw this.getErrorResponse(error);
+    }
+  }
+
+  /**
    * Get all the devices info that belonged to the specified homeId
    * @param homeId 
    */

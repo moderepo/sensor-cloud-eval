@@ -238,7 +238,6 @@ export class AddSensorModule extends Component<
   render() {
     return (
       <Fragment>
-        <LeftNav />
         <div className="scan-container">
           <div className="page-header">Add Sensor Modules</div>
           <div className="scan-section">
