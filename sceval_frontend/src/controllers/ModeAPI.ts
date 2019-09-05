@@ -199,7 +199,7 @@ export class ModeAPI {
       );
       return response.status;
     } catch (error) {
-      return error.status;
+      throw this.getErrorResponse(error);
     }
   }
 

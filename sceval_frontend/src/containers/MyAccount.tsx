@@ -21,6 +21,7 @@ const MyAccount = withRouter(
     const [formValid, setFormValid] = useState<boolean>(false);
     const [updated, setUpdated] = useState<boolean>(false);
     const [updateError, setUpdateError] = useState<boolean>(false);
+    const [errorMessage, setErrorMessage] = useState<string>('');
 
     const appContext: Context = useContext(context);
 
@@ -52,38 +53,42 @@ const MyAccount = withRouter(
     const editUserInfo = (): void => {
       setisEditing(!isEditing);
       setUpdateError(false);
+      setErrorMessage('');
       setUpdated(false);
     };
     // updating changes made to user information on submit handler
     const saveChanges = async (event: React.FormEvent) => {
-      event.preventDefault();
-      AppContext.restoreLogin();
-      if (passwordNew === '') {
-        const status: number = await AppContext.changeUserName(username);
-        if (status === 204) {
-          appContext.actions.setUsername(username);
-          setUsername(username);
-          setUpdated(true);
-          setisEditing(false);
+      try {
+        event.preventDefault();
+        AppContext.restoreLogin();
+        if (passwordNew === '') {
+          const status: number = await AppContext.changeUserName(username);
+          if (status === 204) {
+            appContext.actions.setUsername(username);
+            setUsername(username);
+            setUpdated(true);
+            setisEditing(false);
+          }
         } else {
-          setUpdateError(true);
+          const status: number = await AppContext.UpdateUserInfo(
+            username,
+            passwordNew
+          );
+          if (status === 204) {
+            setUsername(username);
+            setUpdated(true);
+            setisEditing(false);
+          }
         }
-      } else {
-        const status: number = await AppContext.UpdateUserInfo(
-          username,
-          passwordNew
-        );
-        if (status === 204) {
-          setUsername(username);
-          setUpdated(true);
-          setisEditing(false);
-        } else {
-          setUpdateError(true);
+        setTimeout(() => {
+          setUpdated(false);
+        },         2000);
+      } catch (error) {
+        if (error.message === 'PASSWORD_TOO_SHORT') {
+          setErrorMessage('Password is too short.');
         }
+        setUpdateError(true);
       }
-      setTimeout(() => {
-        setUpdated(false);
-      },         2000);
     };
     // handler for text change for name or password
     const handleInputChange = (event: React.FormEvent<HTMLElement>): void => {
@@ -177,8 +182,10 @@ const MyAccount = withRouter(
               >
                 {updated && !isEditing
                   ? 'Successfully updated.'
-                  : updateError &&
-                    'There was an error updating your information.'}
+                  : updateError ?
+                  errorMessage !== '' ? errorMessage : 
+                  'There was an error updating your information.' : ''
+                }
               </div>
               <img src={name} />
               <h4>Name:</h4>
