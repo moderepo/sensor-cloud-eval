@@ -1,10 +1,27 @@
 @import 'variables.scss';
 
+.back-to-hardware {
+    position: absolute;
+    background-color: $base-black;
+    color: $base-background;
+    font-family: $font-family;
+    margin: 10vh 0 0 3vw;
+    font-size: 14px !important;
+    font-weight: 500;
+    padding: 5px 15px 6px;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    border-radius: 4px;
+}
+.back-to-hardware:hover {
+    color: $base-background;
+    text-decoration: none;
+}
 .directions {
-    border-bottom: 2px solid $base-turquoise;
     box-shadow: $base-box-shadow;
     border-radius: 4px;
-    padding: 20px 50px 10px 50px;
+    padding: 20px 50px 2px 50px;
     margin: 5vh 10vw;
     display: grid;
     grid-template-columns: repeat('auto-fit', minmax(200px, 200px));
@@ -25,6 +42,7 @@
 }
 .device-table {
     margin: 20px 50px;
+    box-shadow: $base-box-shadow!important;
     .table-header {
         width: 100%;
         #tableTitle {

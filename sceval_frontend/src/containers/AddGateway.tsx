@@ -1,5 +1,5 @@
 import React, { Component, Fragment, useState, useContext, useEffect } from 'react';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withRouter, RouteComponentProps, NavLink } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -122,6 +122,11 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
 
     return (
         <>
+        <NavLink 
+            to="/devices"
+            className="back-to-hardware"
+        >Back
+        </NavLink>
         <div className="directions">
             <div>
             <span className="circled-number">1</span>
