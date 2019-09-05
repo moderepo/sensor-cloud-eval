@@ -1,191 +1,106 @@
-import React, { Component, Fragment, useState, useContext, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { withRouter, RouteComponentProps, NavLink } from 'react-router-dom';
-import { makeStyles } from '@material-ui/core/styles';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import Paper from '@material-ui/core/Paper';
-import { Context, context } from '../context/Context';
-import modeAPI from '../controllers/ModeAPI';
+import { Input, Button } from 'antd';
 import { LoginInfo } from '../components/entities/User';
 import AppContext from '../controllers/AppContext';
-import { Home, Device } from '../components/entities/API';
-import { Toolbar, Typography } from '@material-ui/core';
-import  { Input, Button } from 'antd';
+import { Home } from '../components/entities/API';
+import modeAPI from '../controllers/ModeAPI';
 
 const connect = require('../common_images/devices/1-plug.svg');
-const claimMode = require('../common_images/devices/device_logo.png');
-const code = require('../common_images/devices/qr.jpg');
-
-const createData = (
-    id: number,  name: string, classId: string, tag: string, status: boolean) => {
-    return { id, name, classId, tag, status };
-};
+const gw = require('../common_images/devices/gateway-large.svg');
+const numbers = require('../common_images/devices/numbers.svg');
 
 const AddGateway = withRouter((props: RouteComponentProps) => {
-    const sensorContext: Context = useContext(context);
-    const [home, setHome] = useState<number>();
-    const [pairedDevices, setPairedDevices] = useState<Array<any>>();
-    const [claimCodeDDVisible, setClaimCodeDDVisible] = useState<boolean>(false);
-    const [claimCode, setClaimCode] = useState<string>();
-    const [addDeviceError, setAddDeviceError] = useState<boolean>(false);
-    const [rows, setRows] = useState();
-    const initialize = async () => {
-        const loginInfo: LoginInfo =  await AppContext.restoreLogin();
-        // get home associated with project
-        const homeObj: Home = await modeAPI.getHome(loginInfo.user.id);
-        setHome(homeObj.id);
-        const devices: Array<Device> = await modeAPI.getDevices(homeObj.id);
-        setPairedDevices(devices);
-        let rowData: any = [];
-        devices.forEach((device: Device, index: any) => {
-            const newData = createData(
-                device.id, device.name ? device.name : '', 
-                device.deviceClass, device.tag, device.isConnected);
-            rowData.push(newData);
-            if (index === devices.length - 1) {
-                setRows(rowData);
-            }
-        });
-    };
+  const [home, setHome] = useState<number>();
+  const [claimCode, setClaimCode] = useState<string>();
+  const [addDeviceError, setAddDeviceError] = useState<boolean>(false);
 
-    const submitClaimCode = async () => {
-        if (home && claimCode) {
-            const status = await modeAPI.addDevice(home, claimCode);
-            if (status === 201) {
-                initialize();
-                setClaimCodeDDVisible(false);
-                setClaimCode('');
-            } else {
-                setAddDeviceError(true);
-            }
-        }
-    };
+  const initialize = async () => {
+    const loginInfo: LoginInfo = await AppContext.restoreLogin();
+    // get home associated with project
+    const homeObj: Home = await modeAPI.getHome(loginInfo.user.id);
+    setHome(homeObj.id);
+  };
 
-    const renderClaimCodeDropdown = () => {
-        setClaimCodeDDVisible(true);
-    };
+  useEffect(() => {
+    initialize();
+  },        []);
 
-    const handleClaimCodeEntry = (event: React.ChangeEvent<HTMLInputElement>) => {
-        event.preventDefault();
-        setClaimCode(event.target.value);
-    };
+  const submitClaimCode = async () => {
+    if (home && claimCode) {
+      const status = await modeAPI.addDevice(home, claimCode);
+      if (status === 201) {
+        setAddDeviceError(false);
+        setClaimCode('');
+        props.history.push('/devices');
+      } else {
+        setAddDeviceError(true);
+        setTimeout(() => {
+          setAddDeviceError(false);
+        },         2000);
+      }
+    }
+  };
 
-    const EnhancedTableToolbar = () => {      
-        return (
-          <Toolbar>
-            <div className="table-header">
-                <Typography variant="h6" id="tableTitle">
-                    Devices
-                </Typography>
-                <button
-                    className={!claimCodeDDVisible ? 'add-gateway' : 'add-gateway disabled'}
-                    disabled={claimCodeDDVisible}
-                    onClick={() => renderClaimCodeDropdown()}
-                >
-                New
-                </button>
-                {
-                    claimCodeDDVisible &&
-                    <div className="claim-code-section">
-                        <Input 
-                            className="claim-code-entry"
-                            placeholder="Claim code"
-                            value={claimCode}
-                            onChange={handleClaimCodeEntry}
-                        />
-                        <Button
-                            className="add-button"
-                            onClick={() => submitClaimCode()}
-                            disabled={claimCode === ''}
-                        >Add
-                        </Button>
-                        <Button
-                            className="cancel-button"
-                            onClick={() => setClaimCodeDDVisible(false)}
-                        >Cancel
-                        </Button>
-                    </div>
-                }
-            </div>
-          </Toolbar>
-        );
-      };
+  const handleClaimCodeEntry = (event: React.ChangeEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    setClaimCode(event.target.value);
+  };
 
-    useEffect(
-        () => {
-            initialize();
-        },
-        []
-    );
-
-    return (
-        <>
-        <NavLink 
-            to="/devices"
-            className="back-to-hardware"
-        >Back
-        </NavLink>
-        <div className="directions">
-            <div>
+  return (
+    <div className="add-gateway-section">
+      <div className="directions">
+        <div className="direction-set">
+          <div className="number-text">
             <span className="circled-number">1</span>
-            <img className="direction-image" src={connect} />
             <p>Make sure your device is connected to power and wifi.</p>
-            </div>
-            <div>
-            <span className="circled-number">2</span>
-            <img className="direction-image" src={claimMode} />
-            <p>Turn your device into claim mode.</p>
-            </div>
-            <div>
-            <span className="circled-number">3</span>
-            <img className="direction-qr" src={code} />
-            <p>Enter the claim code found on your device and click 'Add' to add the device.</p>
-            </div>
+          </div>
+          <img className="direction-image" src={connect} />
         </div>
-        <Paper className="device-table">
-        {EnhancedTableToolbar()}
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>ID</TableCell>
-            <TableCell align="right">Name</TableCell>
-            <TableCell align="right">Class ID&nbsp;</TableCell>
-            <TableCell align="right">Tag&nbsp;</TableCell>
-            <TableCell align="right">Status&nbsp;</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          { rows &&
-            rows.map((row: any) => (
-            <TableRow 
-                key={row.id}
-                className="device-row"
-            >
-              <TableCell component="th" scope="row">
-                {row.id}
-              </TableCell>
-              <TableCell align="right">{row.name}</TableCell>
-              <TableCell align="right">{row.classId.toString()}</TableCell>
-              <TableCell align="right">{row.tag}</TableCell>
-              <TableCell 
-                align="right" 
-              >
-                <div
-                    className={row.status ? 'connected' : 'disconnected'}
-                >
-                {row.status ? 'Connected' : 'Disconnected'}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Paper>
-    </>
-    );
+        <div className="direction-set">
+          <div className="number-text">
+            <span className="circled-number">2</span>
+            <p>Turn your device into claim mode.</p>
+          </div>
+          <img className="direction-image" src={gw} />
+        </div>
+        <div className="direction-set">
+          <div className="number-text">
+            <span className="circled-number">3</span>
+            <p>
+              Enter the claim code found on your device and click 'Add' to add
+              the device.
+            </p>
+          </div>
+          <img className="direction-image" src={numbers} />
+        </div>
+        {addDeviceError && (
+          <div className="warning-animation fade-out">
+            Failed to add gateway. Please check your claim code and try again.
+          </div>
+        )}
+        <div className="claim-code-entry">
+          <Input
+            placeholder="Claim code"
+            value={claimCode}
+            onChange={handleClaimCodeEntry}
+          />
+        </div>
+        <div className="claim-code-section">
+          <Button
+            className="add-button"
+            onClick={() => submitClaimCode()}
+            disabled={claimCode === ''}
+          >
+            Add
+          </Button>
+          <NavLink to="/devices" className="back-to-hardware">
+            Back
+          </NavLink>
+        </div>
+      </div>
+    </div>
+  );
 });
 
 export default AddGateway;

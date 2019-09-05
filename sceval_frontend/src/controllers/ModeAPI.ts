@@ -345,7 +345,7 @@ export class ModeAPI {
       );
       return response.status as number;
     } catch (error) {
-      throw this.getErrorResponse(error);
+      return error;
     }
   }
 
