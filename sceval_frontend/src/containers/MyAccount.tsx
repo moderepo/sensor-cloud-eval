@@ -43,16 +43,20 @@ const MyAccount = withRouter(
       setisEditing(!isEditing);
     };
     // updating changes made to user information on submit handler
-    const saveChanges = (event: React.FormEvent): void => {
+    const saveChanges = async (event: React.FormEvent) => {
       event.preventDefault();
       AppContext.restoreLogin();
-      AppContext.UpdateUserInfo(username, passwordNew).then(
-        (status: number) => {
-          if (status === 204) {
-            setisEditing(false);
-          }
+      if (passwordNew === '') {
+        const status: number = await AppContext.changeUserName(username);
+        if (status === 204) {
+          setisEditing(false);
         }
-      );
+      } else {
+        const status: number = await AppContext.UpdateUserInfo(username, passwordNew);
+        if (status === 204) {
+          setisEditing(false);
+        }
+      }
     };
     // handler for text change for name or password
     const handleInputChange = (event: React.FormEvent<HTMLElement>): void => {
@@ -71,22 +75,27 @@ const MyAccount = withRouter(
         default:
           break;
       }
-      // set form valid depending on whether or not passwords match and name isn't blank
-      if (target.value !== '' && target.value !== 
+      // if the username is new and not blank:
+      if (target.name === 'name' && target.value !== '' && target.value !== 
         JSON.parse(`${localStorage.getItem('user-login')}`).value.user.name) {
         setFormValid(true);
-      } 
-      if ((passwordConfirm === passwordNew &&
-        passwordConfirm !== '' && passwordNew !== '')) {
-          setFormValid(true);
-        } else {
+      } else { // otherewise set form to false
         setFormValid(false);
       }
+      if ((target.name === 'passwordNew' || target.name ===  'passwordConfirm') &&
+          passwordConfirm === passwordNew &&
+        passwordConfirm !== '' && passwordNew !== '') {
+          setFormValid(true);
+        }  else if (target.value === '' || target.value === 
+        JSON.parse(`${localStorage.getItem('user-login')}`).value.user.name)  {
+          setFormValid(false);
+        }
     };
     // if the user isn't logged in, redirect them to login
     if (!props.isLoggedIn) {
       return <Redirect to="/login" />;
     }
+
     const userData = JSON.parse(`${localStorage.getItem('user-login')}`);
 
     return (

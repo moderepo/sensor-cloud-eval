@@ -63,18 +63,16 @@ export class AppContext {
     return AppContext.setLogin(userInfo);
   }
 
-  public static changeUserName(newUsername: string) {
+  public static async changeUserName(newUsername: string): Promise<number> {
     if (AppContext.loginInfo !== null) {
       const user = AppContext.loginInfo.user;
-      modeAPI
+      const status: number = await modeAPI
         .updateUserInfo(AppContext.loginInfo.user.id.toString(), {
           name: newUsername
-        })
-        .then((status: number) => {
-          user.name = newUsername;
-          AppContext.userChangeObservable.notifyAll(user);
-          return status;
         });
+      user.name = newUsername;
+      AppContext.userChangeObservable.notifyAll(user);
+      return status;
     } else {
       throw new UserNameChangeException();
     }
