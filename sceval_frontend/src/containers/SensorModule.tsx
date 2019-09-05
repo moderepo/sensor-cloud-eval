@@ -427,6 +427,34 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         setGraphTimespanNumeric(quantity);
         setGraphTimespan(timespan);
     };
+
+    const renderModuleSettingsDropdown = () => {
+        const menu = (
+            <Menu>
+            <Menu.Item 
+                className="menu-setting-item"
+            >
+                <option 
+                    onClick={toggleModalVisibility}
+                >
+                Sensor Module Settings
+                </option>
+            </Menu.Item>
+            </Menu>
+        );
+        return (
+            <Dropdown 
+                overlay={menu} 
+                className="dropdown"
+                trigger={['hover']}
+                placement="bottomRight"
+            >
+                <a className="default-timespan-value sensing-interval">
+                    •••
+                </a>
+            </Dropdown>
+        );
+    };
     // render helper for graph timespan menu
     const renderGraphTimespanToggle = (): React.ReactNode => {
         const timespanSet = [];
@@ -442,7 +470,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             <Menu>
                 {   timespanSet.map((timespan: any, index: any) => {
                         return (
-                            <Menu.Item key={index}>
+                            <Menu.Item 
+                                key={index}
+                                className="menu-setting-item"
+                            >
                                 <option 
                                     value={timespan.quantity}
                                     onClick={() => toggleGraphTimespan(
@@ -511,7 +542,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             <Menu>
                 {   intervalSet.map((interval: SensingInterval, index: any) => {
                         return (
-                            <Menu.Item key={index}>
+                            <Menu.Item 
+                                key={index}
+                                className="menu-setting-item"
+                            >
                                 <option 
                                     value={interval.value}
                                     onClick={() => setSensingInterval(sensorModuleObj, interval)}
@@ -574,23 +608,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                 }</div>
                             </div>
                             <div className="dropdown-menu-container">
-                                <button
-                                    onClick={toggleSensorModuleSettingsVisible}
-                                >
-                                    •••
-                                </button>
-                                {
-                                    moduleSettingsVisible &&
-                                    // if the module settings are visible:
-                                    <ul className="sce-dropdown-menu">
-                                    <a
-                                        href="#"
-                                        onClick={toggleModalVisibility}
-                                    >
-                                        Edit Settings
-                                    </a>
-                                    </ul>
-                                }
+                                {renderModuleSettingsDropdown()}
                             </div>
                             {
                                 modalVisible &&
