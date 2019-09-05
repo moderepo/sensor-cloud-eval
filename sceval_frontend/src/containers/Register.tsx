@@ -188,25 +188,6 @@ const Register: React.FC<RegisterProps> = (props: RegisterProps) => {
             </div>
             <div className="agreement-account-status">
                 <p>
-                    {`By signing up, you indicate that you have read and agree to the `}
-                    <a
-                        href="https://www.tinkermode.com/legal/tos.html"
-                        target="_blank"
-                        className="navlinks"
-                    >
-                        Terms of Service
-                    </a>
-                    {` and `}
-                    <a
-                        href="https://www.tinkermode.com/legal/privacy.html"
-                        target="_blank"
-                        className="navlinks"
-                    >
-                        Privacy Policy
-                    </a>
-                    .
-                </p>
-                <p>
                     {`Already have an account? `}
                     <NavLink to="/login" className="navlinks">
                         Sign In!

@@ -1,3 +1,4 @@
+@import "node_modules/bootstrap/dist/css/bootstrap";
 @import "variables.scss";
 @import "Login.scss";
 @import "LoginHeader.scss";
@@ -10,4 +11,8 @@
 
 body {
   background-color: $base-background;
+  font-family: $font-family;
+  -webkit-font-smoothing: unset;  /* Unset font-smoothing setting interited from one of the libraries we are using */
+  -moz-font-smoothing: unset;
+  -ms-font-smoothing: unset;
 }
