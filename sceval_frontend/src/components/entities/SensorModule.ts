@@ -41,12 +41,17 @@ export interface AddSensorModuleState {
     noModules: boolean;
 }
 export interface SensorDataBundle {
+    seriesId: string;
     // sensor data unit
     unit: string;
     // sensor data type
     type: string;
     // time-series data for sensor
     TSDBData: TimeSeriesData;
+    dataSummary: TimeSeriesData;
+    avgVal: string;
+    minVal: string;
+    maxVal: string;
 }
 
 export interface SensingInterval {

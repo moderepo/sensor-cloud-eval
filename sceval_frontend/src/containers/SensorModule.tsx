@@ -1,19 +1,26 @@
 import React, { useEffect, useState, Fragment, useContext } from 'react';
-import { NavLink, withRouter, RouteComponentProps } from 'react-router-dom';
+import { NavLink, withRouter, RouteComponentProps, Redirect } from 'react-router-dom';
 import AppContext from '../controllers/AppContext';
 import { AmChart } from '../components/AmChart';
 import { Context, context } from '../context/Context';
-import { KeyValueStore, ErrorResponse, TimeSeriesData, TimeSeriesInfo } from '../components/entities/API';
+import {
+    KeyValueStore,
+    ErrorResponse,
+    TimeSeriesData,
+    TimeSeriesInfo,
+    TimeSeriesBounds
+} from '../components/entities/API';
 import modeAPI from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import moment, { Moment } from 'moment';
 import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
 import ModeConnection  from '../controllers/ModeConnection';
 import { determineUnit, evaluateModel } from '../utils/SensorTypes';
-import { SensorModuleInterface, SensingInterval } from '../components/entities/SensorModule';
+import { SensorModuleInterface, SensingInterval, SensorDataBundle } from '../components/entities/SensorModule';
 import { Constants } from '../utils/Constants';
 import { Home } from '../components/entities/API';
 import { RouteParams } from '../components/entities/Routes';
+import { string } from '@amcharts/amcharts4/core';
 
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
@@ -41,7 +48,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     // contains RT Websocket data
     const [activeSensors, setActiveSensors] = useState<any>();
     // contains data from TSDB fetch
-    const [sensorTypes, setSensorTypes] = useState<Array<any>>();
+    const [sensorTypes, setSensorTypes] = useState<SensorDataBundle[]>();
     // default 15 unit time horizon
     const [graphTimespanNumeric, setGraphTimespanNumeric] = useState<any>(15);
     // default minute time horizon
@@ -65,6 +72,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     const [noTSDBData, setNoTSDBData] = useState<boolean>(false);
     // declaration of a useContext hook
     const sensorContext: Context = useContext(context);
+
+    const [zoomStartDate, setZoomStartDate] = useState<string>();
+    const [zoomEndDate, setZoomEndDate] = useState<string>();
 
     // to keep track of component mounted/unmounted event so we don't call set state when component is unmounted
     let componentUnmounted: boolean;
@@ -90,7 +100,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             startTime = start;
         }
         // get time-series data for the provided time-range and series type
-        modeAPI.getTSDBData(homeID, seriesID, startTime.toISOString(), endTime.toISOString())
+        modeAPI.getTimeSeriesData(homeID, seriesID, startTime.toISOString(), endTime.toISOString())
         .then((timeseriesData: TimeSeriesData) => {
             if (componentUnmounted) {
                 return;
@@ -172,6 +182,14 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         }
     };
 
+    // the URL should contain deviceId and sensorModuleId. If not, take the user
+    // back to the devices page
+    if (!props.match.params.deviceId || !props.match.params.sensorModuleId) {        
+        return (
+            <Redirect to="/devices" />
+        );
+    }
+
     /**
      * This useEffect does not depend on any state so it will only get called once, when the component is mounted
      */
@@ -179,6 +197,15 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         () => {
             // run this code in an async function to make sure these are ran in this order.
             (async () => {
+                // check for NULL up here so we don't have to check for null everywhere else below
+                if (!props.match.params.deviceId || !props.match.params.sensorModuleId) {
+                    return;
+                }
+    
+                // get selected deviceId and selectedModuleId from URL params
+                const sensorModuleId: string = props.match.params.sensorModuleId;
+                const gateway: number = Number(props.match.params.deviceId);
+
                 // restore login
                 AppContext.restoreLogin();
     
@@ -187,20 +214,93 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
                 // get home id
                 const home: Home = await modeAPI.getHome(ClientStorage.getItem('user-login').user.id);
-    
+
+                // load module data
+                const moduleData: SensorModuleInterface = await modeAPI.getDeviceKeyValueStore(
+                    gateway, `${Constants.SENSOR_MODULE_KEY_PREFIX}${sensorModuleId}`);
+
+                // load all timeseries for the module. NOTE: getAllTimeSeriesInfo will return time series for the HOME
+                // which includes time series for all other modules AND series that are for offline sensors. So we need 
+                // to filter out series that don't belong to the selected sensor module AND series that are for offline
+                // sensors
+                const timeSeries: TimeSeriesInfo[] = (await modeAPI.getAllTimeSeriesInfo(home.id)).filter(
+                    (series: TimeSeriesInfo): boolean => {
+                        const sensorType: string = series.id.split('-')[1].toUpperCase();
+                        return series.id.includes(sensorModuleId) && moduleData.value.sensors.includes(sensorType);
+                    }
+                );
+
+                // for each time series, load the time series' bounds so we know when is the series' very first
+                // and very last data point
+                const timeSeriesBounds: TimeSeriesBounds[] = await Promise.all(
+                    timeSeries.map((series: TimeSeriesInfo): Promise<TimeSeriesBounds> => {
+                        return modeAPI.getTimeSeriesBounds(home.id, series.id);
+                    })
+                );
+
+                // we have the bounds for each series so now we can request for the time series data from begin to end
+                const timeSeriesData: TimeSeriesData[] = await Promise.all(
+                    timeSeriesBounds.map((seriesBounds: TimeSeriesBounds): Promise<TimeSeriesData> => {
+                        return modeAPI.getTimeSeriesData(
+                            home.id, seriesBounds.seriesId, seriesBounds.begin, seriesBounds.end
+                        );
+                    })
+                );
+
+                const sensors: Array<SensorDataBundle> = [];
+                timeSeriesData.forEach((series: TimeSeriesData) => {
+                    const format: string = series.seriesId.split('-')[1];
+                    const sensorType: string = format.split(':')[0];
+                    const unit: any = determineUnit(sensorType);
+
+                    // get the sum/min/max/avg values from the time series' data
+                    let sum: number = 0;
+                    let avg: number = 0;
+                    let minVal: number = Number.MAX_SAFE_INTEGER;
+                    let maxVal: number = Number.MIN_SAFE_INTEGER;
+                    series.data.forEach(
+                        (data: Array<any>): void => {
+                            sum = sum + data[1];
+                            minVal = Math.min(minVal, data[1]);
+                            maxVal = Math.max(maxVal, data[1]);
+                    },  0);
+                    avg = sum / series.data.length;
+
+                    const sensorData: SensorDataBundle = {
+                        seriesId: series.seriesId,
+                        unit: unit,
+                        type: sensorType,
+                        dataSummary: Object.assign({}, series),
+                        TSDBData: series,
+                        avgVal: sensorType !== 'uv' ? avg.toFixed(1) : avg.toFixed(3),
+                        maxVal: sensorType !== 'uv' ? maxVal.toFixed(1) : maxVal.toFixed(3),
+                        minVal: sensorType !== 'uv' ? minVal.toFixed(1) : minVal.toFixed(3)
+                    };
+                    // push that data to the sensors array
+                    sensors.push(sensorData);
+                });
+
+                // sort sensors by type
+                sensors.sort((a: any, b: any) =>  {
+                    if (a.type < b.type) {
+                        return -1;
+                    }
+                    if (a.type > b.type) {
+                        return 1;
+                    }
+                    return 0;
+                });
+
+                console.log(sensors);
+
                 if (!componentUnmounted) {
                     setHomeId(home.id);
-
-                    // get selected device and module
-                    if (props.match.params.sensorModuleId) {
-                        const sensorModule = props.match.params.sensorModuleId;
-                        setSelectedModule(props.match.params.sensorModuleId);
-                    }
-                    if (props.match.params.deviceId) {
-                        const gateway = props.match.params.deviceId;
-                        setSelectedGateway(parseInt(gateway, 10));
-                    }
+                    setSelectedGateway(gateway);
+                    setSelectedModule(props.match.params.sensorModuleId);
+                    setSelectedSensorModuleObj(moduleData);
+                    setSensorTypes(sensors);
                 }
+                setTSDBDataFetched(true);
             })();
     },  []);
 
@@ -209,6 +309,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         () => {
             componentUnmounted = false;
 
+            /*
             if (homeId !== 0 && selectedGateway && selectedModule) {
 
                 // fetch module data from KV store
@@ -233,7 +334,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     });
                     setOfflineSensors(sensorsOffline);
 
-                    modeAPI.getTSDBInfo(homeId).then((tsdbInfo: TimeSeriesInfo[]) => {
+                    modeAPI.getAllTimeSeriesInfo(homeId).then((tsdbInfo: TimeSeriesInfo[]) => {
                             if (componentUnmounted) {
                                 return;
                             }
@@ -269,6 +370,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     console.log(error);
                 });
             }
+            */
 
             // websocket message handler for RT data
             const webSocketMessageHandler: any = {
@@ -368,6 +470,60 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     // method invoke dependencies
     },  [homeId, activeSensors, editingModuleSettings, selectedGateway, 
         selectedModule, TSDBDataFetched, graphTimespan, graphTimespanNumeric]);
+
+    const onZoomAndPanHandler = async (
+        target: SensorDataBundle,
+        startDate: string,
+        endDate: string
+    ): Promise<void> => {
+        if (sensorTypes) {
+            // One of the charts zoomed or panned so we need to sync up other charts to have the same zoom and pan.
+            // also, we need to load data for the start and end timespan
+            console.log(target, ' ', startDate, ' ', endDate);
+            const timeSeriesData: TimeSeriesData = await modeAPI.getTimeSeriesData(
+                homeId,
+                target.seriesId,
+                startDate,
+                endDate
+            );
+
+            // Find the sensordataBundle that the event triggered from and insert the loaded data into the bundle's
+            // timeSeries
+            const sensorBundle: SensorDataBundle | undefined = sensorTypes.find(
+                (bundle: SensorDataBundle, index: number): boolean => {
+                    if (bundle.seriesId === target.seriesId) {
+                        sensorTypes[index] = Object.assign({}, bundle);
+                        return true;
+                    }
+                    return false;
+                }
+            );
+
+            if (sensorBundle) {
+                sensorBundle.TSDBData.data = [...sensorBundle.dataSummary.data, ...timeSeriesData.data].sort(
+                    (data1: Array<any>, data2: Array<any>): number => {
+                        if (data1 && data2 && data1.length > 1 && data2.length > 1 && data1[0] && data2[0]) {
+                            if (data1[0] > data2[0]) {
+                                return 1;
+                            } else if (data1[0] < data2[0]) {
+                                return -1;
+                            }
+                        }
+                        return 0;
+                    }
+                );
+            }
+
+            // this will trigger state change event for sensorTypes which will cause chart props to update
+            setSensorTypes([...sensorTypes]);
+
+            // setZoomStartDate(startDate);
+            // setZoomEndDate(endDate);
+
+            console.log(timeSeriesData);
+        }
+    };
+
     // toggle modal visibility handler
     const toggleModalVisibility = () => {
         if (modalVisible) {
@@ -701,11 +857,11 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     >
                         { sensorTypes ?
                             // if TSDB data exists for the active sensors:
-                            sensorTypes.map((sensor: any, index: any) => {
+                            sensorTypes.map((sensor: SensorDataBundle, index: any) => {
                             return (
                                 <div 
                                     className="sensor-container"
-                                    key={sensor.seriesID}
+                                    key={sensor.seriesId}
                                 > 
                                     <div className="unit-rt-container">
                                         <div className="header">
@@ -752,19 +908,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                                     identifier={sensorTypes[index].type}
                                                     timespanNumeric={graphTimespanNumeric}
                                                     timespan={graphTimespan}
+                                                    zoomStartDate={zoomStartDate}
+                                                    zoomEndDate={zoomEndDate}
+                                                    onZoomAndPan={onZoomAndPanHandler}
                                                 />
-                                                <div className="back-arrow">
-                                                    <button
-                                                        onClick={() => toggleTimeSeriesState('back')}
-                                                    >Back
-                                                    </button>
-                                                </div>
-                                                <div className="forward-arrow">
-                                                    <button
-                                                        onClick={() => toggleTimeSeriesState('forward')}
-                                                    >Forward
-                                                    </button>
-                                                </div>
                                             </div>
                                         </div> 
                                     </Fragment>

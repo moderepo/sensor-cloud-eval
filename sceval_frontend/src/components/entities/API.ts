@@ -21,7 +21,6 @@ export interface KeyValueStore {
   // value
   value: any;
 }
-
 export interface TimeSeriesInfo {
   // home id
   homeId: number;
@@ -29,6 +28,14 @@ export interface TimeSeriesInfo {
   id: string;
   // module id
   moduleId: string;
+}
+export interface TimeSeriesBounds {
+  // The date/time of the very first series data
+  begin: string;
+  // The date/time of the very last series data
+  end: string;
+  // time series id
+  seriesId: string;
 }
 export interface TimeSeriesData {
   // time series id (sensor type)
@@ -41,8 +48,8 @@ export interface TimeSeriesData {
   end: string;
   // resolution of data
   resolution: string;
-  // data
-  data: [][];
+  // data, a double Array. Each element is an array of 2 elements, date and value
+  data: Array<Array<any>>;
 }
 export interface ErrorResponse {
   // error message

@@ -6,11 +6,12 @@ import {
   KeyValueStore,
   TimeSeriesData,
   TimeSeriesInfo,
-  ErrorResponse
+  ErrorResponse,
+  TimeSeriesBounds
 } from '../components/entities/API';
 import { Home } from '../components/entities/API';
 import { User } from '../components/entities/User';
-
+import { Constants } from '../utils/Constants';
 export namespace ModeConstants {
   export const MODE_API_BASE_URL: string = 'https://api.tinkermode.com/';
   
@@ -37,6 +38,12 @@ export namespace ModeConstants {
   export const ERROR_USER_EXISTS_UNVERIFIED: string = 'USER_EXISTS_UNVERIFIED';
   export const ERROR_USER_EXISTS: string = 'USER_EXISTS';
   export const ERROR_USER_UNVERIFIED: string = 'USER_UNVERIFIED';
+
+  export const TS_AGGREGATION_MIN: string = 'min';
+  export const TS_AGGREGATION_MAX: string = 'max';
+  export const TS_AGGREGATION_AVG: string = 'avg';
+  export const TS_AGGREGATION_COUNT: string = 'count';
+  export const TS_AGGREGATION_SUM: string = 'sum';
 }
 
 export class ModeAPI {
@@ -319,7 +326,7 @@ export class ModeAPI {
    * metadata, not the actual time series data.
    * @param homeId
    */
-  public async getTSDBInfo(homeId: number): Promise<TimeSeriesInfo[]> {
+  public async getAllTimeSeriesInfo(homeId: number): Promise<TimeSeriesInfo[]> {
     try {
       const response: AxiosResponse<any> = await this.request(
         'GET',
@@ -333,25 +340,67 @@ export class ModeAPI {
   }
 
   /**
+   * Get time series info for a specific series. The returned data is only time series's metadata, not the
+   * actual time series data.
+   * @param homeId
+   */
+  public async getTimeSeriesInfo(
+    homeId: number,
+    seriesId: string
+  ): Promise<TimeSeriesInfo> {
+    try {
+      const response: AxiosResponse<any> = await this.request(
+        'GET',
+        `homes/${homeId}/smartModules/tsdb/timeSeries/${seriesId}`,
+        {}
+      );
+      return response.data as TimeSeriesInfo;
+    } catch (error) {
+      throw this.getErrorResponse(error);
+    }
+  }
+
+  /**
+   * Get time series's data boundaries. This return the "begin" and "end" date which are the very first and very last
+   * date/time of the series data.
+   * @param homeId
+   */
+  public async getTimeSeriesBounds(
+    homeId: number,
+    seriesId: string
+  ): Promise<TimeSeriesBounds> {
+    try {
+      const response: AxiosResponse<any> = await this.request(
+        'GET',
+        `homes/${homeId}/smartModules/tsdb/timeSeries/${seriesId}/timeRange`,
+        {}
+      );
+      return response.data as TimeSeriesBounds;
+    } catch (error) {
+      throw this.getErrorResponse(error);
+    }
+  }
+
+  /**
    * Get time series data for the specified seriesId
    * @param homeId
    * @param seriesId
    * @param startTime
    * @param endTime
-   * @param aggregation
+   * @param aggr - Aggregation e.g. 'min', max', 'avg', 'sum', 'count'
    */
-  public async getTSDBData(
+  public async getTimeSeriesData(
     homeId: number,
     seriesId: string,
     startTime: string,
     endTime: string,
-    aggregation: string = 'avg'
+    aggr?: string
   ): Promise<TimeSeriesData> {
     try {
       const response: AxiosResponse<any> = await this.request(
         'GET',
-        `homes/${homeId}/smartModules/tsdb/timeSeries/${seriesId}` +
-          `/data?begin=${startTime}&end=${endTime}&aggregation=${aggregation}`,
+        `homes/${homeId}/smartModules/tsdb/timeSeries/${seriesId}/data?` +
+          `begin=${startTime}&end=${endTime}&aggregation=${aggr ? aggr : ModeConstants.TS_AGGREGATION_AVG}`,
         {}
       );
 
