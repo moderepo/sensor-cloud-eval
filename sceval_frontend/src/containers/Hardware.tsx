@@ -436,7 +436,6 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
    */
   return (
     <div>
-      <LeftNav />
       <div className="hardware-section">
         <div className="page-header">
           {selectedDevice === 0 ? (
