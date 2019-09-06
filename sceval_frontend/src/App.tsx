@@ -26,14 +26,12 @@ const App: React.FC = () => {
     return (
         <ContextProvider>
             <div className="App">
-                <Route>
-                    <RouteDeclarations
-                        onLogin={onLogin}
-                        isLoggedIn={isLoggedIn}
-                        isAuthenticated={isAuthenticated}
-                        isSavedLoginPresent={true}
-                    />
-                </Route>
+                <RouteDeclarations
+                    onLogin={onLogin}
+                    isLoggedIn={isLoggedIn}
+                    isAuthenticated={isAuthenticated}
+                    isSavedLoginPresent={true}
+                />
             </div>
         </ContextProvider>
     );
