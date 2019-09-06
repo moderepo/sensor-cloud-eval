@@ -690,9 +690,8 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         );
         return (
             <Dropdown overlay={menu} className="dropdown">
-                <a className="default-timespan-value sensing-interval">
-                    {`${graphTimespanNumeric} ${graphTimespan}`}
-                    <Icon type="down" />
+                <a className="default-timespan-value sensing-interval d-flex align-items-center justify-content-center">
+                    {`${graphTimespanNumeric} ${graphTimespan}`}<Icon type="down" />
                 </a>
             </Dropdown>
         );
@@ -769,8 +768,8 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
         return (
             <Dropdown overlay={menu} className="dropdown">
-                <a className="default-timespan-value">
-                    {selectedInterval.value} {selectedInterval.unit.charAt(0)}
+                <a className="default-timespan-value d-flex align-items-center justify-content-center">
+                    {selectedInterval.value} {selectedInterval.unit}
                     <Icon type="down" />
                 </a>
             </Dropdown>
@@ -791,14 +790,18 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 Back to Hardware Overview
                 </NavLink>
                 <div className="module-container">
-                    <div className="module-details">
-                        <div className="module-left-container">
+                    <div className="module-details row">
+                        <div className="module-left-container col-12 col-xl-6 d-flex flex-row align-items-center">
                             <img src={sensorGeneral} />
-                            <div className="info-section">
+                            <div className="info-section d-flex flex-column align-items-start justify-content-center">
                                 <div className="device-name">
                                 {sensorModuleName ? sensorModuleName : selectedModule}
                                 </div>
                                 <div className="gateway-name">Gateway name: {selectedGateway}</div>
+                                <div className="sensor-model">
+                                { selectedModule &&
+                                    `Sensor ID: ${selectedModule.split(':')[1]}`
+                                }</div>
                                 <div className="sensor-model">
                                 { selectedModule &&
                                     `Sensor model: ${evaluateModel(selectedModule.split(':')[0])}`
@@ -852,24 +855,23 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
                             }
                         </div>
-                        <div className="data-col">
-                            <div className="data-name">Sensors Active</div>
-                            <div className="data-value">{activeSensorQuantity}</div>
-                        </div>
-                        { selectedModule && selectedModule.split(':')[0] === '0101' &&
-                        <div className="data-col">
-                            <div className="data-name">Sensing Interval</div>
-                            <div className="sensing">
+                        <div className="data-cols col-12 col-xl-6 d-flex flex-row">
+                            <div className="data-col">
+                                <div className="data-name">Sensors Active</div>
+                                <div className="data-value">{activeSensorQuantity}</div>
+                            </div>
+                            { selectedModule && selectedModule.split(':')[0] === '0101' &&
+                            <div className="data-col">
+                                <div className="data-name col-dropdown">Sensing Interval</div>
                                 {renderSensingIntervalOptions(selectedSensorModuleObj)}
                             </div>
-                        </div>
-                        }
-                        <div className="data-col">
-                            <div className="data-name col-dropdown">Graph Timespan</div>
-                            {renderGraphTimespanToggle()}
+                            }
+                            <div className="data-col">
+                                <div className="data-name col-dropdown">Graph Timespan</div>
+                                {renderGraphTimespanToggle()}
+                            </div>
                         </div>
                     </div>
-                    
                     <div
                         className="sensor-graph-container"
                     >
