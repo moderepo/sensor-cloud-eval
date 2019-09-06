@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Route, Redirect, Switch } from 'react-router-dom';
 import { LeftNav } from '../components/LeftNav';
 import { Login, ResetPassword, Register, Hardware, 
-  EmailSent, MyAccount, AddSensorModule, SensorModule } from '../containers/index';
+  EmailSent, MyAccount, AddSensorModule, SensorModule, AddGateway } from '../containers/index';
 import { RouteKeys, RouteDeclarationsProps } from '../components/entities/Routes';
 
 export default class RouteDeclarations extends React.Component<RouteDeclarationsProps, any> {
@@ -114,6 +114,17 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
               <AddSensorModule
                 isLoggedIn={this.props.isLoggedIn}
                 onLogIn={this.props.onLogin}
+              />
+            </>
+          )}
+        />
+        <Route
+          key={RouteKeys.AddSensorModule}
+          exact={true}
+          path="/add_gateway"
+          component={() => (
+            <>
+              <AddGateway
               />
             </>
           )}

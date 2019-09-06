@@ -8,6 +8,8 @@ export interface Device {
   isConnected: boolean;
   // last time connected
   lastConnectTime: string;
+  // tag
+  tag: string;
   // device name
   name?: string;
   // device class

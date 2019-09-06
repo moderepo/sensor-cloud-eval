@@ -12,6 +12,32 @@
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 0.4px;
+    .header {
+      max-width: 500px;
+    }
+    .add-gateway-button {
+      float: right;
+      background-color: $base-black;
+      color: $base-background;
+      font-family: $font-family;
+      margin: 0 5px 0 5px;
+      font-size: 14px !important;
+      font-weight: 500;
+      height: 35px;
+      padding: 5px 15px 6px;
+      line-height: 1.7;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: middle;
+      border-radius: 4px;
+      margin-right: 3.5vw;
+      .plus {
+        margin-right: 10px;
+      }
+    }
+    .add-gateway-button:hover{
+      text-decoration: none;
+    }
   }
 
   .gateways-section {
