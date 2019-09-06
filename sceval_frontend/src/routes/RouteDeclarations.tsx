@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Route, Redirect } from 'react-router-dom';
+import { Route, Redirect, Switch } from 'react-router-dom';
 import { LeftNav } from '../components/LeftNav';
 import { Login, ResetPassword, Register, Hardware, 
   EmailSent, MyAccount, AddSensorModule, SensorModule, AddGateway } from '../containers/index';
@@ -7,8 +7,8 @@ import { RouteKeys, RouteDeclarationsProps } from '../components/entities/Routes
 
 export default class RouteDeclarations extends React.Component<RouteDeclarationsProps, any> {
   render() {
-    return [
-      (
+    return (
+      <Switch>
         <Route
           key={RouteKeys.Home}
           exact={true}
@@ -17,34 +17,6 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
             <Redirect to="/login" />
           )}
         />
-      ),
-      (
-        <Route
-          key={RouteKeys.Misc}
-          exact={true}
-          path="*"
-          component={() => {
-            if (this.props.isLoggedIn) {
-              return (
-                <>
-                  <Login
-                    isLoggedIn={this.props.isLoggedIn}
-                    onLogIn={this.props.onLogin}
-                  />
-                </>
-              );
-            } else {
-              return (
-                <Hardware
-                  isLoggedIn={this.props.isLoggedIn}
-                  onLogIn={this.props.onLogin}
-                />
-              );
-            }
-          }}
-        />
-      ),
-      (
         <Route
           key={RouteKeys.Login}
           exact={true}
@@ -58,8 +30,6 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
             </>
           )}
         />
-      ),
-      (
         <Route
           key={RouteKeys.ResetPassword}
           exact={true}
@@ -70,8 +40,6 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
             </>
           )}
         />
-      ),
-      (
         <Route
           key={RouteKeys.Register}
           exact={true}
@@ -85,8 +53,6 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
             </>
           )}
         />
-      ),
-      (
         <Route
           key={RouteKeys.EmailSent}
           exact={true}
@@ -97,8 +63,6 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
             </>
           )}
         />
-      ),
-      (
         <Route
           key={RouteKeys.Devices}
           exact={true}
@@ -113,8 +77,6 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
             </>
           )}
         />
-      ),
-      (
         <Route
           key={RouteKeys.MyAccount}
           exact={true}
@@ -129,8 +91,6 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
             </>
           )}
         />
-      ),
-      (
         <Route
           key={RouteKeys.SensorModules}
           exact={true}
@@ -144,8 +104,6 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
             </>
           )}
         />
-      ),
-      (
         <Route
           key={RouteKeys.AddSensorModule}
           exact={true}
@@ -160,8 +118,6 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
             </>
           )}
         />
-      ),
-      (
         <Route
           key={RouteKeys.AddSensorModule}
           exact={true}
@@ -173,7 +129,23 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
             </>
           )}
         />
-      )
-    ];
+        <Route
+          key={RouteKeys.Misc}
+          exact={true}
+          path="*"
+          component={() => {
+            if (this.props.isLoggedIn) {
+              return (
+                <Redirect to="/login" />
+              );
+            } else {
+              return (
+                <Redirect to="/devices" />
+              );
+            }
+          }}
+        />
+      </Switch>
+    );
   }
 }

@@ -107,7 +107,6 @@ const ResetPassword: React.FC = () => {
           )}
         </div>
       </div>
-      }
     </Fragment>
   );
 };

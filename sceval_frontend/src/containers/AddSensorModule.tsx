@@ -14,7 +14,6 @@ import { SensorModuleInterface, AddSensorModuleState } from '../components/entit
 import { RouteParams } from '../components/entities/Routes';
 import SensorModuleComp from '../components/SensorModuleComp';
 import { evaluateSensorTypes, evaluateModel } from '../utils/SensorTypes';
-
 // required images imported
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const checkMark = require('../common_images/notifications/check-1.svg');

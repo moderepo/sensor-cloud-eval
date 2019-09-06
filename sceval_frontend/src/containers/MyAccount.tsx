@@ -1,6 +1,6 @@
-import React, { Fragment, useState, useEffect } from 'react';
-import LeftNav from '../components/LeftNav';
+import React, { Fragment, useState, useEffect, useContext } from 'react';
 import { AppContext } from '../controllers/AppContext';
+import { Context, context } from '../context/Context';
 import { Redirect, withRouter, RouteComponentProps } from 'react-router';
 // required images imported
 const email = require('../common_images/acct_email.svg');
@@ -19,12 +19,23 @@ const MyAccount = withRouter(
     const [passwordNew, setPasswordNew] = useState<string>('');
     const [passwordConfirm, setPasswordConfirm] = useState<string>('');
     const [formValid, setFormValid] = useState<boolean>(false);
+    const [updated, setUpdated] = useState<boolean>(false);
+    const [updateError, setUpdateError] = useState<boolean>(false);
+    const [errorMessage, setErrorMessage] = useState<string>('');
+
+    const appContext: Context = useContext(context);
+
     // get user information on component mount
     useEffect(() => {
-      const user = JSON.parse(`${localStorage.getItem('user-login')}`).value
-        .user.name;
-      setUsername(user);
-    },        []);
+      const userInfo = appContext.state.userData;
+      if (username !== '') {
+        setUsername(username);
+      } else {
+        if (userInfo) {
+          setUsername(userInfo.user.name);
+        }
+      }
+    },        [isEditing]);
     // logout method on click of "Logout button"
     const logout = async () => {
       try {
@@ -41,18 +52,43 @@ const MyAccount = withRouter(
     // toggle editing vs. non-editing mode handler
     const editUserInfo = (): void => {
       setisEditing(!isEditing);
+      setUpdateError(false);
+      setErrorMessage('');
+      setUpdated(false);
     };
     // updating changes made to user information on submit handler
-    const saveChanges = (event: React.FormEvent): void => {
-      event.preventDefault();
-      AppContext.restoreLogin();
-      AppContext.UpdateUserInfo(username, passwordNew).then(
-        (status: number) => {
+    const saveChanges = async (event: React.FormEvent) => {
+      try {
+        event.preventDefault();
+        AppContext.restoreLogin();
+        if (passwordNew === '') {
+          const status: number = await AppContext.changeUserName(username);
           if (status === 204) {
+            appContext.actions.setUsername(username);
+            setUsername(username);
+            setUpdated(true);
+            setisEditing(false);
+          }
+        } else {
+          const status: number = await AppContext.UpdateUserInfo(
+            username,
+            passwordNew
+          );
+          if (status === 204) {
+            setUsername(username);
+            setUpdated(true);
             setisEditing(false);
           }
         }
-      );
+        setTimeout(() => {
+          setUpdated(false);
+        },         2000);
+      } catch (error) {
+        if (error.message === 'PASSWORD_TOO_SHORT') {
+          setErrorMessage('Password is too short.');
+        }
+        setUpdateError(true);
+      }
     };
     // handler for text change for name or password
     const handleInputChange = (event: React.FormEvent<HTMLElement>): void => {
@@ -71,14 +107,27 @@ const MyAccount = withRouter(
         default:
           break;
       }
-      // set form valid depending on whether or not passwords match and name isn't blank
+      // if the username is new and not blank:
+      const userName = JSON.parse(`${localStorage.getItem('user-login')}`).value
+        .user.name;
       if (
-        passwordConfirm === passwordNew &&
-        passwordConfirm !== '' &&
-        name !== ''
+        target.name === 'name' &&
+        target.value !== '' &&
+        target.value !== userName
       ) {
         setFormValid(true);
       } else {
+        // otherewise set form to false
+        setFormValid(false);
+      }
+      if (
+        (target.name === 'passwordNew' || target.name === 'passwordConfirm') &&
+        passwordConfirm === passwordNew &&
+        passwordConfirm !== '' &&
+        passwordNew !== ''
+      ) {
+        setFormValid(true);
+      } else if (target.value === '' || target.value === userName) {
         setFormValid(false);
       }
     };
@@ -86,6 +135,7 @@ const MyAccount = withRouter(
     if (!props.isLoggedIn) {
       return <Redirect to="/login" />;
     }
+
     const userData = JSON.parse(`${localStorage.getItem('user-login')}`);
 
     return (
@@ -121,10 +171,26 @@ const MyAccount = withRouter(
                   </Fragment>
                 )}
               </h3>
+              <div
+                className={
+                  updateError
+                    ? 'warning-animation fade-out'
+                    : updated
+                    ? 'save-animation fade-out'
+                    : ''
+                }
+              >
+                {updated && !isEditing
+                  ? 'Successfully updated.'
+                  : updateError ?
+                  errorMessage !== '' ? errorMessage : 
+                  'There was an error updating your information.' : ''
+                }
+              </div>
               <img src={name} />
               <h4>Name:</h4>
               {!isEditing ? (
-                <div className="user-data">{userData.value.user.name}</div>
+                <div className="user-data">{username}</div>
               ) : (
                 <input
                   type="text"
@@ -137,17 +203,7 @@ const MyAccount = withRouter(
               )}
               <img className="mail" src={email} />
               <h4> Email:</h4>
-              {!isEditing ? (
-                <div className="user-data">{userData.value.user.email}</div>
-              ) : (
-                <input
-                  type="text"
-                  className="user-data edit-box"
-                  value={userData.value.user.email}
-                  disabled={true}
-                  name="email"
-                />
-              )}
+              <div className="user-data">{userData.value.user.email}</div>
               <img src={password} />
               <h4>Password:</h4>
               {!isEditing ? (

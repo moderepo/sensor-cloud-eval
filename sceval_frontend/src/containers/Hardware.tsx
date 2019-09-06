@@ -1,7 +1,6 @@
 import React, { Fragment, useState, useEffect, useContext } from 'react';
 import { Redirect, RouteComponentProps, withRouter } from 'react-router';
-import { LeftNav } from '../components/LeftNav';
-import modeAPI, { ModeConstants, ModeAPI } from '../controllers/ModeAPI';
+import modeAPI, { ModeConstants } from '../controllers/ModeAPI';
 import { KeyValueStore, Device, Home } from '../components/entities/API';
 import { LoginInfo } from '../components/entities/User';
 import AppContext from '../controllers/AppContext';
@@ -310,7 +309,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
             {!isLoading ? (
               <div className="sensor-module-wrapper col-12">
                 <SensorModuleComp
-                  name={sensor.value.name ? sensor.value.name : sensor.key.split('sensorModule')[1]}
+                  name={sensor.value.name ? sensor.value.name : sensor.key.split(Constants.SENSOR_MODULE_KEY_PREFIX)[1]}
                   model={`${evaluateModel(sensor.value.id.split(':')[0])}`}
                   sensors={sensor.value.sensors}
                   isEditing={isEditingDevice}

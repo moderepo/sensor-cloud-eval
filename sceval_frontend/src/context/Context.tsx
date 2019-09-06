@@ -8,12 +8,14 @@ interface ContextProviderProps extends React.Props<any> {}
 interface ContextAction {
   setGateway: (gatewayID: number) => void;
   setRTValues: (vals: any) => void;
+  setUsername: (username: any) => void;
 }
 
 interface ContextState {
   selectedGateway: number;
   rtValues: Array<any>;
   devices: Array<any>;
+  userData: any;
 }
 export interface Context {
   state: ContextState;
@@ -26,7 +28,7 @@ export const ContextProvider: React.FC<ContextProviderProps> = (
 ) => {
   const [selectedGateway, setSelectedGateway] = useState<number>(0);
   const [rtVals, setRTVals] = useState([]);
-
+  const [userData, setUserData] = useState();
   const [devices, setDevices] = useState([]);
   const setGateway = (gatewayID: number) => {
     setSelectedGateway(gatewayID);
@@ -36,17 +38,28 @@ export const ContextProvider: React.FC<ContextProviderProps> = (
     setRTVals(vals);
   };
 
+  const setUsername = (username: string) => {
+    let userInfo = userData;
+    if (userInfo) {
+      userInfo.user.name = username;
+      setUserData(userInfo);
+    }
+  };
+
   const values: ContextState = {
     selectedGateway: selectedGateway,
     rtValues: rtVals,
-    devices: devices
+    devices: devices,
+    userData: userData
   };
 
   useEffect(() => {
     AppContext.restoreLogin(); // restore user credentials and get home / associated devices
-    if (ClientStorage.getItem('user-login')) {
+    const userInfo = ClientStorage.getItem('user-login');
+    if (userInfo) {
+      setUserData(userInfo);
       modeAPI
-        .getHome(ClientStorage.getItem('user-login').user.id)
+        .getHome(userInfo.user.id)
         .then((response: any) => {
           modeAPI.getDevices(response.id).then((deviceResponse: any) => {
             setDevices(deviceResponse);
@@ -61,7 +74,8 @@ export const ContextProvider: React.FC<ContextProviderProps> = (
         state: values,
         actions: {
           setGateway: setGateway,
-          setRTValues: setRealTimeValues
+          setRTValues: setRealTimeValues,
+          setUsername: setUsername
         }
       }}
     >
