@@ -332,6 +332,24 @@ export class ModeAPI {
   }
 
   /**
+   * Add a device to a particular home
+   * @param homeId 
+   * @param claimCode
+   */
+  public async addDevice(homeId: number, claimCode: string): Promise<number> {
+    try {
+      const response: AxiosResponse<any> = await this.request(
+        'POST',
+        `devices`,
+        { homeId: homeId , claimCode: claimCode}
+      );
+      return response.status as number;
+    } catch (error) {
+      throw this.getErrorResponse(error);
+    }
+  }
+
+  /**
    * Get the home's time series info for all serties. This will only return the time series'
    * metadata, not the actual time series data.
    * @param homeId

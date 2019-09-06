@@ -35,6 +35,21 @@ $font-family: "ProximaNova", "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: 700;
 }
 
+.circled-number {
+  background-color: lighten($base-turquoise, 20%);
+  float: left;
+  width: 42px;
+  height: 42px;
+  text-align: center;
+  line-height: 32px;
+  border-color: #767676;
+  border-style: solid;
+  border-width: 4px;
+  border-radius: 30px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
 $animationName: fade-out; // apply to webkit and animation
 
 // fade out (just include variables.scss to leverage)
