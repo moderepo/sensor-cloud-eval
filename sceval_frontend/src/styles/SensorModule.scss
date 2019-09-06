@@ -26,7 +26,6 @@
     border-radius: 4px;
     box-shadow: $base-box-shadow;
     margin-bottom: 30px;
-    min-width: 860px;
     box-sizing: border-box;
     margin-top: 40px;
     margin-left: 150px;
@@ -39,24 +38,13 @@
       margin-right: 0;
       border-bottom: 1px solid $border-grey;
 
-      > * {
-        margin: 0 10px;
-
-        &:first-child {
-          margin-left: 20px;
-        }
-
-        &:last-child {
-          margin-right: 20px;
-        }
-      }
-
       .module-left-container {
         background-color: $base-background;
         border: solid 1px #b5c0d8;
         border-radius: 2px;
-        min-width: 550px;
         position: relative;
+        padding: 20px;
+        margin: 0;
 
         .dropdown-menu-container {
           position: absolute;
@@ -88,14 +76,14 @@
         }
 
         img {
-          float: left;
           padding: 20px;
           max-width: 130px;
         }
 
         .info-section {
-          padding-top: 20px;
-          float: left;
+          flex: 1;
+          min-width: 0;
+
           .device-name {
             overflow: hidden;
             text-overflow: ellipsis;
@@ -103,49 +91,59 @@
             color: $base-black;
             font-size: 20px;
             margin-bottom: 10px;
+            width: 100%;
           }
 
           .gateway-name,
           .sensor-model {
+            width: 100%;
             text-align: left;
-            margin-top: 10px;
+            margin-top: 5px;
             color: $base-black;
           }
         }
       }
 
-      .data-col {
-        background-color: $base-background;
-        border: solid 1px #b5c0d8;
-        border-radius: 2px;
-        width: 130px;
-        height: 135px;
-        padding: 18px 15px;
-        text-align: center;
+      .data-cols {
+        margin: 0;
+        min-height: 100%;
+        padding-top: 20px;
+        justify-content: center;
 
-        .data-name {
-          font-size: 12px;
-          font-weight: 300;
-          color: $base-black;
-          border-bottom: 1px solid #b5c0d8;
-          padding-bottom: 16px;
-        }
-        .data-value {
-          padding-top: 16px;
-          font-size: 25px;
-          font-family: $font-family;
-          font-weight: 800;
-        }
-        .sensing {
-          padding-top: 8px;
-          font-size: 25px;
+        .data-col {
+          background-color: $base-background;
+          border: solid 1px #b5c0d8;
+          border-radius: 2px;
+          width: 150px;
+          padding: 18px 15px;
+          text-align: center;
+          height: 100%;
+          margin: 0 10px;
+
+          .data-name {
+            font-size: 12px;
+            font-weight: 300;
+            color: $base-black;
+            border-bottom: 1px solid #b5c0d8;
+            padding-bottom: 16px;
+          }
+          .data-value {
+            padding-top: 16px;
+            font-size: 25px;
+            font-family: $font-family;
+            font-weight: 800;
+          }
+          .sensing {
+            padding-top: 8px;
+            font-size: 25px;
+          }
         }
       }
     }
+
     .sensor-graph-container {
       padding-bottom: 20px;
       box-sizing: border-box;
-      margin: 20px;
       .sensor-data-loader {
         text-align: center;
       }
@@ -196,7 +194,7 @@
         }
       }
       .graph-container {
-        width: 100vw;
+        width: 65vw;
         left: 0px;
         top: -1px;
         text-align: center;
@@ -208,6 +206,18 @@
         height: auto;
         font-size: 14px;
         font-weight: 400;
+      }
+    }
+
+    @media (min-width:1200px) {
+      .module-left-container {
+        max-width: 600px;
+      }
+      .module-details {
+        .data-cols {
+          justify-content: start;
+          padding-top: 0;
+        }
       }
     }
   }

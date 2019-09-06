@@ -307,7 +307,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
             {!isLoading ? (
               <div className="sensor-module-wrapper col-12">
                 <SensorModuleComp
-                  name={sensor.value.name ? sensor.value.name : sensor.key.split('sensorModule')[1]}
+                  name={sensor.value.name ? sensor.value.name : sensor.key.split(Constants.SENSOR_MODULE_KEY_PREFIX)[1]}
                   model={`${evaluateModel(sensor.value.id.split(':')[0])}`}
                   sensors={sensor.value.sensors}
                   isEditing={isEditingDevice}
