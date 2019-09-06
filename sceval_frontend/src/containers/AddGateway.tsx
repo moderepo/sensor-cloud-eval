@@ -27,18 +27,20 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
   },        []);
 
   const submitClaimCode = async () => {
-    if (home && claimCode) {
-      const status = await modeAPI.addDevice(home, claimCode);
-      if (status === 201) {
-        setAddDeviceError(false);
-        setClaimCode('');
-        props.history.push('/devices');
-      } else {
-        setAddDeviceError(true);
-        setTimeout(() => {
+    try {
+      if (home && claimCode) {
+        const status = await modeAPI.addDevice(home, claimCode);
+        if (status === 201) {
           setAddDeviceError(false);
-        },         2000);
+          setClaimCode('');
+          props.history.push('/devices');
+        }
       }
+    } catch (error) {
+      setAddDeviceError(true);
+      setTimeout(() => {
+        setAddDeviceError(false);
+      },         2000);
     }
   };
 
