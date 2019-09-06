@@ -27,6 +27,12 @@ export namespace Constants {
   export const ERROR_CONNECTION_ERROR: string = 'CONNECTION_ERROR';
   export const ERROR_LOGIN_CREDENTIALS_NOT_PRESENT: string =
     'LOGIN_CREDENTIALS_NOT_PRESENT';
+
+  // The maximum number of data points we want to show on the data series snapshot
+  export const SNAPSHOT_CHART_MAX_DATA_POINTS: number = 50;
+
+  // How long to delay before dispatching chart zoom event
+  export const CHART_ZOOM_EVENT_DELAY_IN_MILLISECONDS: number = 50;
 }
 
 export const MODULE_CATELOG = [

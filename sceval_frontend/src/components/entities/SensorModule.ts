@@ -46,21 +46,22 @@ export interface SensorDataBundle {
     unit: string;
     // sensor data type
     type: string;
-    // time-series data for sensor
-    beginDate: string;
-    endDate: string;
-    TSDBData: TimeSeriesData;
+    // the boundaries of the time series data, the date of the very first and very last data point
+    dateBounds: DateBounds;
+    // snapshot of the time series data from the very first to very last data point
     timeSeriesDataSnapshot: TimeSeriesData;
+    // time-series data for sensor
+    TSDBData: TimeSeriesData;
     avgVal: string;
     minVal: string;
     maxVal: string;
     isChartActive: boolean;
 }
 
-export interface ZoomData {
-    startTime: number;
+export interface DateBounds {
+    beginTime: number;
     endTime: number;
-    startDate: string;    // string representation of startTime in ISO date string
+    beginDate: string;    // string representation of beginTime in ISO date string
     endDate: string;      // string representation of endTime in ISO date string
 }
 

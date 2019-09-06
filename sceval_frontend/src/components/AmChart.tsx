@@ -4,8 +4,9 @@ import * as am4charts from '@amcharts/amcharts4/charts';
 import am4themes_animated from '@amcharts/amcharts4/themes/animated';
 import moment from 'moment';
 import { Context, context } from '../context/Context';
-import { SensorDataBundle, ZoomData } from '../components/entities/SensorModule';
+import { SensorDataBundle, DateBounds } from '../components/entities/SensorModule';
 import { DataPoint } from './entities/API';
+import { Constants } from '../utils/Constants';
 const debounce = require('debounce');
 
 am4core.useTheme(am4themes_animated);
@@ -18,7 +19,7 @@ interface AmChartProps extends React.Props<any> {
   timespanNumeric: number;
   // timespan
   timespan: string;
-  zoom?: ZoomData;
+  zoom?: DateBounds;
   zoomEventDispatchDelay?: number;
   isUserInteracting: boolean;
   onZoomAndPan?: (target: SensorDataBundle, startTime: number, endTime: number) => any;
@@ -38,9 +39,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
   const [sensorChart, setSensorChart] = useState<am4charts.XYChart>();
   // declare context hook
   const sensorContext: Context = useContext(context);
-  // declare useEffect hook
-
-  const [updatingData, setUpdatingData] = useState<boolean>(false);
 
   let componentUnmounted: boolean = false;
 
@@ -64,7 +62,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       dbData = props.TSDB.TSDBData.data.map((sensorDataPoint: Array<any>): DataPoint => {
         return {
             date: moment(sensorDataPoint[0]).toISOString(),
-            timestamp: moment(sensorDataPoint[0]).milliseconds(),
+            timestamp: moment(sensorDataPoint[0]).valueOf(),
             value: sensorDataPoint[1].toFixed(2)
         };
       });
@@ -81,8 +79,8 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     dateAxis.dateFormatter = new am4core.DateFormatter();
     dateAxis.tooltipDateFormat = 'YYYY-MM-dd HH:mm:ss';
     dateAxis.keepSelection = true;
-    dateAxis.min = moment(props.TSDB.beginDate).toDate().getTime();
-    dateAxis.max = moment(props.TSDB.endDate).toDate().getTime();
+    dateAxis.min = props.TSDB.dateBounds.beginTime;
+    dateAxis.max = props.TSDB.dateBounds.endTime;
     dateAxis.strictMinMax = true;
 
     newChart.dateFormatter.dateFormat = 'i';
@@ -160,10 +158,9 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
   },        []);
 
   const dispatchZoomPanEvent: (event: any) => void = (event: any): void => {
-    console.log('On Zoom Event - ' + props.TSDB.seriesId, updatingData);
+    console.log('On Zoom Event - ' + props.TSDB.seriesId);
     if (
       !componentUnmounted &&
-      !updatingData &&
       props.onZoomAndPan &&
       event.target.minZoomed &&
       event.target.maxZoomed
@@ -198,14 +195,24 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
        */
       const debouncer: (event: any) => void = debounce(
         dispatchZoomPanEvent,
-        props.zoomEventDispatchDelay !== undefined ? props.zoomEventDispatchDelay : 50
+        props.zoomEventDispatchDelay !== undefined ?
+          props.zoomEventDispatchDelay :
+          Constants.CHART_ZOOM_EVENT_DELAY_IN_MILLISECONDS
       );
       const dateAxis: am4charts.DateAxis = (sensorChart.xAxes.getIndex(0) as am4charts.DateAxis);
       dateAxis.events.on('startchanged', (event: any): void => {
-          debouncer(event);
+        // don't dispatch event if zoom changed event is not triggered by user interaction.
+        // This can happen because we programatically set the zoom sometime.
+        if (props.isUserInteracting) {
+            debouncer(event);
+        }
       });
       dateAxis.events.on('endchanged', (event: any): void => {
+        // don't dispatch event if zoom changed event is not triggered by user interaction.
+        // This can happen because we programatically set the zoom sometime.
+        if (props.isUserInteracting) {
           debouncer(event);
+        }
       });
     }
   },        [props.isUserInteracting]);
@@ -218,8 +225,8 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
   useEffect(() => {
     if (sensorChart) {
       const xAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
-      if (!props.isUserInteracting && props.zoom && props.zoom.startTime && props.zoom.endTime) {
-          xAxis.zoomToDates(moment(props.zoom.startDate).toDate(), moment(props.zoom.endDate).toDate());
+      if (!props.isUserInteracting && props.zoom && props.zoom.beginTime && props.zoom.endTime) {
+          xAxis.zoomToDates(moment(props.zoom.beginDate).toDate(), moment(props.zoom.endDate).toDate());
       }
     }
   },        [props.zoom]);
@@ -230,8 +237,8 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
   useEffect(() => {
     // This can be called multiple times when data is updated so make sure we are not in the middle
     // of updarting chart data.
-    if (!updatingData && props.TSDB && sensorChart) {
-      console.log('On data changed - ' + props.TSDB.seriesId, updatingData);
+    if (props.TSDB && sensorChart) {
+      console.log('On data changed - ' + props.TSDB.seriesId);
 
       // props.TSDB.TSDBData.data is an Array of data point in array form
       // e.g. ["2019-08-14T07:00:00Z", 47.54249999999999];
@@ -239,18 +246,11 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       const dbData: DataPoint[] = props.TSDB.TSDBData.data.map((sensorDataPoint: Array<any>): DataPoint => {
         return {
             date: moment(sensorDataPoint[0]).toISOString(),
-            timestamp: moment(sensorDataPoint[0]).milliseconds(),
+            timestamp: moment(sensorDataPoint[0]).valueOf(),
             value: sensorDataPoint[1].toFixed(2)
         };
       });
-      setUpdatingData(true);
       sensorChart.data = dbData;
-      setTimeout(
-          (): void => {
-            if (!componentUnmounted) {
-              setUpdatingData(false);
-            }
-      },  100);
     }
   },        [props.TSDB]);
 

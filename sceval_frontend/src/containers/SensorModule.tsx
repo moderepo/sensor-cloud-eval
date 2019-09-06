@@ -20,7 +20,7 @@ import {
     SensorModuleInterface,
     SensingInterval,
     SensorDataBundle,
-    ZoomData
+    DateBounds
 } from '../components/entities/SensorModule';
 import { Constants } from '../utils/Constants';
 import { Home } from '../components/entities/API';
@@ -80,7 +80,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     // declaration of a useContext hook
     const sensorContext: Context = useContext(context);
 
-    const [zoom, setZoom] = useState<ZoomData>();
+    const [zoom, setZoom] = useState<DateBounds>();
 
     // to keep track of component mounted/unmounted event so we don't call set state when component is unmounted
     let componentUnmounted: boolean;
@@ -188,7 +188,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         }
     };
 
-    const requestDetailedData = async (currentZoom: ZoomData): Promise<void> => {
+    const requestDetailedData = async (currentZoom: DateBounds): Promise<void> => {
         console.log('fetch details data');
     };
 
@@ -251,12 +251,19 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 // find the min and max bounds of all the series
                 let beginDate: string;
                 let endDate: string;
+                let beginTime: number;
+                let endTime: number;
                 timeSeriesBounds.forEach((bounds: TimeSeriesBounds): void => {
-                    if (!beginDate || (moment(beginDate).milliseconds() < moment(bounds.begin).milliseconds())) {
+                    const boundsBeginTime: number = moment(bounds.begin).valueOf();
+                    const boundsEndTime: number = moment(bounds.end).valueOf();
+
+                    if (!beginDate || beginTime < boundsBeginTime) {
                         beginDate = bounds.begin;
+                        beginTime = boundsBeginTime;
                     }
-                    if (!endDate || (moment(endDate).milliseconds() < moment(bounds.end).milliseconds())) {
+                    if (!endDate || endTime < boundsEndTime) {
                         endDate = bounds.end;
+                        endTime = boundsEndTime;
                     }
                 });
 
@@ -288,12 +295,25 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     },  0);
                     avg = sum / series.data.length;
 
+                    if (series.data.length > Constants.SNAPSHOT_CHART_MAX_DATA_POINTS) {
+                        // Build an array of snapshot data for the time series. This data will be used to show the
+                        // chart in the scrollbar. For this data, we don't need too many data points. If the backend
+                        // returns too many, we need to remove some for rendering optimization
+                        const snapshotData: Array<Array<any>> = [];
+
+                        series.data = snapshotData;
+                    }
+
                     const sensorData: SensorDataBundle = {
                         seriesId: series.seriesId,
                         unit: unit,
                         type: sensorType,
-                        beginDate: beginDate,
-                        endDate: endDate,
+                        dateBounds: {
+                            beginDate: beginDate,
+                            endDate: endDate, 
+                            beginTime: beginTime,
+                            endTime: endTime,
+                        },
                         timeSeriesDataSnapshot: Object.assign({}, series),
                         TSDBData: series,
                         isChartActive: false,
@@ -558,10 +578,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
             // this will trigger state change event for sensorTypes which will cause chart props to update
             // setSensorTypes([...sensorTypes]);
-            const newZoom: ZoomData = {
-                startTime: startTime,
+            const newZoom: DateBounds = {
+                beginTime: startTime,
                 endTime: endTime,
-                startDate: startDate,
+                beginDate: startDate,
                 endDate: endDate,
             };
             setZoom(newZoom);
