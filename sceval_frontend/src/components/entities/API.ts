@@ -51,6 +51,14 @@ export interface TimeSeriesData {
   // data, a double Array. Each element is an array of 2 elements, date and value
   data: Array<Array<any>>;
 }
+/**
+ * Time series data point
+ */
+export interface DataPoint {
+  date: string;         // the date in string format e.g. 2019-08-14T21:03:43.589Z
+  timestamp: number;    // date converted to number for easy comparison
+  value: number;
+}
 export interface ErrorResponse {
   // error message
   message: string;

@@ -16,15 +16,22 @@ import moment, { Moment } from 'moment';
 import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
 import ModeConnection  from '../controllers/ModeConnection';
 import { determineUnit, evaluateModel } from '../utils/SensorTypes';
-import { SensorModuleInterface, SensingInterval, SensorDataBundle } from '../components/entities/SensorModule';
+import {
+    SensorModuleInterface,
+    SensingInterval,
+    SensorDataBundle,
+    ZoomData
+} from '../components/entities/SensorModule';
 import { Constants } from '../utils/Constants';
 import { Home } from '../components/entities/API';
 import { RouteParams } from '../components/entities/Routes';
-import { string } from '@amcharts/amcharts4/core';
+import { string, DateFormatter } from '@amcharts/amcharts4/core';
 
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const backArrow = require('../common_images/navigation/back.svg');
+const debounce = require('debounce');
+
 // declare the SensorModuleProps interface
 interface SensorModuleProps extends React.Props<any> {
     isLoggedIn: boolean;
@@ -73,8 +80,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     // declaration of a useContext hook
     const sensorContext: Context = useContext(context);
 
-    const [zoomStartDate, setZoomStartDate] = useState<string>();
-    const [zoomEndDate, setZoomEndDate] = useState<string>();
+    const [zoom, setZoom] = useState<ZoomData>();
 
     // to keep track of component mounted/unmounted event so we don't call set state when component is unmounted
     let componentUnmounted: boolean;
@@ -182,6 +188,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         }
     };
 
+    const requestDetailedData = async (currentZoom: ZoomData): Promise<void> => {
+        console.log('fetch details data');
+    };
+
     // the URL should contain deviceId and sensorModuleId. If not, take the user
     // back to the devices page
     if (!props.match.params.deviceId || !props.match.params.sensorModuleId) {        
@@ -238,6 +248,18 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     })
                 );
 
+                // find the min and max bounds of all the series
+                let beginDate: string;
+                let endDate: string;
+                timeSeriesBounds.forEach((bounds: TimeSeriesBounds): void => {
+                    if (!beginDate || (moment(beginDate).milliseconds() < moment(bounds.begin).milliseconds())) {
+                        beginDate = bounds.begin;
+                    }
+                    if (!endDate || (moment(endDate).milliseconds() < moment(bounds.end).milliseconds())) {
+                        endDate = bounds.end;
+                    }
+                });
+
                 // we have the bounds for each series so now we can request for the time series data from begin to end
                 const timeSeriesData: TimeSeriesData[] = await Promise.all(
                     timeSeriesBounds.map((seriesBounds: TimeSeriesBounds): Promise<TimeSeriesData> => {
@@ -270,8 +292,11 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                         seriesId: series.seriesId,
                         unit: unit,
                         type: sensorType,
-                        dataSummary: Object.assign({}, series),
+                        beginDate: beginDate,
+                        endDate: endDate,
+                        timeSeriesDataSnapshot: Object.assign({}, series),
                         TSDBData: series,
+                        isChartActive: false,
                         avgVal: sensorType !== 'uv' ? avg.toFixed(1) : avg.toFixed(3),
                         maxVal: sensorType !== 'uv' ? maxVal.toFixed(1) : maxVal.toFixed(3),
                         minVal: sensorType !== 'uv' ? minVal.toFixed(1) : minVal.toFixed(3)
@@ -471,56 +496,91 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     },  [homeId, activeSensors, editingModuleSettings, selectedGateway, 
         selectedModule, TSDBDataFetched, graphTimespan, graphTimespanNumeric]);
 
+    /**
+     * As the user zooming/panning the chart, we want to fetch more detailed data for the zoomed area. However,
+     * for performance optimization, we don't want to fetch data too often. We want to wait until the user stop
+     * zooming/panning and then load more data. Therefore, we need to use debounce to delay data fetch.
+     */
+    const getDetailDataDebouncer: any = debounce(requestDetailedData, 1000);
+
+    /**
+     * This is the handler for when one of the charts is zoomed or panned.
+     * We will load data for the zoomed range for each chart.
+     */
     const onZoomAndPanHandler = async (
         target: SensorDataBundle,
-        startDate: string,
-        endDate: string
+        startTime: number,
+        endTime: number
     ): Promise<void> => {
         if (sensorTypes) {
+            const startDate: string = moment(startTime).toISOString();
+            const endDate: string = moment(endTime).toISOString();
+
+            console.log('Start time: ', startTime, startDate);
+            console.log('End time: ', endTime, endDate);
+
+            /*
             // One of the charts zoomed or panned so we need to sync up other charts to have the same zoom and pan.
             // also, we need to load data for the start and end timespan
-            console.log(target, ' ', startDate, ' ', endDate);
-            const timeSeriesData: TimeSeriesData = await modeAPI.getTimeSeriesData(
-                homeId,
-                target.seriesId,
-                startDate,
-                endDate
-            );
+            const timeSeriesDataMap: any = (await Promise.all(
+                sensorTypes.map((bundle: SensorDataBundle): Promise<TimeSeriesData> => {
+                    return modeAPI.getTimeSeriesData(homeId, bundle.seriesId, startDate, endDate);
+                })
+            )).reduce(
+                (map: any, timeSeriesData: TimeSeriesData): any => {
+                    map[timeSeriesData.seriesId] = timeSeriesData;
+                    return map;
+            },  {});
 
-            // Find the sensordataBundle that the event triggered from and insert the loaded data into the bundle's
-            // timeSeries
-            const sensorBundle: SensorDataBundle | undefined = sensorTypes.find(
-                (bundle: SensorDataBundle, index: number): boolean => {
-                    if (bundle.seriesId === target.seriesId) {
-                        sensorTypes[index] = Object.assign({}, bundle);
-                        return true;
-                    }
-                    return false;
-                }
-            );
-
-            if (sensorBundle) {
-                sensorBundle.TSDBData.data = [...sensorBundle.dataSummary.data, ...timeSeriesData.data].sort(
-                    (data1: Array<any>, data2: Array<any>): number => {
-                        if (data1 && data2 && data1.length > 1 && data2.length > 1 && data1[0] && data2[0]) {
-                            if (data1[0] > data2[0]) {
-                                return 1;
-                            } else if (data1[0] < data2[0]) {
-                                return -1;
+            // update the sensor bundle timeseries data
+            sensorTypes.forEach((bundle: SensorDataBundle, index: number): void => {
+                // need to create a copy of the bundle so that it is treated as new object and cause
+                // react to fire state change event
+                const timeSeriesData: TimeSeriesData = timeSeriesDataMap[bundle.seriesId];
+                const updatedBundle: SensorDataBundle = Object.assign({}, bundle);
+                updatedBundle.TSDBData.data = 
+                    [...updatedBundle.timeSeriesDataSnapshot.data, ...timeSeriesData.data].sort(
+                        (data1: Array<any>, data2: Array<any>): number => {
+                            if (data1 && data2 && data1.length > 1 && data2.length > 1 && data1[0] && data2[0]) {
+                                if (data1[0] > data2[0]) {
+                                    return 1;
+                                } else if (data1[0] < data2[0]) {
+                                    return -1;
+                                }
                             }
+                            return 0;
                         }
-                        return 0;
-                    }
-                );
-            }
+                    );
+
+                sensorTypes[index] = updatedBundle;
+            });
+            */
 
             // this will trigger state change event for sensorTypes which will cause chart props to update
+            // setSensorTypes([...sensorTypes]);
+            const newZoom: ZoomData = {
+                startTime: startTime,
+                endTime: endTime,
+                startDate: startDate,
+                endDate: endDate,
+            };
+            setZoom(newZoom);
+            getDetailDataDebouncer(newZoom);
+        }
+    };
+
+    const onChartInteractionHandler = (target: SensorDataBundle, isUserInteracting: boolean): void => {
+        // The user start/end interaction with one of the charts. We will set that chart as active/inactive and set all
+        // other chart as inactive
+        if (sensorTypes) {
+            sensorTypes.forEach((bundle: SensorDataBundle): void => {
+                if (bundle.seriesId === target.seriesId) {
+                    bundle.isChartActive = isUserInteracting;
+                } else {
+                    bundle.isChartActive = false;
+                }
+            });
             setSensorTypes([...sensorTypes]);
-
-            // setZoomStartDate(startDate);
-            // setZoomEndDate(endDate);
-
-            console.log(timeSeriesData);
         }
     };
 
@@ -928,9 +988,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                                     identifier={sensorTypes[index].type}
                                                     timespanNumeric={graphTimespanNumeric}
                                                     timespan={graphTimespan}
-                                                    zoomStartDate={zoomStartDate}
-                                                    zoomEndDate={zoomEndDate}
+                                                    zoom={zoom}
+                                                    isUserInteracting={sensorTypes[index].isChartActive}
                                                     onZoomAndPan={onZoomAndPanHandler}
+                                                    onUserInteraction={onChartInteractionHandler}
                                                 />
                                             </div>
                                         </div> 

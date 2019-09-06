@@ -4,7 +4,8 @@ import * as am4charts from '@amcharts/amcharts4/charts';
 import am4themes_animated from '@amcharts/amcharts4/themes/animated';
 import moment from 'moment';
 import { Context, context } from '../context/Context';
-import { SensorDataBundle } from '../components/entities/SensorModule';
+import { SensorDataBundle, ZoomData } from '../components/entities/SensorModule';
+import { DataPoint } from './entities/API';
 const debounce = require('debounce');
 
 am4core.useTheme(am4themes_animated);
@@ -17,18 +18,14 @@ interface AmChartProps extends React.Props<any> {
   timespanNumeric: number;
   // timespan
   timespan: string;
-  zoomStartDate?: string;
-  zoomEndDate?: string;
-  onZoomAndPan?: (target: SensorDataBundle, startDate: string, endDate: string) => void;
-}
-
-interface DataPoint {
-  date: string;
-  value: number;
+  zoom?: ZoomData;
+  zoomEventDispatchDelay?: number;
+  isUserInteracting: boolean;
+  onZoomAndPan?: (target: SensorDataBundle, startTime: number, endTime: number) => any;
+  onUserInteraction?: (target: SensorDataBundle, isUserInteracting: boolean) => any;
 }
 
 export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
-  const [chart, setChart] = useState<am4charts.XYChart>();
   // expanded or closed mode state
   const [expandedMode, setExpandedMode] = useState<boolean>(false);
   // graph height state
@@ -45,10 +42,18 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
 
   const [updatingData, setUpdatingData] = useState<boolean>(false);
 
+  let componentUnmounted: boolean = false;
+
   useEffect(() => {
+    console.log('rereating chart');
+
     // create amChart instance with custom identifier
     const newChart: am4charts.XYChart = am4core.create(props.identifier, am4charts.XYChart);
+    if (newChart.preloader) {
+      newChart.preloader.disabled = true;
+    }
     setSensorChart(newChart);
+
     var dbData: Array<DataPoint> = [];
 
     // if TSDB data exists
@@ -59,6 +64,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       dbData = props.TSDB.TSDBData.data.map((sensorDataPoint: Array<any>): DataPoint => {
         return {
             date: moment(sensorDataPoint[0]).toISOString(),
+            timestamp: moment(sensorDataPoint[0]).milliseconds(),
             value: sensorDataPoint[1].toFixed(2)
         };
       });
@@ -75,6 +81,9 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     dateAxis.dateFormatter = new am4core.DateFormatter();
     dateAxis.tooltipDateFormat = 'YYYY-MM-dd HH:mm:ss';
     dateAxis.keepSelection = true;
+    dateAxis.min = moment(props.TSDB.beginDate).toDate().getTime();
+    dateAxis.max = moment(props.TSDB.endDate).toDate().getTime();
+    dateAxis.strictMinMax = true;
 
     newChart.dateFormatter.dateFormat = 'i';
     newChart.dateFormatter.inputDateFormat = 'i';
@@ -95,6 +104,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     series.name = props.TSDB.type;
     series.dataFields.dateX = 'date';
     series.dataFields.valueY = 'value';
+    series.showOnInit = false;
 
     // format tooltip:
     series.tooltipText = '{valueY.value}';
@@ -106,6 +116,20 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     series.stroke = am4core.color('#7FCBCF');
     series.fillOpacity = 1;
 
+    newChart.scrollbarX = new am4charts.XYChartScrollbar();
+    newChart.scrollbarX.disabled = true;
+    (newChart.scrollbarX as am4charts.XYChartScrollbar).series.push(
+      newChart.series.getIndex(0) as am4charts.XYSeries
+    );
+
+    let bullet1 = series.bullets.push(new am4charts.CircleBullet());
+    series.heatRules.push({
+      target: bullet1.circle,
+      min: 2,
+      max: 2,
+      property: 'radius'
+    });
+
     // format graph gradient:
     var gradient = new am4core.LinearGradient();
     gradient.addColor(newChart.colors.getIndex(0), 0.5);
@@ -116,9 +140,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     // format cursor:
     newChart.cursor = new am4charts.XYCursor();
     newChart.cursor.lineY.opacity = 0;
-    newChart.scrollbarX = new am4charts.XYChartScrollbar();
-    // Show the same series in the scrollbar
-    (newChart.scrollbarX as am4charts.XYChartScrollbar).series.push(series);
 
     // graph smoothness
     // series.tensionX = 0.77;
@@ -130,55 +151,106 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       console.log('data validated');
     });
 
-    const dispatchZoomPanEvent: (event: any) => void = (event: any): void => {
-      console.log('On Zoom Event', updatingData);
-      if (!updatingData && props.onZoomAndPan && event.target.minZoomed && event.target.maxZoomed) {
-        props.onZoomAndPan(
-          props.TSDB, moment(event.target.minZoomed).toISOString(),
-          moment(event.target.maxZoomed).toISOString()
-        );
-      }
-    };
-
-    const debouncer: (event: any) => void = debounce(dispatchZoomPanEvent, 500);
-    dateAxis.events.on('startchanged', (event: any): void => {
-      // wait for half a second before firing zoom event
-      debouncer(event);
-    });
-    dateAxis.events.on('endchanged', (event: any): void => {
-      // wait for half a second before firing zoom event
-      debouncer(event);
-    });
-
-    setChart(newChart);
-
     return function cleanup() {
+      newChart.events.off('datavalidated');
       if (newChart) {
         newChart.dispose();
       }
     };
   },        []);
 
+  const dispatchZoomPanEvent: (event: any) => void = (event: any): void => {
+    console.log('On Zoom Event - ' + props.TSDB.seriesId, updatingData);
+    if (
+      !componentUnmounted &&
+      !updatingData &&
+      props.onZoomAndPan &&
+      event.target.minZoomed &&
+      event.target.maxZoomed
+    ) {
+      props.onZoomAndPan(
+        props.TSDB,
+        event.target.minZoomed,
+        event.target.maxZoomed
+      );
+    }
+  };
+
+  /**
+   * This useEffect is for adding/removing scrollbar which shows the snapshot of the data series's data.
+   * When the user interact with the chart, we will show the scrollbar. We will hide the scrollbar when the
+   * user stop interacting with the chart
+   */
+  useEffect(() => {
+    if (sensorChart) {
+      // Enable the scroll bar when the user start interacting with the chart and disable it otherwise
+      if (props.isUserInteracting) {
+        sensorChart.scrollbarX.disabled = false;
+      } else if (sensorChart.scrollbarX) {
+        sensorChart.scrollbarX.disabled = true;
+      }
+
+      /**
+       * Zoom/pan events get fired for every pixel the chart is zoomed or panned. For performance
+       * optimization, we won't need to do anything until the user stop zoom/pan so we will use
+       * debounce to delay the event. We won't dispatch the event until the user stoped zooming
+       * or panning for props.zoomEventDispatchDelay milliseconds.
+       */
+      const debouncer: (event: any) => void = debounce(
+        dispatchZoomPanEvent,
+        props.zoomEventDispatchDelay !== undefined ? props.zoomEventDispatchDelay : 50
+      );
+      const dateAxis: am4charts.DateAxis = (sensorChart.xAxes.getIndex(0) as am4charts.DateAxis);
+      dateAxis.events.on('startchanged', (event: any): void => {
+          debouncer(event);
+      });
+      dateAxis.events.on('endchanged', (event: any): void => {
+          debouncer(event);
+      });
+    }
+  },        [props.isUserInteracting]);
+
+  /**
+   * This useEffect will listen to zoom state change and update the chart's zoom automatically.
+   * NOTE: This will be called frequently as the user zoom/pan so need to make sure this function
+   * is fast and not do anything unneccessary
+   */
+  useEffect(() => {
+    if (sensorChart) {
+      const xAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
+      if (!props.isUserInteracting && props.zoom && props.zoom.startTime && props.zoom.endTime) {
+          xAxis.zoomToDates(moment(props.zoom.startDate).toDate(), moment(props.zoom.endDate).toDate());
+      }
+    }
+  },        [props.zoom]);
+
+  /**
+   * this use effect will be used for listening to the data change event and update the chart data
+   */
   useEffect(() => {
     // This can be called multiple times when data is updated so make sure we are not in the middle
     // of updarting chart data.
-    console.log('On data changed', updatingData);
-    if (!updatingData && props.TSDB && chart) {
+    if (!updatingData && props.TSDB && sensorChart) {
+      console.log('On data changed - ' + props.TSDB.seriesId, updatingData);
+
       // props.TSDB.TSDBData.data is an Array of data point in array form
       // e.g. ["2019-08-14T07:00:00Z", 47.54249999999999];
       // we need to convert them to DataPoint objects
       const dbData: DataPoint[] = props.TSDB.TSDBData.data.map((sensorDataPoint: Array<any>): DataPoint => {
         return {
             date: moment(sensorDataPoint[0]).toISOString(),
+            timestamp: moment(sensorDataPoint[0]).milliseconds(),
             value: sensorDataPoint[1].toFixed(2)
         };
       });
       setUpdatingData(true);
-      chart.data = dbData;
+      sensorChart.data = dbData;
       setTimeout(
           (): void => {
-            setUpdatingData(false);
-      },  1000);
+            if (!componentUnmounted) {
+              setUpdatingData(false);
+            }
+      },  100);
     }
   },        [props.TSDB]);
 
@@ -209,21 +281,21 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
   return (
     <div>
       <div
-        onClick={() => {
-          if (!expandedMode) {
-            setExpandedMode(true);
-            setGraphHeight('500px');
+        onClick={(event: any) => {
+          if (props.onUserInteraction) {
+            props.onUserInteraction(props.TSDB, true);
           }
         }}
         id={props.identifier}
-        style={{ width: '100%', height: graphHeight }}
+        style={{ width: '100%', height: (props.isUserInteracting ? '500px' : graphHeight) }}
       />
-      {expandedMode && (
+      {props.isUserInteracting && (
         <button
           className="compress-button"
           onClick={() => {
-            setGraphHeight('300px');
-            setExpandedMode(false);
+            if (props.onUserInteraction) {
+              props.onUserInteraction(props.TSDB, false);
+            }
           }}
         >
           Close

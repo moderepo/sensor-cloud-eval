@@ -1,4 +1,4 @@
-import { KeyValueStore, Device } from '../../components/entities/API';
+import { KeyValueStore, Device, TimeSeriesBounds } from '../../components/entities/API';
 import { TimeSeriesData } from './API';
 export interface SensorModuleSet {
     // associated device
@@ -47,11 +47,21 @@ export interface SensorDataBundle {
     // sensor data type
     type: string;
     // time-series data for sensor
+    beginDate: string;
+    endDate: string;
     TSDBData: TimeSeriesData;
-    dataSummary: TimeSeriesData;
+    timeSeriesDataSnapshot: TimeSeriesData;
     avgVal: string;
     minVal: string;
     maxVal: string;
+    isChartActive: boolean;
+}
+
+export interface ZoomData {
+    startTime: number;
+    endTime: number;
+    startDate: string;    // string representation of startTime in ISO date string
+    endDate: string;      // string representation of endTime in ISO date string
 }
 
 export interface SensingInterval {
