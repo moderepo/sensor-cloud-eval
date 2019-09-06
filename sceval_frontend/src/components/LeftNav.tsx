@@ -1,15 +1,33 @@
-import React from 'react';
-import { NavLink, Redirect, RouteComponentProps } from 'react-router-dom';
+import React, { useContext, useEffect, useState } from 'react';
+import { NavLink, Redirect } from 'react-router-dom';
+import { Context, context } from '../context/Context';
+import ClientStorage from '../controllers/ClientStorage';
 // import required images
 const modeLogo = require('../common_images/mode-logo.svg');
 const hardware = require('../common_images/navigation/nav-gateway.svg');
 const profile = require('../common_images/navigation/default-avatar.svg');
 
+const userInfo = ClientStorage.getItem('user-info');
 interface LeftNavProps {
   isLoggedIn: boolean;
 }
 
 export const LeftNav: React.FC<LeftNavProps & React.Props<any>> = (props: LeftNavProps & React.Props<any>) => {
+  const appContext: Context = useContext(context);
+  const [username, setUsername] = useState();
+  useEffect(
+    () => {
+      if (appContext.state.userData) {
+        if (appContext.state.userData.user.name !== username) {
+          setUsername(appContext.state.userData.user.name);
+        }
+      } else {
+        console.log('invoked but not hitting case');
+      }
+    },
+    [appContext, userInfo]
+  );
+
   if (!props.isLoggedIn) {
     return <Redirect to="/login" />;
   }
@@ -23,7 +41,7 @@ export const LeftNav: React.FC<LeftNavProps & React.Props<any>> = (props: LeftNa
       <NavLink className="navigation-item account" to="/my_account">
         <img src={profile} className="icon avatar" />
         <p>
-          {JSON.parse(`${localStorage.getItem('user-login')}`).value.user.name}
+          {userInfo ? userInfo.user.name : username}
         </p>
       </NavLink>
       <NavLink className="navigation-item hardware" to="/devices">

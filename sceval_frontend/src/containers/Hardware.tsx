@@ -1,7 +1,6 @@
 import React, { Fragment, useState, useEffect, useContext } from 'react';
 import { Redirect, RouteComponentProps, withRouter } from 'react-router';
-import { LeftNav } from '../components/LeftNav';
-import modeAPI, { ModeConstants, ModeAPI } from '../controllers/ModeAPI';
+import modeAPI, { ModeConstants } from '../controllers/ModeAPI';
 import { KeyValueStore, Device, Home } from '../components/entities/API';
 import { LoginInfo } from '../components/entities/User';
 import AppContext from '../controllers/AppContext';
