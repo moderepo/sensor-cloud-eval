@@ -217,14 +217,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
     const requestDetailedData = async (currentZoom: DateBounds): Promise<void> => {
         console.log('fetch details data');
-        /*
-        if (sensorTypes) {
-            sensorTypes.forEach((bundle: SensorDataBundle): void => {
-                bundle.timeSeriesData = [...bundle.timeSeriesData];
-            });
-            setSensorTypes(sensorTypes);
-        }
-        */
         
         if (sensorTypes) {
             console.log(currentZoom, seriesDateBounds);
@@ -243,6 +235,21 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
                 // One of the charts zoomed or panned so we need to sync up other charts to have the same zoom and pan.
                 // also, we need to load data for the start and end timespan
+                const timeSeriesDataArray: TimeSeriesData[] = [];
+                for (let seriesInfo of sensorTypes) {
+                    try {
+                        timeSeriesDataArray.push(await modeAPI.getTimeSeriesData(
+                            homeId, seriesInfo.seriesId, currentZoom.beginDate, currentZoom.endDate
+                        ));
+                    } catch (error) {
+                        console.log('Failed to load time series data for series id: ', seriesInfo.seriesId);
+                    }
+                }
+                const allTimeSeriesData: Map<string, DataPoint[]> = convertTimeSeriesDataArrayToMap(
+                    timeSeriesDataArray
+                );
+
+                /*
                 const allTimeSeriesData: Map<string, DataPoint[]> = convertTimeSeriesDataArrayToMap(await Promise.all(
                     sensorTypes.map((bundle: SensorDataBundle): Promise<TimeSeriesData> => {
                         return modeAPI.getTimeSeriesData(
@@ -253,6 +260,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                         );
                     })
                 ));
+                */
 
                 // update the sensor bundle timeseries data
                 sensorTypes.forEach((bundle: SensorDataBundle, index: number): void => {
@@ -311,7 +319,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     }
 
     /**
-     * initialize the page by loading all the needed data
+     * initialize the page by loading all the required data
      */
     const initialize = async (): Promise<any> => {
         // check for NULL up here so we don't have to check for null everywhere else below
@@ -340,32 +348,37 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         // which includes time series for all other modules AND series that are for offline sensors. So we need 
         // to filter out series that don't belong to the selected sensor module AND series that are for offline
         // sensors
-        const timeSeries: TimeSeriesInfo[] = (await modeAPI.getAllTimeSeriesInfo(home.id)).filter(
-            (series: TimeSeriesInfo): boolean => {
-                const sensorType: string = series.id.split('-')[1].toUpperCase();
-                return series.id.includes(sensorModuleId) && moduleData.value.sensors.includes(sensorType);
-            }
-        );
+        let allTimeSeriesInfo: TimeSeriesInfo[] = [];
+        try {
+            allTimeSeriesInfo = (await modeAPI.getAllTimeSeriesInfo(home.id)).filter(
+                (series: TimeSeriesInfo): boolean => {
+                    const sensorType: string = series.id.split('-')[1].toUpperCase();
+                    return series.id.includes(sensorModuleId) && moduleData.value.sensors.includes(sensorType);
+                }
+            );
+        } catch (error) {
+            // do nothing. This will be treated as no time series.
+        }
 
         // for each time series, load the time series' bounds so we know when is the series' very first
         // and very last data point
         const timeSeriesBounds: TimeSeriesBounds[] = [];
-        for (let series of timeSeries) {
+        for (let series of allTimeSeriesInfo) {
             try {
                 timeSeriesBounds.push(await modeAPI.getTimeSeriesBounds(home.id, series.id));
-
-                // Only need 1 time series bounds
+                // Only need 1 time series bounds so we can stop right away
                 break;
             } catch (error) {
                 console.error(error);
+                break;
             }
         }
 
         // Find the min and max bounds comparing all the series
-        let beginDate: string;
-        let beginTime: number = Number.MAX_SAFE_INTEGER;
-        let endDate: string;
-        let endTime: number = Number.MIN_SAFE_INTEGER;
+        let beginTime: number = moment(Date.now()).subtract(10, 'year').valueOf(); // default beginDate is 10 years ago
+        let beginDate: string = moment(beginTime).toISOString();
+        let endTime: number = Date.now();                                          // default endDate is today
+        let endDate: string = moment(endTime).toISOString();
 
         timeSeriesBounds.forEach((bounds: TimeSeriesBounds): void => {
             const boundsBeginTime: number = moment(bounds.begin).valueOf();
@@ -390,17 +403,19 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         // The result for each API call is an object of TimeSeriesData. However, we are only interested in the
         // timeseries data's "data" array. So once we got the response from API call, we will convert these
         // time series data's data into an array of DataPoints so that it is easier to use.
-        const allTimeSeriesData: Map<string, DataPoint[]> = convertTimeSeriesDataArrayToMap(await Promise.all(
-            timeSeries.map((series: TimeSeriesInfo): Promise<TimeSeriesData> => {
-                return modeAPI.getTimeSeriesData(
-                    home.id, series.id, beginDate, endDate
-                );
-            })
-        ));                
+        const timeSeriesDataArray: TimeSeriesData[] = [];
+        for (let seriesInfo of allTimeSeriesInfo) {
+            try {
+                timeSeriesDataArray.push(await modeAPI.getTimeSeriesData(home.id, seriesInfo.id, beginDate, endDate));
+            } catch (error) {
+                console.log('Failed to load time series data for series id: ', seriesInfo.id);
+            }
+        }
+        const allTimeSeriesData: Map<string, DataPoint[]> = convertTimeSeriesDataArrayToMap(timeSeriesDataArray);
 
         // Build an Array of SensorDataBundle for each time series
         const sensors: Array<SensorDataBundle> = [];
-        timeSeries.forEach((series: TimeSeriesInfo) => {
+        allTimeSeriesInfo.forEach((series: TimeSeriesInfo) => {
             const format: string = series.id.split('-')[1];
             const sensorType: string = format.split(':')[0];
             const unit: any = determineUnit(sensorType);
@@ -506,6 +521,8 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         setSelectedModule(props.match.params.sensorModuleId);
         setSelectedSensorModuleObj(moduleData);
         setSensorTypes(sensors);
+
+        console.log('Done initialize');
     };
 
     /**
@@ -514,11 +531,11 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     useEffect(
         () => {
             setIsLoading(true);
-            try {
-                initialize();
-            } catch (error) {
-               console.log(error);
-            }
+            initialize().catch((error: ErrorResponse): void => {
+                // Failed initialize
+                console.log('Initialize failed');
+            });
+            console.log('After Done initialize');
 
             if (!componentUnmounted) {
                 setIsLoading(false);
@@ -1095,7 +1112,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     <div
                         className="sensor-graph-container"
                     >
-                        { sensorTypes ?
+                        { sensorTypes && sensorTypes.length > 0 ?
                             // if TSDB data exists for the active sensors:
                             sensorTypes.map((sensor: SensorDataBundle, index: any) => {
                             return (
@@ -1142,18 +1159,26 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                     // if TSDB data for particular sensor exists:
                                     <Fragment>
                                         <div className="graph-container">
-                                            <div>
-                                                <AmChart
-                                                    TSDB={sensorTypes[index]}
-                                                    identifier={sensorTypes[index].type}
-                                                    timespanNumeric={graphTimespanNumeric}
-                                                    timespan={graphTimespan}
-                                                    zoom={zoom}
-                                                    hasFocus={sensorTypes[index].chartHasFocus}
-                                                    onZoomAndPan={onZoomAndPanHandler}
-                                                    onFocusChanged={onChartInteractionHandler}
-                                                />
-                                            </div>
+                                            {sensorTypes[index].timeSeriesData &&
+                                                sensorTypes[index].timeSeriesData.length > 0 ?
+                                            (
+                                                <div>
+                                                    <AmChart
+                                                        TSDB={sensorTypes[index]}
+                                                        identifier={sensorTypes[index].type}
+                                                        timespanNumeric={graphTimespanNumeric}
+                                                        timespan={graphTimespan}
+                                                        zoom={zoom}
+                                                        hasFocus={sensorTypes[index].chartHasFocus}
+                                                        onZoomAndPan={onZoomAndPanHandler}
+                                                        onFocusChanged={onChartInteractionHandler}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="sensor-data-loader">
+                                                    No Data
+                                                </div>
+                                            )}
                                         </div> 
                                     </Fragment>
                                     :
@@ -1165,13 +1190,13 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                             );
                         }) :
                         // if the response is not empty
-                        !isLoading ?
+                        isLoading ?
                         <div className="sensor-data-loader">
                             <img src={loader} />
                         </div> :
                         // if the TSDB data for the timeframe is actually empty
                         <div className="sensor-data-loader">
-                            No Data Available For This Timeframe
+                            No Data
                         </div>
                         }
                     </div>
