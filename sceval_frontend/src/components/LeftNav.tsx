@@ -15,6 +15,9 @@ interface LeftNavProps {
 export const LeftNav: React.FC<LeftNavProps & React.Props<any>> = (props: LeftNavProps & React.Props<any>) => {
   const appContext: Context = useContext(context);
   const [username, setUsername] = useState();
+
+  const isLoggedIn: boolean = localStorage.getItem('user-login') !== null;
+
   useEffect(
     () => {
       if (appContext.state.userData) {
@@ -28,7 +31,7 @@ export const LeftNav: React.FC<LeftNavProps & React.Props<any>> = (props: LeftNa
     [appContext, userInfo]
   );
 
-  if (!props.isLoggedIn) {
+  if (!isLoggedIn) {
     return <Redirect to="/login" />;
   }
 

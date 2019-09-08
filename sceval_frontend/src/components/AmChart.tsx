@@ -164,11 +164,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       newChart.scrollbarX.disabled = true;
     });
 
-    newChart.events.on('datavalidated', (event: any): void => {
-      // on data validated, we can enable events again
-      dateAxis.events.enable();
-    });
-
     /**
      * Zoom/pan events get fired for every pixel the chart is zoomed or panned. For performance
      * optimization, we won't need to do anything until the user stop zoom/pan so we will use
@@ -190,7 +185,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     return function cleanup() {
       dateAxis.events.off('startchanged', onRangeChange, newChart);
       dateAxis.events.off('endchanged', onRangeChange, newChart);
-      newChart.events.off('datavalidated');
 
       if (newChart && !newChart.isDisposed()) {
         newChart.dispose();
@@ -200,7 +194,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
 
   /**
    * This useEffect is for enabling/disabling scrollbar which shows the snapshot of the data series's data.
-   * When the user interact with the chart, we will show the scrollbar. We will hide the scrollbar when the
+   * When the user starts interact with the chart, we will show the scrollbar. We will hide the scrollbar when the
    * user stop interacting with the chart
    */
   useEffect(() => {
@@ -208,7 +202,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
       if (props.hasFocus) {
         sensorChart.scrollbarX.disabled = false;
-      } else if (sensorChart.scrollbarX) {
+      } else {
         sensorChart.scrollbarX.disabled = true;
       }
     }
@@ -258,6 +252,20 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       // data zoom/pan event. We need to ignore those pan/zoom event so that we don't go into infinite loop
       // so we need to disable events before setting data.
       dateAxis.events.disable();
+
+      // temporary re-enable scrollbar so that it will get re-rendered when we change data
+      sensorChart.scrollbarX.disabled = false;
+
+      // listen to data invalidated event. Once data is invalidated, we can disable the scrollbar again
+      // and also re-enable date axis events
+      sensorChart.events.once('datavalidated', (): void => {
+        if (!props.hasFocus) {
+          sensorChart.scrollbarX.disabled = true;
+        }
+        dateAxis.events.enable();
+      });
+
+      // change chart data
       sensorChart.data = props.TSDB.timeSeriesData;
     }
   },        [props.TSDB]);
