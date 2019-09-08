@@ -9,7 +9,7 @@ import { DataPoint } from './entities/API';
 import { Constants } from '../utils/Constants';
 const debounce = require('debounce');
 
-am4core.useTheme(am4themes_animated);
+// am4core.useTheme(am4themes_animated);
 
 interface AmChartProps extends React.Props<any> {
   // amchart chart identifier
@@ -21,9 +21,9 @@ interface AmChartProps extends React.Props<any> {
   timespan: string;
   zoom?: DateBounds;
   zoomEventDispatchDelay?: number;
-  isUserInteracting: boolean;
+  hasFocus: boolean;            // Used for showing/hiding scrollbar
   onZoomAndPan?: (target: SensorDataBundle, startTime: number, endTime: number) => any;
-  onUserInteraction?: (target: SensorDataBundle, isUserInteracting: boolean) => any;
+  onFocusChanged?: (target: SensorDataBundle, hasFocus: boolean) => any;
 }
 
 export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
@@ -42,32 +42,48 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
 
   let componentUnmounted: boolean = false;
 
+  /**
+   * Dispatch a zoom event to let the listener know the chart just zoomed/panned
+   * @param event 
+   */
+  const dispatchZoomPanEvent: (event: any) => void = (event: any): void => {
+    console.log('On Zoom Event Dispatch: ', {
+      series_id: props.TSDB.seriesId,
+      zoom: props.zoom,
+    });
+
+    if (
+      !componentUnmounted &&
+      props.onZoomAndPan !== undefined &&
+      event && event.target &&
+      event.target.minZoomed !== undefined &&
+      event.target.maxZoomed !== undefined
+    ) {
+      // if the user zoomed out all the way, use the props.TSDB.dateBounds begin and end instead
+      if (event.target.minZoomed <= props.TSDB.dateBounds.beginTime &&
+        event.target.maxZoomed >= props.TSDB.dateBounds.endTime) {
+        props.onZoomAndPan(
+          props.TSDB,
+          props.TSDB.dateBounds.beginTime,
+          props.TSDB.dateBounds.endTime
+        );
+      } else {
+        props.onZoomAndPan(
+          props.TSDB,
+          event.target.minZoomed,
+          event.target.maxZoomed
+        );
+      }
+    }
+  };
+
   useEffect(() => {
     console.log('rereating chart');
 
     // create amChart instance with custom identifier
     const newChart: am4charts.XYChart = am4core.create(props.identifier, am4charts.XYChart);
-    if (newChart.preloader) {
-      newChart.preloader.disabled = true;
-    }
     setSensorChart(newChart);
-
-    var dbData: Array<DataPoint> = [];
-
-    // if TSDB data exists
-    if (props.TSDB) {
-      // props.TSDB.TSDBData.data is an Array of data point in array form
-      // e.g. ["2019-08-14T07:00:00Z", 47.54249999999999];
-      // we need to convert them to DataPoint objects
-      dbData = props.TSDB.TSDBData.data.map((sensorDataPoint: Array<any>): DataPoint => {
-        return {
-            date: moment(sensorDataPoint[0]).toISOString(),
-            timestamp: moment(sensorDataPoint[0]).valueOf(),
-            value: sensorDataPoint[1].toFixed(2)
-        };
-      });
-    }
-    newChart.data = dbData;
+    newChart.data = props.TSDB.timeSeriesData;
 
     // push  new x-value axis
     let dateAxis = newChart.xAxes.push(new am4charts.DateAxis());
@@ -102,7 +118,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     series.name = props.TSDB.type;
     series.dataFields.dateX = 'date';
     series.dataFields.valueY = 'value';
-    series.showOnInit = false;
 
     // format tooltip:
     series.tooltipText = '{valueY.value}';
@@ -114,19 +129,17 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     series.stroke = am4core.color('#7FCBCF');
     series.fillOpacity = 1;
 
+    // Add a scrollbar so the user can zoom/pan but make it hiddne initially until the user click on the chart
     newChart.scrollbarX = new am4charts.XYChartScrollbar();
-    newChart.scrollbarX.disabled = true;
-    (newChart.scrollbarX as am4charts.XYChartScrollbar).series.push(
-      newChart.series.getIndex(0) as am4charts.XYSeries
-    );
-
-    let bullet1 = series.bullets.push(new am4charts.CircleBullet());
-    series.heatRules.push({
-      target: bullet1.circle,
-      min: 2,
-      max: 2,
-      property: 'radius'
-    });
+    (newChart.scrollbarX as am4charts.XYChartScrollbar).series.push(series);
+ 
+    const bullet = series.bullets.push(new am4charts.Bullet());
+    const square = bullet.createChild(am4core.Rectangle);
+    square.width = 5;
+    square.height = 5;
+    square.opacity = 1;
+    square.horizontalCenter = 'middle';
+    square.verticalCenter = 'middle';
 
     // format graph gradient:
     var gradient = new am4core.LinearGradient();
@@ -144,78 +157,62 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     dateAxis.renderer.grid.template.strokeOpacity = 0.07;
     valueAxis.renderer.grid.template.strokeOpacity = 0.07;
 
-    newChart.events.on('datavalidated', (event: any): void => {
-      // on data ready, zoom the chart to the set timespan
-      console.log('data validated');
+    // Listen to chart ready event and then disable the scrollbar
+    // If we disable it before it is rendered, the scrollbar will be blank
+    newChart.events.on('ready', (event: any): void => {
+      console.log('Chart ready: ', props.TSDB.seriesId);
+      newChart.scrollbarX.disabled = true;
     });
 
+    newChart.events.on('datavalidated', (event: any): void => {
+      // on data validated, we can enable events again
+      dateAxis.events.enable();
+    });
+
+    /**
+     * Zoom/pan events get fired for every pixel the chart is zoomed or panned. For performance
+     * optimization, we won't need to do anything until the user stop zoom/pan so we will use
+     * debounce to delay the event. We won't dispatch the event until the user stoped zooming
+     * or panning for props.zoomEventDispatchDelay milliseconds.
+     */
+    const dispatchEventDelay: number = props.zoomEventDispatchDelay !== undefined ?
+      props.zoomEventDispatchDelay : Constants.CHART_ZOOM_EVENT_DELAY_IN_MS;
+
+    const zoomPanEventDebouncer: (event: any) => void = debounce(dispatchZoomPanEvent, dispatchEventDelay);
+    const onRangeChange = (event: any): void => {
+      zoomPanEventDebouncer(event);
+    };
+
+    // register zoom/pan events
+    dateAxis.events.on('startchanged', onRangeChange, newChart);
+    dateAxis.events.on('endchanged', onRangeChange, newChart);
+
     return function cleanup() {
+      dateAxis.events.off('startchanged', onRangeChange, newChart);
+      dateAxis.events.off('endchanged', onRangeChange, newChart);
       newChart.events.off('datavalidated');
-      if (newChart) {
+
+      if (newChart && !newChart.isDisposed()) {
         newChart.dispose();
       }
     };
   },        []);
 
-  const dispatchZoomPanEvent: (event: any) => void = (event: any): void => {
-    console.log('On Zoom Event - ' + props.TSDB.seriesId);
-    if (
-      !componentUnmounted &&
-      props.onZoomAndPan &&
-      event.target.minZoomed &&
-      event.target.maxZoomed
-    ) {
-      props.onZoomAndPan(
-        props.TSDB,
-        event.target.minZoomed,
-        event.target.maxZoomed
-      );
-    }
-  };
-
   /**
-   * This useEffect is for adding/removing scrollbar which shows the snapshot of the data series's data.
+   * This useEffect is for enabling/disabling scrollbar which shows the snapshot of the data series's data.
    * When the user interact with the chart, we will show the scrollbar. We will hide the scrollbar when the
    * user stop interacting with the chart
    */
   useEffect(() => {
     if (sensorChart) {
-      // Enable the scroll bar when the user start interacting with the chart and disable it otherwise
-      if (props.isUserInteracting) {
+      const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
+      if (props.hasFocus) {
         sensorChart.scrollbarX.disabled = false;
       } else if (sensorChart.scrollbarX) {
         sensorChart.scrollbarX.disabled = true;
       }
-
-      /**
-       * Zoom/pan events get fired for every pixel the chart is zoomed or panned. For performance
-       * optimization, we won't need to do anything until the user stop zoom/pan so we will use
-       * debounce to delay the event. We won't dispatch the event until the user stoped zooming
-       * or panning for props.zoomEventDispatchDelay milliseconds.
-       */
-      const debouncer: (event: any) => void = debounce(
-        dispatchZoomPanEvent,
-        props.zoomEventDispatchDelay !== undefined ?
-          props.zoomEventDispatchDelay :
-          Constants.CHART_ZOOM_EVENT_DELAY_IN_MILLISECONDS
-      );
-      const dateAxis: am4charts.DateAxis = (sensorChart.xAxes.getIndex(0) as am4charts.DateAxis);
-      dateAxis.events.on('startchanged', (event: any): void => {
-        // don't dispatch event if zoom changed event is not triggered by user interaction.
-        // This can happen because we programatically set the zoom sometime.
-        if (props.isUserInteracting) {
-            debouncer(event);
-        }
-      });
-      dateAxis.events.on('endchanged', (event: any): void => {
-        // don't dispatch event if zoom changed event is not triggered by user interaction.
-        // This can happen because we programatically set the zoom sometime.
-        if (props.isUserInteracting) {
-          debouncer(event);
-        }
-      });
     }
-  },        [props.isUserInteracting]);
+  },        [props.hasFocus]);
 
   /**
    * This useEffect will listen to zoom state change and update the chart's zoom automatically.
@@ -224,9 +221,22 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
    */
   useEffect(() => {
     if (sensorChart) {
-      const xAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
-      if (!props.isUserInteracting && props.zoom && props.zoom.beginTime && props.zoom.endTime) {
-          xAxis.zoomToDates(moment(props.zoom.beginDate).toDate(), moment(props.zoom.endDate).toDate());
+      const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
+      if (!props.hasFocus && props.zoom && props.zoom.beginTime && props.zoom.endTime) {
+        console.log('Updating zoom: ', {
+          series_id: props.TSDB.seriesId,
+          zoom: props.zoom,
+        });
+
+        // When we programatically zoom the chart, it will also trigger the zoom/pan event which
+        // will cause the zoomPan event from being dispatched and all other chart will be trigger
+        // to zoom again which will go into an infinite loop. So we need to disable the event first
+        // before we zoom.
+        if (props.hasFocus) {
+          dateAxis.events.disable();
+        }
+        dateAxis.zoomToDates(moment(props.zoom.beginDate).toDate(), moment(props.zoom.endDate).toDate());
+        dateAxis.events.enable();
       }
     }
   },        [props.zoom]);
@@ -238,19 +248,17 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     // This can be called multiple times when data is updated so make sure we are not in the middle
     // of updarting chart data.
     if (props.TSDB && sensorChart) {
-      console.log('On data changed - ' + props.TSDB.seriesId);
-
-      // props.TSDB.TSDBData.data is an Array of data point in array form
-      // e.g. ["2019-08-14T07:00:00Z", 47.54249999999999];
-      // we need to convert them to DataPoint objects
-      const dbData: DataPoint[] = props.TSDB.TSDBData.data.map((sensorDataPoint: Array<any>): DataPoint => {
-        return {
-            date: moment(sensorDataPoint[0]).toISOString(),
-            timestamp: moment(sensorDataPoint[0]).valueOf(),
-            value: sensorDataPoint[1].toFixed(2)
-        };
+      const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
+      console.log('Updating data: ', {
+        series_id: props.TSDB.seriesId,
+        zoom: props.zoom,
       });
-      sensorChart.data = dbData;
+  
+      // update the data BUT note that this will cause the data range change which will trigger the
+      // data zoom/pan event. We need to ignore those pan/zoom event so that we don't go into infinite loop
+      // so we need to disable events before setting data.
+      dateAxis.events.disable();
+      sensorChart.data = props.TSDB.timeSeriesData;
     }
   },        [props.TSDB]);
 
@@ -282,19 +290,19 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     <div>
       <div
         onClick={(event: any) => {
-          if (props.onUserInteraction) {
-            props.onUserInteraction(props.TSDB, true);
+          if (props.onFocusChanged) {
+            props.onFocusChanged(props.TSDB, true);
           }
         }}
         id={props.identifier}
-        style={{ width: '100%', height: (props.isUserInteracting ? '500px' : graphHeight) }}
+        style={{ width: '100%', height: (props.hasFocus ? '500px' : graphHeight) }}
       />
-      {props.isUserInteracting && (
+      {props.hasFocus && (
         <button
           className="compress-button"
           onClick={() => {
-            if (props.onUserInteraction) {
-              props.onUserInteraction(props.TSDB, false);
+            if (props.onFocusChanged) {
+              props.onFocusChanged(props.TSDB, false);
             }
           }}
         >

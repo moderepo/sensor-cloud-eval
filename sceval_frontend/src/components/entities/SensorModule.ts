@@ -1,4 +1,4 @@
-import { KeyValueStore, Device, TimeSeriesBounds } from '../../components/entities/API';
+import { KeyValueStore, Device, TimeSeriesBounds, DataPoint } from '../../components/entities/API';
 import { TimeSeriesData } from './API';
 export interface SensorModuleSet {
     // associated device
@@ -49,13 +49,13 @@ export interface SensorDataBundle {
     // the boundaries of the time series data, the date of the very first and very last data point
     dateBounds: DateBounds;
     // snapshot of the time series data from the very first to very last data point
-    timeSeriesDataSnapshot: TimeSeriesData;
+    timeSeriesDataSnapshot: DataPoint[];
     // time-series data for sensor
-    TSDBData: TimeSeriesData;
+    timeSeriesData: DataPoint[];
     avgVal: string;
     minVal: string;
     maxVal: string;
-    isChartActive: boolean;
+    chartHasFocus: boolean;
 }
 
 export interface DateBounds {

@@ -8,7 +8,8 @@ import {
     ErrorResponse,
     TimeSeriesData,
     TimeSeriesInfo,
-    TimeSeriesBounds
+    TimeSeriesBounds,
+    DataPoint
 } from '../components/entities/API';
 import modeAPI from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
@@ -26,6 +27,7 @@ import { Constants } from '../utils/Constants';
 import { Home } from '../components/entities/API';
 import { RouteParams } from '../components/entities/Routes';
 import { string, DateFormatter } from '@amcharts/amcharts4/core';
+import { pointsToPath } from '@amcharts/amcharts4/.internal/core/rendering/Path';
 
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
@@ -50,6 +52,8 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     const [selectedGateway, setSelectedGateway] = useState<number>(0);
     // state of all TSDB data being fetched
     const [TSDBDataFetched, setTSDBDataFetched] = useState<boolean>(false);
+    // state to show that the page is loading so the user doesn't think it frozen
+    const [isLoading, setIsLoading] = useState<boolean>(true);
     // quantity of active sensors
     const [activeSensorQuantity, setActiveSensorQuantity] = useState<number>(0);
     // contains RT Websocket data
@@ -79,7 +83,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     const [noTSDBData, setNoTSDBData] = useState<boolean>(false);
     // declaration of a useContext hook
     const sensorContext: Context = useContext(context);
-
+    // The min/max date bounds of all the sensor time series
+    const [seriesDateBounds, setSeriesDateBounds] = useState<DateBounds>();
+    // The current zoom bounds
     const [zoom, setZoom] = useState<DateBounds>();
 
     // to keep track of component mounted/unmounted event so we don't call set state when component is unmounted
@@ -188,8 +194,112 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         }
     };
 
+    /**
+     * Given an Array of TimeSeriesData objects, return the time series data in a map.
+     * @param timeSeriesDataArray
+     */
+    const convertTimeSeriesDataArrayToMap = (timeSeriesDataArray: TimeSeriesData[]): Map<string, DataPoint[]> => {
+        return timeSeriesDataArray.reduce(
+            (map: Map<string, DataPoint[]>, tsData: TimeSeriesData): Map<string, DataPoint[]> => {
+                const convertedData: DataPoint[] = tsData.data.map((dataPoint: Array<any>): DataPoint => {
+                    return {
+                        date: dataPoint[0],
+                        timestamp: moment(dataPoint[0]).valueOf(),
+                        value: dataPoint[1],
+                    };
+                });
+                map.set(tsData.seriesId, convertedData);
+                return map;
+            },
+            new Map<string, DataPoint[]>()
+        );
+    };
+
     const requestDetailedData = async (currentZoom: DateBounds): Promise<void> => {
         console.log('fetch details data');
+        /*
+        if (sensorTypes) {
+            sensorTypes.forEach((bundle: SensorDataBundle): void => {
+                bundle.timeSeriesData = [...bundle.timeSeriesData];
+            });
+            setSensorTypes(sensorTypes);
+        }
+        */
+        
+        if (sensorTypes) {
+            console.log(currentZoom, seriesDateBounds);
+            if (seriesDateBounds && seriesDateBounds.beginTime >= currentZoom.beginTime &&
+                seriesDateBounds.endTime <= currentZoom.endTime) {
+                // look like the user zoomed out all the way. This mean we can just use the time series
+                // snapshot data and don't need to load more details data
+                sensorTypes.forEach((bundle: SensorDataBundle, index: number): void => {
+                    // need to create a copy of the bundle so that it is treated as new object and cause
+                    // react to fire state change event
+                    const updatedBundle: SensorDataBundle = Object.assign({}, bundle);
+                    sensorTypes[index] = updatedBundle;
+                    updatedBundle.timeSeriesData = [...updatedBundle.timeSeriesDataSnapshot];   // copy the snapshot
+                });
+            } else {
+
+                // One of the charts zoomed or panned so we need to sync up other charts to have the same zoom and pan.
+                // also, we need to load data for the start and end timespan
+                const allTimeSeriesData: Map<string, DataPoint[]> = convertTimeSeriesDataArrayToMap(await Promise.all(
+                    sensorTypes.map((bundle: SensorDataBundle): Promise<TimeSeriesData> => {
+                        return modeAPI.getTimeSeriesData(
+                            homeId,
+                            bundle.seriesId,
+                            currentZoom.beginDate,
+                            currentZoom.endDate
+                        );
+                    })
+                ));
+
+                // update the sensor bundle timeseries data
+                sensorTypes.forEach((bundle: SensorDataBundle, index: number): void => {
+                    let seriesData: DataPoint[] = [];
+                    if (allTimeSeriesData.has(bundle.seriesId)) {
+                        // NOTE: Need to create temp and check for null so that compiler doesn't require
+                        // seriesData to be defined as DataPoint[] | undefined
+                        const temp: DataPoint[] | undefined = allTimeSeriesData.get(bundle.seriesId);
+                        if (temp !== undefined) {
+                            seriesData = temp;
+                        }
+                    }
+
+                    // need to create a copy of the bundle so that it is treated as new object and cause
+                    // react to fire state change event
+                    const updatedBundle: SensorDataBundle = Object.assign({}, bundle);
+                    sensorTypes[index] = updatedBundle;
+
+                    // Insert newly loaded series data into timeSeriesDataSnapshot
+                    updatedBundle.timeSeriesData = [];
+                    let i: number = 0;
+                    for (i = 0; i < updatedBundle.timeSeriesDataSnapshot.length; i++) {
+                        let point: DataPoint = updatedBundle.timeSeriesDataSnapshot[i];
+                        if (point.timestamp < currentZoom.beginTime) {
+                            updatedBundle.timeSeriesData.push(point);
+                        } else {
+                            // found a point that is greater than the zoon area
+                            break;
+                        }
+                    }
+                    // add the newly loaded point in the middle of updatedBundle.timeSeriesData
+                    seriesData.forEach((newPoint: DataPoint): void => {
+                        updatedBundle.timeSeriesData.push(newPoint);
+                    });
+                    // Add points from snapshot that is later than the zoom end time into updatedBundle.timeSeriesData
+                    for (; i < updatedBundle.timeSeriesDataSnapshot.length; i++) {
+                        let point: DataPoint = updatedBundle.timeSeriesDataSnapshot[i];
+                        if (point.timestamp > currentZoom.endTime) {
+                            updatedBundle.timeSeriesData.push(point);
+                        }
+                    }
+                });
+            }
+
+            setSensorTypes([...sensorTypes]);
+        }
+        
     };
 
     // the URL should contain deviceId and sensorModuleId. If not, take the user
@@ -201,152 +311,219 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     }
 
     /**
+     * initialize the page by loading all the needed data
+     */
+    const initialize = async (): Promise<any> => {
+        // check for NULL up here so we don't have to check for null everywhere else below
+        if (!props.match.params.deviceId || !props.match.params.sensorModuleId) {
+            return;
+        }
+
+        // get selected deviceId and selectedModuleId from URL params
+        const sensorModuleId: string = props.match.params.sensorModuleId;
+        const gateway: number = Number(props.match.params.deviceId);
+
+        // restore login
+        await AppContext.restoreLogin();
+
+        // open new connection for refresh
+        ModeConnection.openConnection(); 
+
+        // get home id
+        const home: Home = await modeAPI.getHome(ClientStorage.getItem('user-login').user.id);
+
+        // load module data
+        const moduleData: SensorModuleInterface = await modeAPI.getDeviceKeyValueStore(
+            gateway, `${Constants.SENSOR_MODULE_KEY_PREFIX}${sensorModuleId}`);
+
+        // load all timeseries for the module. NOTE: getAllTimeSeriesInfo will return time series for the HOME
+        // which includes time series for all other modules AND series that are for offline sensors. So we need 
+        // to filter out series that don't belong to the selected sensor module AND series that are for offline
+        // sensors
+        const timeSeries: TimeSeriesInfo[] = (await modeAPI.getAllTimeSeriesInfo(home.id)).filter(
+            (series: TimeSeriesInfo): boolean => {
+                const sensorType: string = series.id.split('-')[1].toUpperCase();
+                return series.id.includes(sensorModuleId) && moduleData.value.sensors.includes(sensorType);
+            }
+        );
+
+        // for each time series, load the time series' bounds so we know when is the series' very first
+        // and very last data point
+        const timeSeriesBounds: TimeSeriesBounds[] = [];
+        for (let series of timeSeries) {
+            try {
+                timeSeriesBounds.push(await modeAPI.getTimeSeriesBounds(home.id, series.id));
+
+                // Only need 1 time series bounds
+                break;
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // Find the min and max bounds comparing all the series
+        let beginDate: string;
+        let beginTime: number = Number.MAX_SAFE_INTEGER;
+        let endDate: string;
+        let endTime: number = Number.MIN_SAFE_INTEGER;
+
+        timeSeriesBounds.forEach((bounds: TimeSeriesBounds): void => {
+            const boundsBeginTime: number = moment(bounds.begin).valueOf();
+            const boundsEndTime: number = moment(bounds.end).valueOf();
+
+            if (!beginDate || beginTime < boundsBeginTime) {
+                beginDate = bounds.begin;
+                beginTime = boundsBeginTime;
+            }
+            if (!endDate || endTime < boundsEndTime) {
+                endDate = bounds.end;
+                endTime = boundsEndTime;
+            }
+        });
+
+        // calculate the interval and buckets times so we can group the data points in buckets
+        const interval: number =
+            Math.floor((endTime - beginTime) / Constants.SNAPSHOT_CHART_MAX_DATA_POINTS);
+        const firstBucketTS: number = Math.floor(beginTime - (interval / 2));
+
+        // We have the bounds for each series so now we can request for the time series data from begin to end
+        // The result for each API call is an object of TimeSeriesData. However, we are only interested in the
+        // timeseries data's "data" array. So once we got the response from API call, we will convert these
+        // time series data's data into an array of DataPoints so that it is easier to use.
+        const allTimeSeriesData: Map<string, DataPoint[]> = convertTimeSeriesDataArrayToMap(await Promise.all(
+            timeSeries.map((series: TimeSeriesInfo): Promise<TimeSeriesData> => {
+                return modeAPI.getTimeSeriesData(
+                    home.id, series.id, beginDate, endDate
+                );
+            })
+        ));                
+
+        // Build an Array of SensorDataBundle for each time series
+        const sensors: Array<SensorDataBundle> = [];
+        timeSeries.forEach((series: TimeSeriesInfo) => {
+            const format: string = series.id.split('-')[1];
+            const sensorType: string = format.split(':')[0];
+            const unit: any = determineUnit(sensorType);
+            let seriesData: DataPoint[] = [];
+            if (allTimeSeriesData.has(series.id)) {
+                // NOTE: Need to create temp and check for null so that compiler doesn't require
+                // seriesData to be defined as DataPoint[] | undefined
+                const temp: DataPoint[] | undefined = allTimeSeriesData.get(series.id);
+                if (temp !== undefined) {
+                    seriesData = temp;
+                }
+            }
+
+            // get the sum/min/max/avg values from the time series' data
+            let sum: number = 0;
+            let avg: number = 0;
+            let minVal: number = Number.MAX_SAFE_INTEGER;
+            let maxVal: number = Number.MIN_SAFE_INTEGER;
+            seriesData.forEach(
+                (point: DataPoint): void => {
+                    sum = sum + point.value;
+                    minVal = Math.min(minVal, point.value);
+                    maxVal = Math.max(maxVal, point.value);
+            },  0);
+            avg = sum / seriesData.length;
+
+            if (seriesData.length > Constants.SNAPSHOT_CHART_MAX_DATA_POINTS) {
+                // Build an array of snapshot data for the time series. This data will be used to show the
+                // chart in the scrollbar. For this data, we don't need too many data points. If the backend
+                // returns too many, we need to remove some for rendering optimization
+                // Here is the algorithm. lets say the date bounds/range is 1 year and the max # of data
+                // points we can render is 12 then we need 1 point per month. The interval will ber 1 month.
+
+                const dataBucket: Array<DataPoint> = 
+                    new Array<DataPoint>(Constants.SNAPSHOT_CHART_MAX_DATA_POINTS);
+
+                // Go through all the data point and take 1 point for each interval
+                // Once this is done, seriesData.length should be ABOUT Constants.SNAPSHOT_CHART_MAX_DATA_POINTS
+                // The length can be less depending on how the data points are spread out. If the data points
+                // are not uniformly spread out then there will be less points after filtered
+                seriesData.forEach((point: DataPoint, index: number): boolean => {
+                    // find out which bucket this point belongs to and whether or not there is already another
+                    // points in the bucket.
+                    const bucketNumber: number = Math.floor((point.timestamp - firstBucketTS) / interval);
+                    if (bucketNumber >= 0 &&
+                        bucketNumber < dataBucket.length &&
+                        dataBucket[bucketNumber] === undefined) {
+
+                        dataBucket[bucketNumber] = point;
+                        return true;
+                    }
+                    return false;
+                });
+
+                seriesData = dataBucket.filter((point: DataPoint): boolean => {
+                    return point !== undefined;
+                });
+            }
+
+            const sensorData: SensorDataBundle = {
+                seriesId: series.id,
+                unit: unit,
+                type: sensorType,
+                dateBounds: {
+                    beginDate: beginDate,
+                    endDate: endDate, 
+                    beginTime: beginTime,
+                    endTime: endTime,
+                },
+                timeSeriesDataSnapshot: seriesData,
+                timeSeriesData: seriesData,
+                chartHasFocus: false,
+                avgVal: sensorType !== 'uv' ? avg.toFixed(1) : avg.toFixed(3),
+                maxVal: sensorType !== 'uv' ? maxVal.toFixed(1) : maxVal.toFixed(3),
+                minVal: sensorType !== 'uv' ? minVal.toFixed(1) : minVal.toFixed(3)
+            };
+
+            // remember the min/max bounds of all the data series
+            setSeriesDateBounds({
+                beginDate: beginDate,
+                beginTime: beginTime,
+                endDate: endDate,
+                endTime: endTime,
+            });
+
+            // push that data to the sensors array
+            sensors.push(sensorData);
+        });
+
+        // sort sensors by type
+        sensors.sort((a: any, b: any) =>  {
+            if (a.type < b.type) {
+                return -1;
+            }
+            if (a.type > b.type) {
+                return 1;
+            }
+            return 0;
+        });
+
+        setHomeId(home.id);
+        setSelectedGateway(gateway);
+        setSelectedModule(props.match.params.sensorModuleId);
+        setSelectedSensorModuleObj(moduleData);
+        setSensorTypes(sensors);
+    };
+
+    /**
      * This useEffect does not depend on any state so it will only get called once, when the component is mounted
      */
     useEffect(
         () => {
-            // run this code in an async function to make sure these are ran in this order.
-            (async () => {
-                // check for NULL up here so we don't have to check for null everywhere else below
-                if (!props.match.params.deviceId || !props.match.params.sensorModuleId) {
-                    return;
-                }
-    
-                // get selected deviceId and selectedModuleId from URL params
-                const sensorModuleId: string = props.match.params.sensorModuleId;
-                const gateway: number = Number(props.match.params.deviceId);
+            setIsLoading(true);
+            try {
+                initialize();
+            } catch (error) {
+               console.log(error);
+            }
 
-                // restore login
-                AppContext.restoreLogin();
-    
-                // open new connection for refresh
-                ModeConnection.openConnection(); 
-
-                // get home id
-                const home: Home = await modeAPI.getHome(ClientStorage.getItem('user-login').user.id);
-
-                // load module data
-                const moduleData: SensorModuleInterface = await modeAPI.getDeviceKeyValueStore(
-                    gateway, `${Constants.SENSOR_MODULE_KEY_PREFIX}${sensorModuleId}`);
-
-                // load all timeseries for the module. NOTE: getAllTimeSeriesInfo will return time series for the HOME
-                // which includes time series for all other modules AND series that are for offline sensors. So we need 
-                // to filter out series that don't belong to the selected sensor module AND series that are for offline
-                // sensors
-                const timeSeries: TimeSeriesInfo[] = (await modeAPI.getAllTimeSeriesInfo(home.id)).filter(
-                    (series: TimeSeriesInfo): boolean => {
-                        const sensorType: string = series.id.split('-')[1].toUpperCase();
-                        return series.id.includes(sensorModuleId) && moduleData.value.sensors.includes(sensorType);
-                    }
-                );
-
-                // for each time series, load the time series' bounds so we know when is the series' very first
-                // and very last data point
-                const timeSeriesBounds: TimeSeriesBounds[] = await Promise.all(
-                    timeSeries.map((series: TimeSeriesInfo): Promise<TimeSeriesBounds> => {
-                        return modeAPI.getTimeSeriesBounds(home.id, series.id);
-                    })
-                );
-
-                // find the min and max bounds of all the series
-                let beginDate: string;
-                let endDate: string;
-                let beginTime: number;
-                let endTime: number;
-                timeSeriesBounds.forEach((bounds: TimeSeriesBounds): void => {
-                    const boundsBeginTime: number = moment(bounds.begin).valueOf();
-                    const boundsEndTime: number = moment(bounds.end).valueOf();
-
-                    if (!beginDate || beginTime < boundsBeginTime) {
-                        beginDate = bounds.begin;
-                        beginTime = boundsBeginTime;
-                    }
-                    if (!endDate || endTime < boundsEndTime) {
-                        endDate = bounds.end;
-                        endTime = boundsEndTime;
-                    }
-                });
-
-                // we have the bounds for each series so now we can request for the time series data from begin to end
-                const timeSeriesData: TimeSeriesData[] = await Promise.all(
-                    timeSeriesBounds.map((seriesBounds: TimeSeriesBounds): Promise<TimeSeriesData> => {
-                        return modeAPI.getTimeSeriesData(
-                            home.id, seriesBounds.seriesId, seriesBounds.begin, seriesBounds.end
-                        );
-                    })
-                );
-
-                const sensors: Array<SensorDataBundle> = [];
-                timeSeriesData.forEach((series: TimeSeriesData) => {
-                    const format: string = series.seriesId.split('-')[1];
-                    const sensorType: string = format.split(':')[0];
-                    const unit: any = determineUnit(sensorType);
-
-                    // get the sum/min/max/avg values from the time series' data
-                    let sum: number = 0;
-                    let avg: number = 0;
-                    let minVal: number = Number.MAX_SAFE_INTEGER;
-                    let maxVal: number = Number.MIN_SAFE_INTEGER;
-                    series.data.forEach(
-                        (data: Array<any>): void => {
-                            sum = sum + data[1];
-                            minVal = Math.min(minVal, data[1]);
-                            maxVal = Math.max(maxVal, data[1]);
-                    },  0);
-                    avg = sum / series.data.length;
-
-                    if (series.data.length > Constants.SNAPSHOT_CHART_MAX_DATA_POINTS) {
-                        // Build an array of snapshot data for the time series. This data will be used to show the
-                        // chart in the scrollbar. For this data, we don't need too many data points. If the backend
-                        // returns too many, we need to remove some for rendering optimization
-                        const snapshotData: Array<Array<any>> = [];
-
-                        series.data = snapshotData;
-                    }
-
-                    const sensorData: SensorDataBundle = {
-                        seriesId: series.seriesId,
-                        unit: unit,
-                        type: sensorType,
-                        dateBounds: {
-                            beginDate: beginDate,
-                            endDate: endDate, 
-                            beginTime: beginTime,
-                            endTime: endTime,
-                        },
-                        timeSeriesDataSnapshot: Object.assign({}, series),
-                        TSDBData: series,
-                        isChartActive: false,
-                        avgVal: sensorType !== 'uv' ? avg.toFixed(1) : avg.toFixed(3),
-                        maxVal: sensorType !== 'uv' ? maxVal.toFixed(1) : maxVal.toFixed(3),
-                        minVal: sensorType !== 'uv' ? minVal.toFixed(1) : minVal.toFixed(3)
-                    };
-                    // push that data to the sensors array
-                    sensors.push(sensorData);
-                });
-
-                // sort sensors by type
-                sensors.sort((a: any, b: any) =>  {
-                    if (a.type < b.type) {
-                        return -1;
-                    }
-                    if (a.type > b.type) {
-                        return 1;
-                    }
-                    return 0;
-                });
-
-                console.log(sensors);
-
-                if (!componentUnmounted) {
-                    setHomeId(home.id);
-                    setSelectedGateway(gateway);
-                    setSelectedModule(props.match.params.sensorModuleId);
-                    setSelectedSensorModuleObj(moduleData);
-                    setSensorTypes(sensors);
-                }
+            if (!componentUnmounted) {
+                setIsLoading(false);
                 setTSDBDataFetched(true);
-            })();
+            }
     },  []);
 
     // React hook's componentDidMount and componentDidUpdate
@@ -420,6 +597,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             // websocket message handler for RT data
             const webSocketMessageHandler: any = {
                 notify: (message: any): void => {
+                    return;
                     if (componentUnmounted) {
                         return;
                     }
@@ -521,7 +699,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
      * for performance optimization, we don't want to fetch data too often. We want to wait until the user stop
      * zooming/panning and then load more data. Therefore, we need to use debounce to delay data fetch.
      */
-    const getDetailDataDebouncer: any = debounce(requestDetailedData, 1000);
+    const getDetailDataDebouncer: any = debounce(requestDetailedData, Constants.CHART_DETAIL_REQUEST_DELAY_IN_MS);
 
     /**
      * This is the handler for when one of the charts is zoomed or panned.
@@ -536,48 +714,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             const startDate: string = moment(startTime).toISOString();
             const endDate: string = moment(endTime).toISOString();
 
-            console.log('Start time: ', startTime, startDate);
-            console.log('End time: ', endTime, endDate);
-
-            /*
-            // One of the charts zoomed or panned so we need to sync up other charts to have the same zoom and pan.
-            // also, we need to load data for the start and end timespan
-            const timeSeriesDataMap: any = (await Promise.all(
-                sensorTypes.map((bundle: SensorDataBundle): Promise<TimeSeriesData> => {
-                    return modeAPI.getTimeSeriesData(homeId, bundle.seriesId, startDate, endDate);
-                })
-            )).reduce(
-                (map: any, timeSeriesData: TimeSeriesData): any => {
-                    map[timeSeriesData.seriesId] = timeSeriesData;
-                    return map;
-            },  {});
-
-            // update the sensor bundle timeseries data
-            sensorTypes.forEach((bundle: SensorDataBundle, index: number): void => {
-                // need to create a copy of the bundle so that it is treated as new object and cause
-                // react to fire state change event
-                const timeSeriesData: TimeSeriesData = timeSeriesDataMap[bundle.seriesId];
-                const updatedBundle: SensorDataBundle = Object.assign({}, bundle);
-                updatedBundle.TSDBData.data = 
-                    [...updatedBundle.timeSeriesDataSnapshot.data, ...timeSeriesData.data].sort(
-                        (data1: Array<any>, data2: Array<any>): number => {
-                            if (data1 && data2 && data1.length > 1 && data2.length > 1 && data1[0] && data2[0]) {
-                                if (data1[0] > data2[0]) {
-                                    return 1;
-                                } else if (data1[0] < data2[0]) {
-                                    return -1;
-                                }
-                            }
-                            return 0;
-                        }
-                    );
-
-                sensorTypes[index] = updatedBundle;
-            });
-            */
-
             // this will trigger state change event for sensorTypes which will cause chart props to update
-            // setSensorTypes([...sensorTypes]);
             const newZoom: DateBounds = {
                 beginTime: startTime,
                 endTime: endTime,
@@ -585,6 +722,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 endDate: endDate,
             };
             setZoom(newZoom);
+
+            // Need to load detail data for the zoomed in area. However, don't do it right away.
+            // Use debouncer to wait for some milliseconds before doing it.
             getDetailDataDebouncer(newZoom);
         }
     };
@@ -595,9 +735,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         if (sensorTypes) {
             sensorTypes.forEach((bundle: SensorDataBundle): void => {
                 if (bundle.seriesId === target.seriesId) {
-                    bundle.isChartActive = isUserInteracting;
+                    bundle.chartHasFocus = isUserInteracting;
                 } else {
-                    bundle.isChartActive = false;
+                    bundle.chartHasFocus = false;
                 }
             });
             setSensorTypes([...sensorTypes]);
@@ -1009,9 +1149,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                                     timespanNumeric={graphTimespanNumeric}
                                                     timespan={graphTimespan}
                                                     zoom={zoom}
-                                                    isUserInteracting={sensorTypes[index].isChartActive}
+                                                    hasFocus={sensorTypes[index].chartHasFocus}
                                                     onZoomAndPan={onZoomAndPanHandler}
-                                                    onUserInteraction={onChartInteractionHandler}
+                                                    onFocusChanged={onChartInteractionHandler}
                                                 />
                                             </div>
                                         </div> 
@@ -1025,7 +1165,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                             );
                         }) :
                         // if the response is not empty
-                        !noTSDBData ?
+                        !isLoading ?
                         <div className="sensor-data-loader">
                             <img src={loader} />
                         </div> :
