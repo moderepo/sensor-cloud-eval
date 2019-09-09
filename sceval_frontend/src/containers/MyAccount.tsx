@@ -3,9 +3,9 @@ import { AppContext } from '../controllers/AppContext';
 import { Context, context } from '../context/Context';
 import { Redirect, withRouter, RouteComponentProps } from 'react-router';
 // required images imported
-const email = require('../common_images/acct_email.svg');
-const name = require('../common_images/acct_name.svg');
-const password = require('../common_images/acct_password.svg');
+const email = require('../common_images/user/acct_email.svg');
+const name = require('../common_images/user/acct_name.svg');
+const password = require('../common_images/user/acct_password.svg');
 
 interface HardwareProps extends React.Props<any> {
   isLoggedIn: boolean;

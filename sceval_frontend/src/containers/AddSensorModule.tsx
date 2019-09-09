@@ -17,8 +17,8 @@ import { evaluateSensorTypes, evaluateModel } from '../utils/SensorTypes';
 // required images imported
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const checkMark = require('../common_images/notifications/check-1.svg');
-const addModule1 = require('../common_images/add-module-1.svg');
-const addModule2 = require('../common_images/add-module-2.svg');
+const addModule1 = require('../common_images/sensor_modules/add-module-1.svg');
+const addModule2 = require('../common_images/sensor_modules/add-module-2.svg');
 // declared props interface
 interface AddSensorModuleProps extends React.Props<any> {
   isLoggedIn: boolean;
