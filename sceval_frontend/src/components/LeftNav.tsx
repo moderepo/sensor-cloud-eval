@@ -3,7 +3,7 @@ import { NavLink, Redirect } from 'react-router-dom';
 import { Context, context } from '../context/Context';
 import ClientStorage from '../controllers/ClientStorage';
 // import required images
-const modeLogo = require('../common_images/mode-logo.svg');
+const modeLogo = require('../common_images/logos/mode-logo.svg');
 const hardware = require('../common_images/navigation/nav-gateway.svg');
 const profile = require('../common_images/navigation/default-avatar.svg');
 

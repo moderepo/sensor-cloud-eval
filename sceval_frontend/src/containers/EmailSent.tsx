@@ -1,7 +1,7 @@
 import React from 'react';
 import LoginHeader from '../components/LoginHeader';
 // required images imported
-const emailSent = require('../common_images/email_sent.svg');
+const emailSent = require('../common_images/notifications/email_sent.svg');
 
 const EmailSent: React.FC = () => {
     return (
