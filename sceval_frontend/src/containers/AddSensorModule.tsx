@@ -1,10 +1,9 @@
 import React, { Component, Fragment } from 'react';
-import LeftNav from '../components/LeftNav';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import ModeConnection from '../controllers/ModeConnection';
 import AppContext from '../controllers/AppContext';
 import modeAPI from '../controllers/ModeAPI';
-import { KeyValueStore, Device, ErrorResponse, Home } from '../components/entities/API';
+import { KeyValueStore, Device, Home } from '../components/entities/API';
 import { Context, context } from '../context/Context';
 import { Progress } from 'antd';
 import 'antd/dist/antd.css';
@@ -13,10 +12,8 @@ import { Constants } from '../utils/Constants';
 import { SensorModuleInterface, AddSensorModuleState } from '../components/entities/SensorModule';
 import { RouteParams } from '../components/entities/Routes';
 import SensorModuleComp from '../components/SensorModuleComp';
-import { evaluateSensorTypes, evaluateModel } from '../utils/SensorTypes';
+import { evaluateModel } from '../utils/SensorTypes';
 // required images imported
-const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
-const checkMark = require('../common_images/notifications/check-1.svg');
 const addModule1 = require('../common_images/sensor_modules/add-module-1.svg');
 const addModule2 = require('../common_images/sensor_modules/add-module-2.svg');
 // declared props interface
