@@ -16,9 +16,6 @@ interface AmChartProps extends React.Props<any> {
   identifier: string;
   // time series data passed to chart
   TSDB: SensorDataBundle;
-  timespanNumeric: number;
-  // timespan
-  timespan: string;
   zoom?: DateBounds;
   zoomEventDispatchDelay?: number;
   hasFocus: boolean;            // Used for showing/hiding scrollbar
@@ -46,19 +43,20 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
    * Dispatch a zoom event to let the listener know the chart just zoomed/panned
    * @param event 
    */
-  const dispatchZoomPanEvent: (event: any) => void = (event: any): void => {
-    console.log('On Zoom Event Dispatch: ', {
-      series_id: props.TSDB.seriesId,
-      zoom: props.zoom,
-    });
-
+  const dispatchZoomPanEvent = (event: any): void => {
     if (
       !componentUnmounted &&
+      props.hasFocus &&
       props.onZoomAndPan !== undefined &&
       event && event.target &&
       event.target.minZoomed !== undefined &&
       event.target.maxZoomed !== undefined
     ) {
+      console.log('On Zoom Event Dispatch: ', {
+        series_id: props.TSDB.seriesId,
+        zoom: props.zoom,
+      });
+  
       // if the user zoomed out all the way, use the props.TSDB.dateBounds begin and end instead
       if (event.target.minZoomed <= props.TSDB.dateBounds.beginTime &&
         event.target.maxZoomed >= props.TSDB.dateBounds.endTime) {
@@ -105,13 +103,8 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     let valueAxis = newChart.yAxes.push(new am4charts.ValueAxis());
     valueAxis.renderer.labels.template.fill = am4core.color('#7FCBCF');
     valueAxis.renderer.minWidth = 60;
-    valueAxis.extraMin = 0.1;
-    if (props.timespan === 'minute') {
-      valueAxis.extraMax = 1.0;
-      valueAxis.extraMin = 1.0;
-    } else {
-      valueAxis.extraMax = 0.2;
-    }
+    valueAxis.extraMin = 0;
+    valueAxis.extraMax = 0;
 
     // format data series:
     let series: am4charts.LineSeries = newChart.series.push(new am4charts.LineSeries());
@@ -162,30 +155,21 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     newChart.events.on('ready', (event: any): void => {
       console.log('Chart ready: ', props.TSDB.seriesId);
       newChart.scrollbarX.disabled = true;
+      
+      if (props.zoom) {
+        // When we programatically zoom the chart, it will also trigger the zoom/pan event which
+        // will cause the zoomPan event from being dispatched and all other chart will be trigger
+        // to zoom again which will go into an infinite loop. So we need to disable the event first
+        // before we zoom.
+        if (props.hasFocus) {
+          dateAxis.events.disable();
+        }
+        dateAxis.zoomToDates(moment(props.zoom.beginDate).toDate(), moment(props.zoom.endDate).toDate());
+        dateAxis.events.enable();
+      }  
     });
 
-    /**
-     * Zoom/pan events get fired for every pixel the chart is zoomed or panned. For performance
-     * optimization, we won't need to do anything until the user stop zoom/pan so we will use
-     * debounce to delay the event. We won't dispatch the event until the user stoped zooming
-     * or panning for props.zoomEventDispatchDelay milliseconds.
-     */
-    const dispatchEventDelay: number = props.zoomEventDispatchDelay !== undefined ?
-      props.zoomEventDispatchDelay : Constants.CHART_ZOOM_EVENT_DELAY_IN_MS;
-
-    const zoomPanEventDebouncer: (event: any) => void = debounce(dispatchZoomPanEvent, dispatchEventDelay);
-    const onRangeChange = (event: any): void => {
-      zoomPanEventDebouncer(event);
-    };
-
-    // register zoom/pan events
-    dateAxis.events.on('startchanged', onRangeChange, newChart);
-    dateAxis.events.on('endchanged', onRangeChange, newChart);
-
     return function cleanup() {
-      dateAxis.events.off('startchanged', onRangeChange, newChart);
-      dateAxis.events.off('endchanged', onRangeChange, newChart);
-
       if (newChart && !newChart.isDisposed()) {
         newChart.dispose();
       }
@@ -205,8 +189,35 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       } else {
         sensorChart.scrollbarX.disabled = true;
       }
+
+      /**
+       * Zoom/pan events get fired for every pixel the chart is zoomed or panned. For performance
+       * optimization, we won't need to do anything until the user stop zoom/pan so we will use
+       * debounce to delay the event. We won't dispatch the event until the user stoped zooming
+       * or panning for props.zoomEventDispatchDelay milliseconds.
+       */
+      const dispatchEventDelay: number = props.zoomEventDispatchDelay !== undefined ?
+        props.zoomEventDispatchDelay : Constants.CHART_ZOOM_EVENT_DELAY_IN_MS;
+
+      const zoomPanEventDebouncer: (event: any) => void = debounce(dispatchZoomPanEvent, dispatchEventDelay);
+      const onRangeChange = (event: any): void => {
+        zoomPanEventDebouncer(event);
+      };
+
+      // register zoom/pan events
+      dateAxis.events.on('selectionextremeschanged', onRangeChange);
+
+      return function cleanup() {
+        if (!dateAxis.isDisposed()) {
+          dateAxis.events.off('selectionextremeschanged', onRangeChange);
+        }
+      };
+    } else {
+      return (): void => {
+        // nothing
+      };
     }
-  },        [props.hasFocus]);
+  },        [sensorChart, props.hasFocus]);
 
   /**
    * This useEffect will listen to zoom state change and update the chart's zoom automatically.
@@ -292,12 +303,12 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     }
     // invoke dependencies
     */
-  },        [sensorChart, props.timespan, sensorContext.state.rtValues]);
+  },        [sensorChart, sensorContext.state.rtValues]);
 
   return (
     <div>
       <div
-        onClick={(event: any) => {
+        onPointerDown={(event: any) => {
           if (props.onFocusChanged) {
             props.onFocusChanged(props.TSDB, true);
           }

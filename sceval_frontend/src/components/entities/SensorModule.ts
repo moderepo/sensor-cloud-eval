@@ -70,3 +70,8 @@ export interface SensingInterval {
     unit: string;
     multiplier: number;
 }
+
+export interface ChartTimespan {
+    label: string;  // The label to be displayed to the user e.g. "15 minutes", "1 Hour", etc...
+    value: number;  // The value correspond to the label in millisecs e.g. 900000 for 15 mins and 3600000 for 1 hours
+}

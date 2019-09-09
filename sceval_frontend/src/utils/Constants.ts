@@ -32,8 +32,29 @@ export namespace Constants {
   export const SNAPSHOT_CHART_MAX_DATA_POINTS: number = 100;
 
   // How long to delay before dispatching chart zoom event
-  export const CHART_ZOOM_EVENT_DELAY_IN_MS: number = 50;
+  export const CHART_ZOOM_EVENT_DELAY_IN_MS: number = 100;
   export const CHART_DETAIL_REQUEST_DELAY_IN_MS: number = 3000;
+
+  // Months and years values will assume months are 30 days and years are 365 days. This is not
+  // accurate but it is good enough. If you need a correct value, don't use these constants.
+  export const MINUTE_IN_SECS: number     = 60;       // 1 minute in seconds
+  export const MINUTE_IN_MS: number       = 60 * 1000;  // 1 minute in milliseconds
+  export const HOUR_IN_SECS: number       = 60 * 60;
+  export const HOUR_IN_MS: number         = 60 * 60 * 1000;
+  export const DAY_IN_SECS: number        = 60 * 60 * 24;
+  export const DAY_IN_MS: number          = 60 * 60 * 24 * 1000;
+  export const WEEK_IN_SECS: number       = 60 * 60 * 24 * 7;
+  export const WEEK_IN_MS: number         = 60 * 60 * 24 * 7 * 1000;
+  export const MONTH_IN_SECS: number      = 60 * 60 * 24 * 30;
+  export const MONTH_IN_MS: number        = 60 * 60 * 24 * 30 * 1000;
+  export const YEAR_IN_SECS: number       = 60 * 60 * 24 * 356;
+  export const YEAR_IN_MS: number         = 60 * 60 * 24 * 356 * 1000;
+  export const DECADE_IN_SECS: number     = 60 * 60 * 24 * 356 * 10;
+  export const DECADE_IN_MS: number       = 60 * 60 * 24 * 356 * 10 * 1000;
+  export const CENTURY_IN_SECS: number    = 60 * 60 * 24 * 356 * 100;
+  export const CENTURY_IN_MS: number      = 60 * 60 * 24 * 356 * 100 * 1000;
+  export const MILLENNIUM_IN_SECS: number = 60 * 60 * 24 * 356 * 1000;
+  export const MILLENNIUM_IN_MS: number   = 60 * 60 * 24 * 356 * 1000 * 1000;
 }
 
 export const MODULE_CATELOG = [

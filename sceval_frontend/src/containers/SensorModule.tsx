@@ -21,12 +21,13 @@ import {
     SensorModuleInterface,
     SensingInterval,
     SensorDataBundle,
-    DateBounds
+    DateBounds,
+    ChartTimespan as GraphTimespan
 } from '../components/entities/SensorModule';
 import { Constants } from '../utils/Constants';
 import { Home } from '../components/entities/API';
 import { RouteParams } from '../components/entities/Routes';
-import { string, DateFormatter } from '@amcharts/amcharts4/core';
+import { string, DateFormatter, time } from '@amcharts/amcharts4/core';
 import { pointsToPath } from '@amcharts/amcharts4/.internal/core/rendering/Path';
 
 const loader = require('../common_images/notifications/loading_ring.svg');
@@ -60,15 +61,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     const [activeSensors, setActiveSensors] = useState<any>();
     // contains data from TSDB fetch
     const [sensorTypes, setSensorTypes] = useState<SensorDataBundle[]>();
-    // default 15 unit time horizon
-    const [graphTimespanNumeric, setGraphTimespanNumeric] = useState<any>(15);
-    // default minute time horizon
-    const [graphTimespan, setGraphTimespan] = useState<any>('minutes');
-    // current stop time (end time of data)
-    const [currentStop, setCurrentStop] = useState<Moment>(moment(new Date()));
-    // current start time (start time of data)
-    const [currentStart, setCurrentStart] = 
-    useState<Moment>(moment(new Date()).subtract(graphTimespanNumeric, graphTimespan));
     // full sensor list associated to sensor module
     const [fullSensorList, setFullSensorList] = useState();
     // list of sensors offline
@@ -88,114 +80,14 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     // The current zoom bounds
     const [zoom, setZoom] = useState<DateBounds>();
 
+    const [graphTimespanOptions, setGraphTimespanOptions] = useState<GraphTimespan[]>([]);
+    const [selectedGraphTimespan, setSelectedGraphTimespan] = useState<GraphTimespan>();
+
     // to keep track of component mounted/unmounted event so we don't call set state when component is unmounted
     let componentUnmounted: boolean;
 
-    // time-series data fetch handler method
-    const performTSDBFetch =  
-    (homeID: number, sensors: any, 
-     sType: string, seriesID: string, 
-     unit: string, wsData: any, stop?: Moment, start?: Moment,
-     direction?: string
-     ) => {
-        // set now as reference point
-        const now = new Date();
-        let endTime = moment(now);
-        // determine start time
-        let startTime = moment(now).subtract(
-            graphTimespanNumeric === '' ?
-                1 : graphTimespanNumeric, 
-            graphTimespan === 'real-time' ?
-                'minute' : graphTimespan);
-        if (stop && start) {
-            endTime = stop;
-            startTime = start;
-        }
-        // get time-series data for the provided time-range and series type
-        modeAPI.getTimeSeriesData(homeID, seriesID, startTime.toISOString(), endTime.toISOString())
-        .then((timeseriesData: TimeSeriesData) => {
-            if (componentUnmounted) {
-                return;
-            }
-            let maxVal = 0;
-            let minVal = Infinity;
-            let sum = 0;
-            // if data exists
-            if (timeseriesData.data.length > 0) {
-                // for each set of TSDB data, perform a calculation
-                timeseriesData.data.forEach((datapoint: any, datapointIndex: any) => {
-                    // add to total data points
-                    sum += datapoint[1];
-                    // check for maximum
-                    if (datapoint[1] > maxVal) {
-                        maxVal = datapoint[1];
-                    }
-                    // check for minimum
-                    if (datapoint[1] < minVal) {
-                        minVal = datapoint[1];
-                    }
-                    // if all data points have been assessed
-                    if (datapointIndex === timeseriesData.data.length - 1) {
-                        // push the updated data into a sensordata object
-                        const sensorData = {
-                            seriesID: seriesID,
-                            unit: unit,
-                            type: sType,
-                            TSDBData: timeseriesData,
-                            avgVal: sType !== 'uv' ? 
-                                (sum / datapointIndex).toFixed(1) : (sum / datapointIndex).toFixed(3),
-                            maxVal: sType !== 'uv' ?
-                                maxVal.toFixed(1) : maxVal.toFixed(3),
-                            minVal: sType !== 'uv' ?
-                                minVal.toFixed(1) : minVal.toFixed(3)
-                        };
-                        // push that data to the sensors array
-                        sensors.push(sensorData);
-                    }
-                    // bundle data after going through sensor set
-                    if (sensors.length === wsData.length) {
-                        // if all of the sensor data has been populated, sort it alphabetically by type
-                        const sortedTSDBData = sensors.sort((a: any, b: any) =>  {
-                            if (a.type < b.type) {
-                                return -1;
-                            }
-                            if (a.type > b.type) {
-                                return 1;
-                            }
-                            return 0;
-                        });
-                        // set TSDB values
-                        if (!TSDBDataFetched) {
-                            setSensorTypes(sortedTSDBData);
-                            setTSDBDataFetched(true);
-                        }
-                    }
-                });
-            }
-        });
-    };
-
-    const toggleTimeSeriesState = (direction: string) => {
-        let sensors: Array<any> = [];
-        if (sensorTypes) {
-            sensorTypes.forEach((sensor: any) =>  {
-                const now =  moment(new Date());
-                const stopDifference = now.diff(currentStop.toISOString(), graphTimespan);
-                const newStart = currentStart.subtract(graphTimespanNumeric, graphTimespan);
-                const newStop = currentStop.subtract(graphTimespan, graphTimespanNumeric);
-                if (direction === 'forward') {
-                    performTSDBFetch(homeId, sensors, sensor.type, sensor.seriesID, sensor.unit, sensorTypes);
-                } else {
-                    performTSDBFetch(
-                        homeId, sensors, sensor.type, sensor.seriesID, 
-                        sensor.unit, sensorTypes, newStop, newStart);
-                }
-            });
-        }
-    };
-
     /**
-     * Given an Array of TimeSeriesData objects, return the time series data in a map.
+     * Given an Array of TimeSeriesData objects, return the time series data in a map using time series id as keys
      * @param timeSeriesDataArray
      */
     const convertTimeSeriesDataArrayToMap = (timeSeriesDataArray: TimeSeriesData[]): Map<string, DataPoint[]> => {
@@ -215,6 +107,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         );
     };
 
+    /**
+     * Request for detailed data for the given zoomed area
+     */
     const requestDetailedData = async (currentZoom: DateBounds): Promise<void> => {
         console.log('fetch details data');
         
@@ -248,19 +143,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 const allTimeSeriesData: Map<string, DataPoint[]> = convertTimeSeriesDataArrayToMap(
                     timeSeriesDataArray
                 );
-
-                /*
-                const allTimeSeriesData: Map<string, DataPoint[]> = convertTimeSeriesDataArrayToMap(await Promise.all(
-                    sensorTypes.map((bundle: SensorDataBundle): Promise<TimeSeriesData> => {
-                        return modeAPI.getTimeSeriesData(
-                            homeId,
-                            bundle.seriesId,
-                            currentZoom.beginDate,
-                            currentZoom.endDate
-                        );
-                    })
-                ));
-                */
 
                 // update the sensor bundle timeseries data
                 sensorTypes.forEach((bundle: SensorDataBundle, index: number): void => {
@@ -307,16 +189,77 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
             setSensorTypes([...sensorTypes]);
         }
-        
     };
 
-    // the URL should contain deviceId and sensorModuleId. If not, take the user
-    // back to the devices page
-    if (!props.match.params.deviceId || !props.match.params.sensorModuleId) {        
-        return (
-            <Redirect to="/devices" />
-        );
-    }
+    /**
+     * Once we know the begin and end time, we can build the list of graph timespan options the user can choose
+     * We will build this list dynamically base on the range of the begin/end time because using 1 fixed list
+     * of time span doesn't make sense for some data. For example: If the range is 10 years, it makes more sense
+     * to give the user the time span that are larger e.g. 2 year, 1 year, 6 months, 1 months.
+     * Once we know the begin and end time, we can build the list of graph timespan options the user can choose
+     * We will build this list dynamically base on the range of the begin/end time because using 1 fixed list
+     * of time span doesn't make sense for some data. For example: If the range is 10 years, it makes more sense
+     * to give the user the time span that are larger e.g. 2 year, 1 year, 6 months, 1 months.
+     * 
+     * @param beginTime 
+     * @param endTime 
+     */
+    const buildGraphTimespanOptions = (beginTime: number, endTime: number): GraphTimespan[] => {
+        const range: number = endTime - beginTime;
+
+        const predefinedOptions: GraphTimespan[] = [
+            { value: Constants.YEAR_IN_MS * 10, label: '10 Years' },
+            { value: Constants.YEAR_IN_MS * 5, label: '5 Years' },
+            { value: Constants.YEAR_IN_MS * 2, label: '2 Years' },
+            { value: Constants.YEAR_IN_MS, label: '1 Year' },
+            { value: Constants.MONTH_IN_MS * 6, label: '6 Months' },
+            { value: Constants.MONTH_IN_MS * 2, label: '2 Months' },
+            { value: Constants.MONTH_IN_MS, label: '1 Month' },
+            { value: Constants.WEEK_IN_MS * 2, label: '2 Weeks' },
+            { value: Constants.WEEK_IN_MS, label: '1 Week' },
+            { value: Constants.DAY_IN_MS * 2, label: '2 Days' },
+            { value: Constants.DAY_IN_MS, label: '1 Day' },
+            { value: Constants.HOUR_IN_MS * 12, label: '12 Hours' },
+            { value: Constants.HOUR_IN_MS * 6, label: '6 Hours' },
+            { value: Constants.HOUR_IN_MS * 2, label: '2 Hours' },
+            { value: Constants.HOUR_IN_MS, label: '1 Hour' },
+            { value: Constants.MINUTE_IN_MS * 30, label: '30 Minutes' },
+            { value: Constants.MINUTE_IN_MS * 15, label: '15 Minutes' },
+        ];
+
+        const options: Set<GraphTimespan> = new Set<GraphTimespan>();
+
+        // We will try to create 5 options, 50%, 25%, 20%, 10%, 5% of the range.
+        // However, these values might give odd or random timespan e.g. 7 minutes, 13 days, or 3 weeks.
+        // So for each of these options, we will use the closest predefinedOptions instead of the actual
+        // value. For example: if 25 % of the range is 14 Hours, we will use the 12 Hours option. Or if the
+        // 10 % of the range is 25 Minutes, we will use the 15 Minutes option and so on.
+        // NOTE: we use a set for the list of options because sometime 1 or more of these 5 values will
+        // return the same timespan. We only need to use one.
+        [
+            Math.floor((5 / 100) * range),
+            Math.floor((10 / 100) * range),
+            Math.floor((20 / 100) * range),
+            Math.floor((25 / 100) * range),
+            Math.floor((50 / 100) * range),
+        ].forEach((timespan: number): void => {
+            // now find the closest predefinedOptions to the timespan
+            let result: GraphTimespan | undefined = predefinedOptions.find((option: GraphTimespan): boolean => {
+                return option.value < timespan;
+            });
+            if (!result) {
+                // Use the last one
+                result = predefinedOptions[predefinedOptions.length - 1];
+            }
+            options.add(result);
+        });
+
+        // Convert the Set to Array and also add the 'Real-time' option to the beginning
+        return [
+            { value: 0, label: 'Real-time' },
+            ...Array.from(options.values())
+        ];
+    };
 
     /**
      * initialize the page by loading all the required data
@@ -393,6 +336,11 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 endTime = boundsEndTime;
             }
         });
+
+        // Once we know the begin and end time, we can build the list of graph timespan options the user can choose
+        // We will build this list dynamically base on the range of the begin/end time because using 1 fixed list
+        // of time span doesn't make sense for some data.
+        let timespanOptions: GraphTimespan[] = buildGraphTimespanOptions(beginTime, endTime);
 
         // calculate the interval and buckets times so we can group the data points in buckets
         const interval: number =
@@ -493,14 +441,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 minVal: sensorType !== 'uv' ? minVal.toFixed(1) : minVal.toFixed(3)
             };
 
-            // remember the min/max bounds of all the data series
-            setSeriesDateBounds({
-                beginDate: beginDate,
-                beginTime: beginTime,
-                endDate: endDate,
-                endTime: endTime,
-            });
-
             // push that data to the sensors array
             sensors.push(sensorData);
         });
@@ -520,10 +460,28 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         setSelectedGateway(gateway);
         setSelectedModule(props.match.params.sensorModuleId);
         setSelectedSensorModuleObj(moduleData);
+
+        // remember the min/max bounds of all the data series
+        setSeriesDateBounds({
+            beginDate: beginDate,
+            beginTime: beginTime,
+            endDate: endDate,
+            endTime: endTime,
+        });
+
+        setGraphTimespanOptions(timespanOptions);
         setSensorTypes(sensors);
 
         console.log('Done initialize');
     };
+
+    // the URL should contain deviceId and sensorModuleId. If not, take the user
+    // back to the devices page
+    if (!props.match.params.deviceId || !props.match.params.sensorModuleId) {        
+        return (
+            <Redirect to="/devices" />
+        );
+    }
 
     /**
      * This useEffect does not depend on any state so it will only get called once, when the component is mounted
@@ -709,7 +667,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             };
     // method invoke dependencies
     },  [homeId, activeSensors, editingModuleSettings, selectedGateway, 
-        selectedModule, TSDBDataFetched, graphTimespan, graphTimespanNumeric]);
+        selectedModule, TSDBDataFetched]);
 
     /**
      * As the user zooming/panning the chart, we want to fetch more detailed data for the zoomed area. However,
@@ -746,9 +704,13 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         }
     };
 
-    const onChartInteractionHandler = (target: SensorDataBundle, isUserInteracting: boolean): void => {
-        // The user start/end interaction with one of the charts. We will set that chart as active/inactive and set all
-        // other chart as inactive
+    /**
+     * The user start/end interaction with one of the charts. We will set that chart as active/inactive and set all
+     * other chart as inactive
+     * @param target 
+     * @param isUserInteracting 
+     */
+    const onChartFocusHandler = (target: SensorDataBundle, isUserInteracting: boolean): void => {
         if (sensorTypes) {
             sensorTypes.forEach((bundle: SensorDataBundle): void => {
                 if (bundle.seriesId === target.seriesId) {
@@ -768,11 +730,13 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         }
         setModalVisible(!modalVisible);
     };
+
     // handler for renaming of the current sensor module
     const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         event.preventDefault();
         setSensorModuleName(event.target.value);
     };
+
     // handler for the submission of new sensor module settings changes  
     const handleOk = (event: any) => {
         let filteredActiveSensors: any = Constants.ALPS_SENSOR_SET.filter((sensor: any): boolean => {
@@ -808,6 +772,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             setModalVisible(false);
         }
     };
+
     // adjusting offline sensors handler
     const adjustOfflineSensors = (sensorType: string) => {
         // if offline sensors includes toggled sensor:
@@ -824,42 +789,32 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             setOfflineSensors(addedSet);
         }
     };
+
     // handler for toggling sensor module settings dropdown
     const toggleSensorModuleSettingsVisible = () => {
         setModuleSettingsVisible(!moduleSettingsVisible);
     };
-    // handler for toggling the graph timespan dropdown
-    const toggleGraphTimespan = (quantity: any, timespan: string): void => {
-        const start = moment(new Date());
-        let stop: any;
-        if (timespan === 'real-time') {
-            stop = start.subtract(1, 'minute');
-        } else {
-            stop = start.subtract(quantity, timespan);
-        }
-        let sensorSet: any = [];
-        // set TSDB data flag to false
-        setTSDBDataFetched(false);
-        modeAPI.getHome(ClientStorage.getItem('user-login').user.id)
-        .then((response: any) => {
-            if (componentUnmounted) {
-                return;
-            }
 
-            const homeID = response.id;
-            // update the UI according to the new timespan
-            if (sensorTypes !== undefined) {
-                // map through active sensors and perform fetch
-                sensorTypes.forEach((sensor: any, index: any) => {
-                    performTSDBFetch(
-                    homeID, sensorSet, sensor.type, sensor.seriesID,
-                    sensorTypes[index].unit, sensorTypes, stop, start);
-                });
+    // handler for toggling the graph timespan dropdown
+    const toggleGraphTimespan = (timespan: GraphTimespan): void => {
+        // Don't need to update the selected timespan if it is currently set.
+        if (!selectedGraphTimespan || selectedGraphTimespan.value !== timespan.value) {
+            setSelectedGraphTimespan(timespan);
+            if (seriesDateBounds) {
+                // this will trigger state change event for sensorTypes which will cause chart props to update
+                const newZoom: DateBounds = {
+                    beginDate: moment(seriesDateBounds.endTime - timespan.value).toISOString(),
+                    beginTime: seriesDateBounds.endTime - timespan.value,
+                    endTime: seriesDateBounds.endTime,
+                    endDate: moment(seriesDateBounds.endTime).toISOString()
+                };
+                setZoom(newZoom);
+
+                // Need to load detail data for the zoomed in area. However, don't do it right away.
+                // Use debouncer to wait for some milliseconds before doing it.
+                getDetailDataDebouncer(newZoom);
             }
-        });
-        // update the UI according to the new timeframe and quantity
-        setGraphTimespanNumeric(quantity);
-        setGraphTimespan(timespan);
+        }
     };
 
     const renderModuleSettingsDropdown = () => {
@@ -889,35 +844,22 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             </Dropdown>
         );
     };
+
     // render helper for graph timespan menu
     const renderGraphTimespanToggle = (): React.ReactNode => {
-        const timespanSet = [];
-        timespanSet.push({ quantity: 1, unit: 'minute'});
-        timespanSet.push({ quantity: 15, unit: 'minutes'});
-        timespanSet.push({ quantity: 1, unit: 'hour'});
-        timespanSet.push({ quantity: 8, unit: 'hours'});
-        timespanSet.push({ quantity: 24, unit: 'hours'});
-        timespanSet.push({ quantity: 7, unit: 'days'});
-        timespanSet.push({ quantity: 30, unit: 'days'});
-
         const menu = (
             <Menu>
-                {   timespanSet.map((timespan: any, index: any) => {
+                {   graphTimespanOptions.map((option: GraphTimespan, index: any) => {
                         return (
                             <Menu.Item 
                                 key={index}
                                 className="menu-setting-item"
                             >
                                 <option 
-                                    value={timespan.quantity}
-                                    onClick={() => toggleGraphTimespan(
-                                        timespan.unit === 'minute' ?
-                                            '' : timespan.quantity, 
-                                        timespan.unit === 'minute' ?
-                                        'real-time' : timespan.unit)}
+                                    value={option.value}
+                                    onClick={() => toggleGraphTimespan(option)}
                                 >
-                                {timespan.unit === 'minute' ?
-                                    'real-time' : `${timespan.quantity} ${timespan.unit}`}
+                                    {option.label}
                                 </option>
                             </Menu.Item>
                         );
@@ -928,7 +870,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         return (
             <Dropdown overlay={menu} className="dropdown">
                 <a className="default-timespan-value sensing-interval d-flex align-items-center justify-content-center">
-                    {`${graphTimespanNumeric} ${graphTimespan}`}<Icon type="down" />
+                    {selectedGraphTimespan ? selectedGraphTimespan.label : 'Select One'}<Icon type="down" />
                 </a>
             </Dropdown>
         );
@@ -1166,12 +1108,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                                     <AmChart
                                                         TSDB={sensorTypes[index]}
                                                         identifier={sensorTypes[index].type}
-                                                        timespanNumeric={graphTimespanNumeric}
-                                                        timespan={graphTimespan}
                                                         zoom={zoom}
                                                         hasFocus={sensorTypes[index].chartHasFocus}
                                                         onZoomAndPan={onZoomAndPanHandler}
-                                                        onFocusChanged={onChartInteractionHandler}
+                                                        onFocusChanged={onChartFocusHandler}
                                                     />
                                                 </div>
                                             ) : (
