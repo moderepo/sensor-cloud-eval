@@ -12,6 +12,7 @@ Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be u
 - [Quick start](#quick-start)
 - [Mode API Reference](https://dev.tinkermode.com/docs/api/)
 - [App Navigation](#app-navigation)
+  -[Adding and Deleting Gateways](#adding-and-deleting-gateways)
   -[Link and Unlink Sensor Modules to and from a Gateway](#link-and-unlink-sensor-modules-to-and-from-a-gateway)
   -[Viewing and Manipulating the Sensor Module](#viewing-and-manipulating-the-sensor-module)
 - [API Examples](#api-examples)
@@ -20,6 +21,7 @@ Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be u
     - [Linking / Unlinking Sensor Modules](#linking-and-unlinking-sensor-modules)
     - [Sending Device Commands](#sending-device-commands)
   - [Receiving Device Events (Websocket)](#receiving-device-events)
+- [Deployment](#deployment)
 - [Acknowledgements](#acknowledgements)
 - [Links](#links)
 
@@ -36,6 +38,7 @@ Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be u
 ## Installation and Setup
 
 To begin development off MODE's sensor cloud evaluation kit, first clone the repository to your local machine.
+
 ```sh
 $ git clone https://github.com/moderepo/sensor-cloud-eval.git
 ```
@@ -48,10 +51,9 @@ $ git clone https://github.com/moderepo/sensor-cloud-eval.git
 
 3. You must have an account with the [Tinkermode Console](https://console.tinkermode.com/console/signup).
 
-4. If you don't already have npm and typescript installed, you will need to install both in order to run the application. You will also need at least `Node 8.16.0` or `Node 10.16.0` or later version on your local development machine. If you don't already have node, please navigate [here](https://nodejs.org/en/download/) to download the source code compatible with your machine.
+4. If you don't already have npm and typescript installed, you will need to install both in order to run the application. You will also need at least `Node 8.16.0` or `Node 10.16.0` or later version on your local development machine. If you don't already have node, please navigate [here](https://nodejs.org/en/download/) to download the source code compatible with your machine. `NPM is distributed with Node.js`, which means that when you downlaod Node.js, you automatically get npm installed on your computer.
 
 ```sh
-$ npm install -g npm
 $ npm install -g typescript
 $ npm install -g node
 ```
@@ -69,6 +71,12 @@ $ npm install -g node
 4. Navigate to http://localhost:3000 your browser to view the running application.
 
 ## App Navigation
+
+### Adding and Deleting Gateways
+
+SCEVAL provides a way for a developer to add gateways to his/her project. In order to provision a device on demand, the developer must first put the device in `Claim Mode`. Running the provided shell script will put the device in claim mode, allowing the developer to add a gateway directly from the app. To do so, navigate to the Hardware page, click `Add Gateway` and enter the claim code found on your device. Once successfully added, the developer will see that a new gateway was added to their project.
+
+Deleting a gateway disassociates that gateway from the user's home. To delete a gateway and its sensor module associations, select `Delete Device` from the device settings dropdown. A popup will prompt the user to confirm whether this action is desired, and if the user selected `OK`, will remove the gateway and its associations from the project.
 
 ### Link and Unlink Sensor Modules to and from a Gateway
 
@@ -235,6 +243,18 @@ The application receives device events in the form of a websocket message. The f
 6. `error`: The gateway emits this event when it has problem executing a command. The event contains a field called `msg` that explains the reason of the error.
 
 7. `sensorModuleStateChange`: The gateway emits this event whenever a sensor module changes its connection state and/or sensing state.
+
+## Deployment
+
+SCEVAL provides a built-in Dockerfile for generating Docker images to run as containerized applications in the cloud. SCEVAL was built using a NginX app server and hosted in Amazon's Fargate service, but can also be deployed and hosted on other platforms as outlined in [React's Deployment Documentation](https://create-react-app.dev/docs/deployment). If you are curious about how to deploy containerized applications to cloud platforms like AWS, GCP, and others, feel free to contact us directly.
+
+To create a local Docker image of your customized SCEVAL application, go to the root of the directory and run:
+
+```sh
+$ docker build . -t {your app name}
+```
+
+This will build your docker image locally, using React's `npm run-script build` method for production. This image can then be pushed to a containerized service like Dockerhub or Amazon Fargate.
 
 ## Acknowledgements
 
