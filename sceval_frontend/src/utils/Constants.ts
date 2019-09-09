@@ -1,3 +1,5 @@
+import { SensorModelInterface } from '../components/entities/SensorModule';
+
 export namespace Constants {
   export const SENSOR_MODULE_KEY_PREFIX: string = 'sensorModule';
 
@@ -32,7 +34,7 @@ export namespace Constants {
   export const SNAPSHOT_CHART_MAX_DATA_POINTS: number = 100;
 
   // How long to delay before dispatching chart zoom event
-  export const CHART_ZOOM_EVENT_DELAY_IN_MS: number = 100;
+  export const CHART_ZOOM_EVENT_DELAY_IN_MS: number = 20;
   export const CHART_DETAIL_REQUEST_DELAY_IN_MS: number = 3000;
 
   // Months and years values will assume months are 30 days and years are 365 days. This is not
@@ -57,7 +59,7 @@ export namespace Constants {
   export const MILLENNIUM_IN_MS: number   = 60 * 60 * 24 * 356 * 1000 * 1000;
 }
 
-export const MODULE_CATELOG = [
+export const MODULE_CATELOG: SensorModelInterface[] = [
   {
     'modelId': '0101',
     'vendor': 'Alps',
@@ -88,7 +90,6 @@ export const MODULE_CATELOG = [
       'ACCELERATION_Y:0': 'Acceleration Y',
       'ACCELERATION_Z:0': 'Acceleration Z'
      }
-
   },
   {
     'modelId': '0102',

@@ -13,7 +13,7 @@ import { Constants } from '../utils/Constants';
 import { SensorModuleInterface, AddSensorModuleState } from '../components/entities/SensorModule';
 import { RouteParams } from '../components/entities/Routes';
 import SensorModuleComp from '../components/SensorModuleComp';
-import { evaluateSensorTypes, evaluateModel } from '../utils/SensorTypes';
+import { evaluateSensorTypes, evaluateSensorModelName } from '../utils/SensorTypes';
 // required images imported
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const checkMark = require('../common_images/notifications/check-1.svg');
@@ -296,7 +296,7 @@ export class AddSensorModule extends Component<
                         <div className="sensor-module-wrapper col-12" key={index}>
                           <SensorModuleComp
                             id={sModule.modelSpecificId}
-                            model={`${evaluateModel(sModule.modelId)}`}
+                            model={`${evaluateSensorModelName(sModule.modelId)}`}
                             sensors={sModule.moduleSchema}
                             isSelected={this.state.selectedModules.includes(sModule)}
                             onClick={

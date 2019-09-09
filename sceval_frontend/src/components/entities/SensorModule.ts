@@ -1,5 +1,22 @@
 import { KeyValueStore, Device, TimeSeriesBounds, DataPoint } from '../../components/entities/API';
 import { TimeSeriesData } from './API';
+
+export interface SensorModelInterface {
+    modelId: string;
+    vendor: string;
+    vendorModelId: string;
+    name: string;
+    description: string;
+    moduleSchema: string[];
+    iconName: string;
+    canChangeInterval: boolean;
+    serviceId: string;
+    moduleSchemaDisplayNames?: any;        // A map of sensor type => user friendly name
+    isPlaceholder?: boolean;
+    parentModelId?: string;
+    needConductivityConv?: boolean;
+}
+
 export interface SensorModuleSet {
     // associated device
     device: Device;
@@ -41,20 +58,23 @@ export interface AddSensorModuleState {
     noModules: boolean;
 }
 export interface SensorDataBundle {
-    seriesId: string;
+    seriesId: string | null;
     // sensor data unit
     unit: string;
     // sensor data type
     type: string;
+    // Whether or not this sensor is active
+    active: boolean;
     // the boundaries of the time series data, the date of the very first and very last data point
     dateBounds: DateBounds;
     // snapshot of the time series data from the very first to very last data point
     timeSeriesDataSnapshot: DataPoint[];
     // time-series data for sensor
     timeSeriesData: DataPoint[];
-    avgVal: string;
-    minVal: string;
-    maxVal: string;
+    curVal: number;
+    avgVal: number;
+    minVal: number;
+    maxVal: number;
     chartHasFocus: boolean;
 }
 

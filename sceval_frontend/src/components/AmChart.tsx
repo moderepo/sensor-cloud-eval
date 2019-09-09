@@ -19,6 +19,7 @@ interface AmChartProps extends React.Props<any> {
   zoom?: DateBounds;
   zoomEventDispatchDelay?: number;
   hasFocus: boolean;            // Used for showing/hiding scrollbar
+  onUserInteracting?: (target: SensorDataBundle) => any;
   onZoomAndPan?: (target: SensorDataBundle, startTime: number, endTime: number) => any;
   onFocusChanged?: (target: SensorDataBundle, hasFocus: boolean) => any;
 }
@@ -38,6 +39,16 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
   const sensorContext: Context = useContext(context);
 
   let componentUnmounted: boolean = false;
+
+  /**
+   * Dispatch userInteracting event to let the listener know the user is interacting with the chart
+   * @param event 
+   */
+  const dispatchChartInteractionEvent = (event: any): void => {
+    if (props.hasFocus && props.onUserInteracting) {
+      props.onUserInteracting(props.TSDB);
+    }
+  };
 
   /**
    * Dispatch a zoom event to let the listener know the chart just zoomed/panned
@@ -118,9 +129,9 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       series.tooltip.getFillFromObject = false;
       series.tooltip.background.fill = am4core.color('#7FCBCF');
     }
-    series.fill = am4core.color('#7FCBCF');
+    // series.fill = am4core.color('#7FCBCF');
     series.stroke = am4core.color('#7FCBCF');
-    series.fillOpacity = 1;
+    // series.fillOpacity = 1;
 
     // Add a scrollbar so the user can zoom/pan but make it hiddne initially until the user click on the chart
     newChart.scrollbarX = new am4charts.XYChartScrollbar();
@@ -139,7 +150,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     gradient.addColor(newChart.colors.getIndex(0), 0.5);
     gradient.addColor(newChart.colors.getIndex(0), 0);
     // gradient.rotation = 90;
-    series.fill = gradient;
+    // series.fill = gradient;
 
     // format cursor:
     newChart.cursor = new am4charts.XYCursor();
@@ -166,7 +177,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
         }
         dateAxis.zoomToDates(moment(props.zoom.beginDate).toDate(), moment(props.zoom.endDate).toDate());
         dateAxis.events.enable();
-      }  
+      }
     });
 
     return function cleanup() {
@@ -183,6 +194,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
    */
   useEffect(() => {
     if (sensorChart) {
+      
       const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
       if (props.hasFocus) {
         sensorChart.scrollbarX.disabled = false;
@@ -199,8 +211,14 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       const dispatchEventDelay: number = props.zoomEventDispatchDelay !== undefined ?
         props.zoomEventDispatchDelay : Constants.CHART_ZOOM_EVENT_DELAY_IN_MS;
 
+      const chartInteractionEventDebouncer: (event: any) => void = debounce(dispatchChartInteractionEvent, 10);
       const zoomPanEventDebouncer: (event: any) => void = debounce(dispatchZoomPanEvent, dispatchEventDelay);
+
       const onRangeChange = (event: any): void => {
+        // Notify the user is intracting with the chart
+        chartInteractionEventDebouncer(event);
+
+        // Use debouncer to notify that the user zoomed/panned
         zoomPanEventDebouncer(event);
       };
 
