@@ -74,7 +74,15 @@ $ npm install -g node
 
 ### Adding and Deleting Gateways
 
-SCEVAL provides a way for a developer to add gateways to his/her project. In order to provision a device on demand, the developer must first put the device in `Claim Mode`. Running the provided shell script will put the device in claim mode, allowing the developer to add a gateway directly from the app. To do so, navigate to the Hardware page, click `Add Gateway` and enter the claim code found on your device. Once successfully added, the developer will see that a new gateway was added to their project.
+SCEVAL provides a way for a developer to add gateways to his/her project. In order to provision a device on demand, the developer must first put the device in `Claim Mode`. Running the provided shell script will put the device in claim mode, allowing the developer to add a gateway directly from the app.
+
+To properly configure the shell script, you will need to obtain the device ID and associated API key, assigning them to the correct variables. Once add, you can run:
+
+```sh
+$ sh provision.sh
+```
+
+Once you run the script, you will be able to add the claim code within the app. To do so, navigate to the Hardware page, click `Add Gateway` and enter the claim code found on your device. Once successfully added, the developer will see that a new gateway was added to their project.
 
 <img src="https://github.com/moderepo/sensor-cloud-eval/blob/readme/v2/sceval_frontend/src/common_images/screenshots/add_device.png" alt="Size Limit CLI" width="850">
 
