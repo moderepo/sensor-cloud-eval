@@ -30,6 +30,7 @@ import { Home } from '../components/entities/API';
 import { RouteParams } from '../components/entities/Routes';
 import { string, DateFormatter, time } from '@amcharts/amcharts4/core';
 import { pointsToPath } from '@amcharts/amcharts4/.internal/core/rendering/Path';
+import handleErrors from '../utils/ErrorMessages';
 
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
@@ -47,13 +48,21 @@ interface ChartOptions {
     fetchDataDelay: number;
 }
 
+interface SensorTypeSetting {
+    type: string;
+    name: string;           // same as type but more user friendly
+    selected: boolean;
+}
+interface SensorModuleSettings {
+    name: string;
+    sensors: SensorTypeSetting[];
+}
+
 export const SensorModule = withRouter((props: SensorModuleProps & RouteComponentProps<RouteParams>) => {
     // homeId state
     const [homeId, setHomeId] = useState<number>(0);
     // selected module state
     const [selectedModule, setSelectedModule] = useState<string|null>();
-    // sensor module name state
-    const [sensorModuleName, setSensorModuleName] = useState<string>();
     // sensor module data object state
     const [selectedSensorModuleObj, setSelectedSensorModuleObj] = useState<SensorModuleInterface|null>();
     // selected gateway state
@@ -64,24 +73,15 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     const [isLoadingPage, setIsLoadingPage] = useState<boolean>(true);
     // state to show that we are loading chart data
     const [isLoadingTSDB, setIsLoadingTSDB] = useState<boolean>(true);
-    // quantity of active sensors
-    const [activeSensorQuantity, setActiveSensorQuantity] = useState<number>(0);
     // contains data from TSDB fetch
     const [sensorTypes, setSensorTypes] = useState<SensorDataBundle[]>([]);
     const [activeSensors, setActiveSensors] = useState<SensorDataBundle[]>([]);
-
-    // full sensor list associated to sensor module
-    const [fullSensorList, setFullSensorList] = useState();
     // list of sensors offline
     const [offlineSensors, setOfflineSensors] = useState<Array<any>>([]);
-    // settings modal display state
-    const [modalVisible, setModalVisible] = useState<boolean>(false);
-    // module settings visible state (dropdown)
-    const [moduleSettingsVisible, setModuleSettingsVisible] = useState<boolean>(false);
+    // sensor module settings modal display state
+    const [settingsModalVisible, setSettingsModalVisible] = useState<boolean>(false);
     // editing sensor module settings state
     const [editingModuleSettings, setEditingModuleSettings] = useState<boolean>(false);
-    // empty time-series data returned state
-    const [noTSDBData, setNoTSDBData] = useState<boolean>(false);
     // declaration of a useContext hook
     const sensorContext: Context = useContext(context);
     // The min/max date bounds of all the sensor time series
@@ -97,6 +97,8 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         showBullets: false,
         fetchDataDelay: Constants.CHART_FETCH_DATA_DELAY_IN_MS,
     });
+
+    const [sensorModuleSettings, setSensorModuleSettings] = useState<SensorModuleSettings>();
 
     // to keep track of component mounted/unmounted event so we don't call set state when component is unmounted
     let componentUnmounted: boolean;
@@ -349,7 +351,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         try {
             allTimeSeriesInfo = (await modeAPI.getAllTimeSeriesInfo(home.id)).filter(
                 (series: TimeSeriesInfo): boolean => {
-                    const sensorType: string = series.id.split('-')[1].toUpperCase();
                     // time series id will contain the sensor module id and the sensor type e.g.
                     // 0101:28a183311676-acceleration_y:0
                     // So to find out which series belong to this sensor module, we need to check if the
@@ -377,16 +378,16 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
         // Find the min and max bounds of all the series. Because we need to sync up all the chart as the
         // user zoom/pan, we need to have them all use the same bounds
-        let beginTime: number = moment(Date.now()).subtract(10, 'year').valueOf(); // default beginDate is 10 years ago
-        let beginDate: string = moment(beginTime).toISOString();
-        let endTime: number = Date.now();                                          // default endDate is today
-        let endDate: string = moment(endTime).toISOString();
+        let beginTime: number = Number.MAX_SAFE_INTEGER;
+        let beginDate: string = '';
+        let endTime: number = Number.MIN_SAFE_INTEGER;
+        let endDate: string = '';
 
         timeSeriesBounds.forEach((bounds: TimeSeriesBounds): void => {
             const boundsBeginTime: number = moment(bounds.begin).valueOf();
             const boundsEndTime: number = moment(bounds.end).valueOf();
 
-            if (!beginDate || beginTime < boundsBeginTime) {
+            if (!beginDate || beginTime > boundsBeginTime) {
                 beginDate = bounds.begin;
                 beginTime = boundsBeginTime;
             }
@@ -395,6 +396,16 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 endTime = boundsEndTime;
             }
         });
+
+        // If we can't find begin/end date/time, use today
+        if (!beginDate) {
+            beginTime = moment(Date.now()).valueOf();
+            beginDate = moment(beginTime).toISOString();
+        }
+        if (!endDate) {
+            endTime = moment(Date.now()).valueOf();
+            endDate = moment(beginTime).toISOString();
+        }
 
         // Once we know the begin and end time, we can build the list of graph timespan options the user can choose
         // We will build this list dynamically base on the range of the begin/end time because using 1 fixed list
@@ -426,7 +437,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         allSensorTypes.forEach((sensorType: string) => {
             // sensorType = acceleration_y:0 so we need to remove :0 to get the actual name
             const sensorTypeLowercase: string = sensorType.toLocaleLowerCase();
-            const typeName: string = sensorTypeLowercase.split(':')[0];
+            const typeName: string = sensorTypeLowercase.split(':')[0].replace(/_/g, ' ');
             const unit: any = determineUnit(typeName.toLowerCase());
 
             // NOTE: sensorModuleData.value.sensors are in uppercase
@@ -502,7 +513,8 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             const sensorData: SensorDataBundle = {
                 seriesId: seriesId,
                 unit: unit,
-                type: typeName,
+                type: sensorType,
+                name: typeName,
                 active: isActive,
                 dateBounds: {
                     beginDate: beginDate,
@@ -541,6 +553,18 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         setActiveSensors(sensors.filter((sensorBundle: SensorDataBundle): boolean => {
             return sensorBundle.active;
         }));
+
+        // Build a sensor module settings state which we can use later to populate the edit sensor module settings modal
+        setSensorModuleSettings({
+            name: sensorModuleData.value.name,
+            sensors: sensors.map((sensorBundle: SensorDataBundle): SensorTypeSetting => {
+                return {
+                    type: sensorBundle.type,
+                    name: sensorBundle.name,
+                    selected: sensorBundle.active,
+                };
+            })
+        });
 
         setIsLoadingPage(false);
         setIsLoadingTSDB(false);
@@ -726,12 +750,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     }
                 }
             };
-            // check to see that TSDB data was fetched and set flag accordingly
-            if (sensorTypes && sensorTypes.length > 0) {
-                setNoTSDBData(false);
-            } else {
-                setNoTSDBData(true);
-            }
             ModeConnection.addObserver(webSocketMessageHandler);
             // Return cleanup function to be called when the component is unmounted
             return (): void => {
@@ -804,22 +822,86 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         }
     };
 
-    // toggle modal visibility handler
-    const toggleModalVisibility = () => {
-        if (modalVisible) {
-            setModuleSettingsVisible(false);
-        }
-        setModalVisible(!modalVisible);
-    };
-
-    // handler for renaming of the current sensor module
-    const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    /**
+     * Handle sensor module name change from the sensor module settings modal.
+     * Change the sensorModuleSettings state's name and update the state
+     * @param event 
+     */
+    const onSensorModuleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         event.preventDefault();
-        setSensorModuleName(event.target.value);
+        if (sensorModuleSettings) {
+            sensorModuleSettings.name = event.target.value;
+            setSensorModuleSettings(Object.assign({}, sensorModuleSettings));
+        }
     };
 
-    // handler for the submission of new sensor module settings changes  
-    const handleOk = (event: any) => {
+    /**
+     * handler for the submission of new sensor module settings changes  
+     * @param event 
+     */
+    const handleSaveSensorModuleSettings = async (event: any) => {
+        if (selectedSensorModuleObj && sensorModuleSettings) {
+            const updatedSensorModuleObject: SensorModuleInterface = Object.assign({}, selectedSensorModuleObj);
+
+            // If the name changed, update the name
+            let settingChanged: boolean = false;
+            if (sensorModuleSettings.name !== updatedSensorModuleObject.value.name) {
+                if (!sensorModuleSettings.name) {
+                    delete updatedSensorModuleObject.value.name;
+                } else {
+                    updatedSensorModuleObject.value.name = sensorModuleSettings.name;
+                }
+                settingChanged = true;
+            }
+            // Get the list of selected sensor types from sensorModuleSettings and update the
+            // sensor module object's sensors array
+            const updatedSensorsList: string[] = sensorModuleSettings.sensors.filter(
+                (sensorSetting: SensorTypeSetting): boolean => {
+                    return sensorSetting.selected;
+                }).map((sensorSetting: SensorTypeSetting): string => {
+                    return sensorSetting.type;
+                });
+
+            // Check if the updatedSensorList is different from the current list. If the list is different
+            // then update the list
+            if (updatedSensorModuleObject.value.sensors.length === updatedSensorsList.length) {
+                // the lengths are the same but that doesn't mean the list are different, we need to
+                // compare the elements in both array
+                if (updatedSensorModuleObject.value.sensors.find((sensorType: string): boolean => {
+                    // for each sensorType in the current sensor module object, see if the type exist in the
+                    // updatedSensorList. NOTE: we are doing a REVERSE of find. We return FALSE if the sensor type
+                    // exist in the updatedSensorList and return TRUE if not.
+                    return !updatedSensorsList.includes(sensorType);
+                })) {
+                    // If find returns a sensor type that mean we found a type that does not exist
+                    // in the updatedSensorsList
+                    updatedSensorModuleObject.value.sensors = updatedSensorsList;
+                    settingChanged = true;
+                }
+            } else {
+                // The length are different which mean they are different
+                updatedSensorModuleObject.value.sensors = updatedSensorsList;
+                settingChanged = true;
+            }
+
+            if (settingChanged) {
+                // save the settings and update the state
+                // update KV store for the device
+                try {
+                    const status: number = await modeAPI.setDeviceKeyValueStore(
+                        selectedGateway,
+                        updatedSensorModuleObject.key,
+                        updatedSensorModuleObject
+                    );
+                    setSelectedSensorModuleObj(updatedSensorModuleObject);
+                    setSettingsModalVisible(false);
+                } catch (error) {
+                    alert(handleErrors(error && error.message ? error.message : error));
+                    console.error(error);
+                }
+            }
+        }
+        /*
         let filteredActiveSensors: any = Constants.ALPS_SENSOR_SET.filter((sensor: any): boolean => {
             // if the user does not request the sensor to be turned off
             return !offlineSensors.includes(sensor);
@@ -852,28 +934,25 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             // hide modal
             setModalVisible(false);
         }
+        */
     };
 
-    // adjusting offline sensors handler
-    const adjustOfflineSensors = (sensorType: string) => {
-        // if offline sensors includes toggled sensor:
-        if (offlineSensors.includes(sensorType)) {
-            // remove it from offline sensors
-            const removedSet = offlineSensors.filter((sensor: any) => {
-                return sensor !== sensorType;
-            });
-            setOfflineSensors(removedSet);     
-        } else {
-            // if it doesn't, add it to offline sensors
-            const addedSet: any = offlineSensors;
-            addedSet.push(sensorType);
-            setOfflineSensors(addedSet);
+    /**
+     * Toggle the sensor type from the sensor module setting modal
+     * @param target 
+     */
+    const toggleSelectedSensorType = (target: SensorTypeSetting) => {
+        if (sensorModuleSettings) {
+            const sensorTypeSetting: SensorTypeSetting | undefined = sensorModuleSettings.sensors.find(
+                (sensor: SensorTypeSetting): boolean => {
+                    return sensor.type === target.type;
+                });
+            if (sensorTypeSetting) {
+                // found the setting, now toggle selected field and update the state
+                sensorTypeSetting.selected = !sensorTypeSetting.selected;
+                setSensorModuleSettings(Object.assign({}, sensorModuleSettings));
+            }
         }
-    };
-
-    // handler for toggling sensor module settings dropdown
-    const toggleSensorModuleSettingsVisible = () => {
-        setModuleSettingsVisible(!moduleSettingsVisible);
     };
 
     // handler for toggling the graph timespan dropdown
@@ -905,7 +984,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 className="menu-setting-item"
             >
                 <option 
-                    onClick={toggleModalVisibility}
+                    onClick={() => {
+                        setSettingsModalVisible(true);
+                    }}
                 >
                 Sensor Module Settings
                 </option>
@@ -1097,7 +1178,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             > 
                 <div className="unit-rt-container">
                     <div className="header">
-                        {sensor.type.replace(/_/g, ' ').toUpperCase()}
+                        {sensor.name.toUpperCase()}
                     </div>
                     <Fragment>
                         <div className="unit-value">
@@ -1160,6 +1241,51 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         );
     };
 
+    const renderSensorModuleSettingsModal = (): React.ReactNode => {
+        if (!sensorModuleSettings) {
+            return null;
+        }
+        return (
+            <Modal
+                title="Sensor Module Settings"
+                visible={settingsModalVisible}
+                onOk={handleSaveSensorModuleSettings}
+                onCancel={() => {
+                    setSettingsModalVisible(false);
+                }}
+            >
+                <div className="sensor-module-form">
+                    <div className="sensor-module-name">
+                        <label className="label-title">Sensor Module Name</label>
+                        <Input
+                            value={sensorModuleSettings.name}
+                            onChange={onSensorModuleNameChange}
+                            placeholder={
+                                sensorModuleSettings.name ? sensorModuleSettings.name : 'Enter sensor name'
+                            }
+                        />
+                    </div>
+                    <div className="sensor-types">
+                        <label className="label-title">Select Types of Data to Collect</label>
+                        {
+                            sensorModuleSettings.sensors.map((sensorSetting: SensorTypeSetting)  => {
+                                return (
+                                    <Checkbox 
+                                        key={sensorSetting.type}
+                                        value={sensorSetting.type}
+                                        onClick={() => toggleSelectedSensorType(sensorSetting)}
+                                        checked={sensorSetting.selected}
+                                    >{sensorSetting.name.toUpperCase()}
+                                    </Checkbox>
+                                );
+                            })
+                        }
+                    </div>
+                </div>
+            </Modal>
+        );
+    };
+
     return (
 
         <Fragment>
@@ -1176,91 +1302,67 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 </NavLink>
                 <div className="module-container">
                     <div className="module-details row">
-                        <div className="module-left-container col-12 col-xl-6 d-flex flex-row align-items-center">
-                            <img src={sensorGeneral} />
-                            <div className="info-section d-flex flex-column align-items-start justify-content-center">
-                                <div className="device-name">
-                                {sensorModuleName ? sensorModuleName : selectedModule}
-                                </div>
-                                <div className="gateway-name">Gateway name: {selectedGateway}</div>
-                                <div className="sensor-model">
-                                { selectedModule &&
-                                    `Sensor ID: ${selectedModule.split(':')[1]}`
-                                }</div>
-                                <div className="sensor-model">
-                                { selectedModule &&
-                                    `Sensor model: ${evaluateSensorModelName(selectedModule.split(':')[0])}`
-                                }</div>
-                            </div>
-                            <div className="dropdown-menu-container">
-                                {renderModuleSettingsDropdown()}
-                            </div>
-                            {
-                                modalVisible &&
-                                // if the modal state is visible:
-                                <Modal
-                                    title="Sensor Module Settings"
-                                    visible={modalVisible}
-                                    onOk={handleOk}
-                                    onCancel={toggleModalVisibility}
+                        {selectedSensorModuleObj ? (
+                            <Fragment>
+                                <div
+                                    className="module-left-container col-12 col-xl-6 d-flex flex-row align-items-center"
                                 >
-                                <div className="sensor-module-form">
-                                    <div className="sensor-module-name">
-                                        <label className="label-title">Sensor Module Name</label>
-                                        <Input
-                                            value={sensorModuleName}
-                                            onChange={handleNameChange}
-                                            placeholder={
-                                                sensorModuleName ? sensorModuleName :
-                                                selectedModule ? selectedModule : '' 
-                                            }
-                                        />
-                                    </div>
-                                    <div className="sensor-types">
-                                        <label className="label-title">Select Types of Data to Collect</label>
-                                        {
-                                            sensorTypes && fullSensorList && 
-                                            // if the the active sensors have been fetched:
-                                            Constants.ALPS_SENSOR_SET.map((sensorType: any, index: any)  => {
-                                                const displayed = sensorType.split(':')[0];
-                                                return (
-                                                    <Checkbox 
-                                                        key={sensorType}
-                                                        value={displayed}
-                                                        onClick={() => adjustOfflineSensors(sensorType)}
-                                                        defaultChecked={fullSensorList.includes(sensorType)}
-                                                    >{displayed.replace(/_/g, ' ')}
-                                                    </Checkbox>
-                                                );
-                                            })
+                                    <img src={sensorGeneral} />
+                                    <div
+                                        className={
+                                            'info-section d-flex flex-column align-items-start justify-content-center'
                                         }
+                                    >
+                                        <div className="device-name">
+                                        {selectedSensorModuleObj.value.name ?
+                                            selectedSensorModuleObj.value.name : selectedSensorModuleObj.value.id}
+                                        </div>
+                                        <div className="gateway-name">Gateway name: {selectedGateway}</div>
+                                        <div className="sensor-model">
+                                        { selectedModule &&
+                                            `Sensor ID: ${selectedModule.split(':')[1]}`
+                                        }</div>
+                                        <div className="sensor-model">
+                                        { selectedModule &&
+                                            `Sensor model: ${evaluateSensorModelName(selectedModule.split(':')[0])}`
+                                        }</div>
+                                    </div>
+                                    <div className="dropdown-menu-container">
+                                        {renderModuleSettingsDropdown()}
+                                    </div>
+                                    {
+                                        // if the modal state is visible:
+                                        settingsModalVisible && renderSensorModuleSettingsModal()
+                                    }
+                                </div>
+                                <div className="data-cols col-12 col-xl-6 d-flex flex-row">
+                                    <div className="data-col">
+                                        <div className="data-name">Sensors Active</div>
+                                        <div className="data-value">{activeSensors.length}</div>
+                                    </div>
+                                    { selectedModule && selectedModule.split(':')[0] === '0101' &&
+                                    <div className="data-col">
+                                        <div className="data-name col-dropdown">Sensing Interval</div>
+                                        {renderSensingIntervalOptions(selectedSensorModuleObj)}
+                                    </div>
+                                    }
+                                    <div className="data-col">
+                                        <div className="data-name col-dropdown">Graph Timespan</div>
+                                        {renderGraphTimespanToggle()}
+                                    </div>
+                                    <div className="data-col">
+                                        <div className="data-name col-dropdown">Graph Options</div>
+                                        {renderGraphOptions()}
                                     </div>
                                 </div>
-                                </Modal>
-
-                            }
-                        </div>
-                        <div className="data-cols col-12 col-xl-6 d-flex flex-row">
-                            <div className="data-col">
-                                <div className="data-name">Sensors Active</div>
-                                <div className="data-value">{activeSensorQuantity}</div>
+                            </Fragment>
+                        ) : ( 
+                            <div className="sensor-data-loader">
+                                <img src={loader} />
                             </div>
-                            { selectedModule && selectedModule.split(':')[0] === '0101' &&
-                            <div className="data-col">
-                                <div className="data-name col-dropdown">Sensing Interval</div>
-                                {renderSensingIntervalOptions(selectedSensorModuleObj)}
-                            </div>
-                            }
-                            <div className="data-col">
-                                <div className="data-name col-dropdown">Graph Timespan</div>
-                                {renderGraphTimespanToggle()}
-                            </div>
-                            <div className="data-col">
-                                <div className="data-name col-dropdown">Graph Options</div>
-                                {renderGraphOptions()}
-                            </div>
-                        </div>
+                        )}
                     </div>
+
                     <div
                         className="sensor-graph-container"
                     >

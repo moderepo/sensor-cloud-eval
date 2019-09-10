@@ -31,7 +31,7 @@ export namespace Constants {
     'LOGIN_CREDENTIALS_NOT_PRESENT';
 
   // The maximum number of data points we want to show on the data series snapshot
-  export const SNAPSHOT_CHART_MAX_DATA_POINTS: number = 100;
+  export const SNAPSHOT_CHART_MAX_DATA_POINTS: number = 200;
 
   // How long to delay before dispatching chart zoom event
   export const CHART_ZOOM_EVENT_DELAY_IN_MS: number = 20;

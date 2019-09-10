@@ -63,6 +63,7 @@ export interface SensorDataBundle {
     unit: string;
     // sensor data type
     type: string;
+    name: string;       // same as name but more user friendly, without the :0
     // Whether or not this sensor is active
     active: boolean;
     // the boundaries of the time series data, the date of the very first and very last data point

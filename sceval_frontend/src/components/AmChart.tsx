@@ -121,7 +121,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
 
     // format data series:
     let series: am4charts.LineSeries = newChart.series.push(new am4charts.LineSeries());
-    series.name = props.TSDB.type;
+    series.name = props.TSDB.name;
     series.dataFields.dateX = 'date';
     series.dataFields.valueY = 'value';
 
