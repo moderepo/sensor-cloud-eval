@@ -1,5 +1,4 @@
 import React from 'react';
-import { SensorModuleInterface } from './entities/SensorModule';
 import { evaluateSensorTypes } from '../utils/SensorTypes';
 import '../css/SensorModuleComp.css';
 
