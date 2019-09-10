@@ -86,7 +86,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     // declaration of a useContext hook
     const sensorContext: Context = useContext(context);
     // The min/max date bounds of all the sensor time series
-    const [seriesDateBounds, setSeriesDateBounds] = useState<DateBounds>();
+    const [masterDateBounds, setMasterDateBounds] = useState<DateBounds>();
     // The current zoom bounds
     const [zoom, setZoom] = useState<DateBounds>();
 
@@ -126,10 +126,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     };
 
     /**
-     * Request for detailed data for the given zoomed area
+     * Request for detailed data for the given date bounds
      */
-    const requestDetailedData = async (currentZoom: DateBounds): Promise<void> => {
-        if (!currentZoom) {
+    const fetchDetailedData = async (dateBounds: DateBounds): Promise<void> => {
+        if (!dateBounds) {
             console.log('Fetch details data canceled');
             return;
         }
@@ -137,10 +137,12 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         console.log('Fetch details data');
         setIsLoadingTSDB(true);
         
+        let dataUpdated: boolean = false;
+
         if (allSensorBundles) {
-            console.log(currentZoom, seriesDateBounds);
-            if (seriesDateBounds && seriesDateBounds.beginTime >= currentZoom.beginTime &&
-                seriesDateBounds.endTime <= currentZoom.endTime) {
+            console.log(dateBounds, masterDateBounds);
+            if (masterDateBounds && masterDateBounds.beginTime >= dateBounds.beginTime &&
+                masterDateBounds.endTime <= dateBounds.endTime) {
                 // look like the user zoomed out all the way. This mean we can just use the time series
                 // snapshot data and don't need to load more details data
                 allSensorBundles.forEach((bundle: SensorDataBundle, index: number): void => {
@@ -150,22 +152,35 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     allSensorBundles[index] = updatedBundle;
                     updatedBundle.timeSeriesData = [...updatedBundle.timeSeriesDataSnapshot];   // copy the snapshot
                 });
+                dataUpdated = true;
             } else {
 
                 // One of the charts zoomed or panned so we need to sync up other charts to have the same zoom and pan.
                 // also, we need to load data for the start and end timespan
                 const timeSeriesDataArray: TimeSeriesData[] = [];
                 for (let sensorBundle of allSensorBundles) {
-                    // Only request data for active sensors
+                    // Only request data for active sensors. Also to avoid reloading the same data, we will make sure
+                    // we only load data if the the new bounds is different than the bounds we loaded previously
                     if (sensorBundle.seriesId && sensorBundle.active) {
-                        try {
-                            timeSeriesDataArray.push(await modeAPI.getTimeSeriesData(
-                                homeId, sensorBundle.seriesId, currentZoom.beginDate, currentZoom.endDate
-                            ));
-                        } catch (error) {
-                            console.log('Failed to load time series data for series id: ', sensorBundle.seriesId);
+                        if (!sensorBundle.currentDateBounds ||
+                         dateBounds.beginTime !== sensorBundle.currentDateBounds.beginTime ||
+                         dateBounds.endTime !== sensorBundle.currentDateBounds.endTime) {
+                            try {
+                                timeSeriesDataArray.push(await modeAPI.getTimeSeriesData(
+                                    homeId, sensorBundle.seriesId, dateBounds.beginDate, dateBounds.endDate
+                                ));
+                            } catch (error) {
+                                console.log('Failed to load time series data for series id: ', sensorBundle.seriesId);
+                            }
+                        } else {
+                            console.log('Requesting data for the same data, ngnoring the request: ', sensorBundle.type);
                         }
                     }
+                }
+
+                if (timeSeriesDataArray.length > 0) {
+                    // at least one of the data series loaded data. Mark as data updated
+                    dataUpdated = true;
                 }
 
                 // Convert allTimeSeriesDataArray to map of just the DataPoint array so we can look up time series
@@ -176,58 +191,73 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
                 // update the sensor bundle timeseries data
                 allSensorBundles.forEach((sensorBundle: SensorDataBundle, index: number): void => {
-                    // Only request data for active sensors
                     if (sensorBundle.seriesId) {
-                        let seriesData: DataPoint[] = [];
                         if (allTimeSeriesData.has(sensorBundle.seriesId)) {
+                            let seriesData: DataPoint[] = [];
+
                             // NOTE: Need to create temp and check for null so that compiler doesn't require
                             // seriesData to be defined as DataPoint[] | undefined
                             const temp: DataPoint[] | undefined = allTimeSeriesData.get(sensorBundle.seriesId);
                             if (temp !== undefined) {
                                 seriesData = temp;
                             }
-                        }
 
-                        // need to create a copy of the bundle so that it is treated as new object and cause
-                        // react to fire state change event
-                        const updatedBundle: SensorDataBundle = Object.assign({}, sensorBundle);
-                        allSensorBundles[index] = updatedBundle;
+                            // need to create a copy of the bundle so that it is treated as new object and cause
+                            // react to fire state change event
+                            const updatedBundle: SensorDataBundle = Object.assign({}, sensorBundle);
+                            allSensorBundles[index] = updatedBundle;
 
-                        // Insert newly loaded series data into timeSeriesDataSnapshot
-                        updatedBundle.timeSeriesData = [];
-                        let i: number = 0;
-                        for (i = 0; i < updatedBundle.timeSeriesDataSnapshot.length; i++) {
-                            let point: DataPoint = updatedBundle.timeSeriesDataSnapshot[i];
-                            if (point.timestamp < currentZoom.beginTime) {
-                                updatedBundle.timeSeriesData.push(point);
-                            } else {
-                                // found a point that is greater than the zoon area
-                                break;
+                            // Update the current data date bounds so we know which bounds the current data belong to
+                            updatedBundle.currentDateBounds = Object.assign({}, dateBounds);
+
+                            // Insert newly loaded series data into timeSeriesDataSnapshot
+                            updatedBundle.timeSeriesData = [];
+                            let i: number = 0;
+                            for (i = 0; i < updatedBundle.timeSeriesDataSnapshot.length; i++) {
+                                let point: DataPoint = updatedBundle.timeSeriesDataSnapshot[i];
+                                if (point.timestamp < dateBounds.beginTime) {
+                                    updatedBundle.timeSeriesData.push(point);
+                                } else {
+                                    // found a point that is greater than the zoom area
+                                    break;
+                                }
                             }
-                        }
-                        // add the newly loaded point in the middle of updatedBundle.timeSeriesData
-                        seriesData.forEach((newPoint: DataPoint): void => {
-                            updatedBundle.timeSeriesData.push(newPoint);
-                        });
-                        // Add points from snapshot that is later than the zoom end time into
-                        // updatedBundle.timeSeriesData
-                        for (; i < updatedBundle.timeSeriesDataSnapshot.length; i++) {
-                            let point: DataPoint = updatedBundle.timeSeriesDataSnapshot[i];
-                            if (point.timestamp > currentZoom.endTime) {
-                                updatedBundle.timeSeriesData.push(point);
+                            // add the newly loaded point in the middle of updatedBundle.timeSeriesData
+                            seriesData.forEach((newPoint: DataPoint): void => {
+                                updatedBundle.timeSeriesData.push(newPoint);
+                            });
+                            // Add points from snapshot that is later than the zoom end time into
+                            // updatedBundle.timeSeriesData
+                            for (; i < updatedBundle.timeSeriesDataSnapshot.length; i++) {
+                                let point: DataPoint = updatedBundle.timeSeriesDataSnapshot[i];
+                                if (point.timestamp > dateBounds.endTime) {
+                                    updatedBundle.timeSeriesData.push(point);
+                                }
                             }
+                        } else {
+                            // We didn't laod data for the bundle, don't need to change anything
                         }
                     }
                 });
             }
 
-            setAllSensorBundles([...allSensorBundles]);
-            setActiveSensorBundles(allSensorBundles.filter((sensorBundle: SensorDataBundle): boolean => {
-                return sensorBundle.active;
-            }));
+            if (dataUpdated) {
+                setAllSensorBundles([...allSensorBundles]);
+                setActiveSensorBundles(allSensorBundles.filter((sensorBundle: SensorDataBundle): boolean => {
+                    return sensorBundle.active;
+                }));
+            }
+
             setIsLoadingTSDB(false);
         }
     };
+
+    /**
+     * As the user zooming/panning the chart, we want to fetch more detailed data for the zoomed area. However,
+     * for performance optimization, we don't want to fetch data too often. We want to wait until the user stop
+     * zooming/panning and then load more data. Therefore, we need to use debounce to delay data fetch.
+     */
+    const getDetailDataDebouncer: any = debounce(fetchDetailedData, Constants.CHART_FETCH_DATA_DELAY_IN_MS);
 
     /**
      * Once we know the begin and end time, we can build the list of graph timespan options the user can choose
@@ -408,6 +438,12 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             endDate = moment(beginTime).toISOString();
         }
 
+        // Round the begin and end time to the nearest seconds, ignoring the milliseconds.
+        beginTime = Math.floor(beginTime / 1000) * 1000;
+        beginDate = moment(beginTime).toISOString();
+        endTime = Math.floor(endTime / 1000) * 1000;
+        endDate = moment(endTime).toISOString();
+
         // Once we know the begin and end time, we can build the list of graph timespan options the user can choose
         // We will build this list dynamically base on the range of the begin/end time because using 1 fixed list
         // of time span doesn't make sense for some data.
@@ -517,7 +553,13 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 type: sensorType,
                 name: typeName,
                 active: isActive,
-                dateBounds: {
+                allTimeDateBounds: {
+                    beginDate: beginDate,
+                    endDate: endDate, 
+                    beginTime: beginTime,
+                    endTime: endTime,
+                },
+                currentDateBounds: {
                     beginDate: beginDate,
                     endDate: endDate, 
                     beginTime: beginTime,
@@ -542,7 +584,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         setSelectedSensorModuleObj(sensorModuleData);
 
         // remember the min/max bounds of all the data series
-        setSeriesDateBounds({
+        setMasterDateBounds({
             beginDate: beginDate,
             beginTime: beginTime,
             endDate: endDate,
@@ -555,10 +597,11 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             return sensorBundle.active;
         }));
 
-        // Build a sensor module settings state which we can use later to populate the edit sensor module settings modal
+        // Create the sensor module settings state used for the sensor module settings modal
         setSensorModuleSettings({
             name: sensorModuleData.value.name,
-            sensors: sensors.map((sensorBundle: SensorDataBundle): SensorTypeSetting => {
+            sensors: sensors.map(
+                (sensorBundle: SensorDataBundle): SensorTypeSetting => {
                 return {
                     type: sensorBundle.type,
                     name: sensorBundle.name,
@@ -762,13 +805,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     },  [homeId, activeSensorBundles, editingModuleSettings, selectedGateway, 
         selectedModule, TSDBDataFetched]);
 
-    /**
-     * As the user zooming/panning the chart, we want to fetch more detailed data for the zoomed area. However,
-     * for performance optimization, we don't want to fetch data too often. We want to wait until the user stop
-     * zooming/panning and then load more data. Therefore, we need to use debounce to delay data fetch.
-     */
-    const getDetailDataDebouncer: any = debounce(requestDetailedData, Constants.CHART_FETCH_DATA_DELAY_IN_MS);
-
     const onUserInteractingWithChartHandler = (sensorBundle: SensorDataBundle): void => {
         // cancle debounce if there is one
         console.log('Cancel debounce');
@@ -809,19 +845,28 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
      * The user start/end interaction with one of the charts. We will set that chart as active/inactive and set all
      * other chart as inactive
      * @param target 
-     * @param isUserInteracting 
+     * @param hasFocus 
      */
-    const onChartFocusHandler = (target: SensorDataBundle, isUserInteracting: boolean): void => {
+    const onChartFocusHandler = (target: SensorDataBundle, hasFocus: boolean): void => {
         if (allSensorBundles) {
-            allSensorBundles.forEach((bundle: SensorDataBundle): void => {
-                if (bundle.seriesId === target.seriesId) {
-                    bundle.chartHasFocus = isUserInteracting;
-                } else {
-                    bundle.chartHasFocus = false;
-                }
-            });
+            // If the target focus changed then update all charts
+            if (!target.chartHasFocus && hasFocus) {
+                allSensorBundles.forEach((bundle: SensorDataBundle): void => {
+                    if (bundle.seriesId === target.seriesId) {
+                        bundle.chartHasFocus = hasFocus;
+                    } else {
+                        bundle.chartHasFocus = false;
+                    }
+                });
+            }
             setAllSensorBundles([...allSensorBundles]);
         }
+
+        // cancle debounce if there is one
+        console.log('Cancel debounce');
+
+        // Call debounce but pass zoom as null. We will check for null in the requestDetailedData function
+        getDetailDataDebouncer(null);
     };
 
     /**
@@ -846,14 +891,15 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             const updatedSensorModuleObject: SensorModuleInterface = Object.assign({}, selectedSensorModuleObj);
 
             // If the name changed, update the name
-            let settingChanged: boolean = false;
+            let nameChanged: boolean = false;
+            let sensorListChanged: boolean = false;
             if (sensorModuleSettings.name !== updatedSensorModuleObject.value.name) {
                 if (!sensorModuleSettings.name) {
                     delete updatedSensorModuleObject.value.name;
                 } else {
                     updatedSensorModuleObject.value.name = sensorModuleSettings.name;
                 }
-                settingChanged = true;
+                nameChanged = true;
             }
             // Get the list of selected sensor types from sensorModuleSettings and update the
             // sensor module object's sensors array
@@ -878,15 +924,15 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     // If find returns a sensor type that mean we found a type that does not exist
                     // in the updatedSensorsList
                     updatedSensorModuleObject.value.sensors = updatedSensorsList;
-                    settingChanged = true;
+                    sensorListChanged = true;
                 }
             } else {
                 // The length are different which mean the lists are different
                 updatedSensorModuleObject.value.sensors = updatedSensorsList;
-                settingChanged = true;
+                sensorListChanged = true;
             }
 
-            if (settingChanged) {
+            if (nameChanged || sensorListChanged) {
                 // save the settings and update the state
                 // update KV store for the device
                 try {
@@ -899,6 +945,36 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     setSettingsModalVisible(false);
 
                     // update the active and inactive sensor bundles
+                    if (sensorListChanged) {
+                        const updatedAllSensorBundles: SensorDataBundle[] = [...allSensorBundles];
+                        updatedAllSensorBundles.forEach((sensorBundle: SensorDataBundle): void => {
+                            sensorBundle.active = updatedSensorsList.includes(sensorBundle.type);
+                        });
+                        setAllSensorBundles(updatedAllSensorBundles);
+
+                        // Use the allSensorBundles to get the list of active sensor bundles 
+                        setActiveSensorBundles(updatedAllSensorBundles.filter(
+                            (sensorBundle: SensorDataBundle): boolean => {
+                                return sensorBundle.active;
+                            }
+                        ));
+                
+                        // Update the sensor module settings state
+                        setSensorModuleSettings({
+                            name: selectedSensorModuleObj.value.name,
+                            sensors: updatedAllSensorBundles.map(
+                                (sensorBundle: SensorDataBundle): SensorTypeSetting => {
+                                return {
+                                    type: sensorBundle.type,
+                                    name: sensorBundle.name,
+                                    selected: sensorBundle.active,
+                                };
+                            })
+                        });
+
+                        // Fetch data for the new selected sensors
+                        getDetailDataDebouncer(zoom);
+                    }
                 } catch (error) {
                     alert(handleErrors(error && error.message ? error.message : error));
                     console.error(error);
@@ -964,13 +1040,13 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         // Don't need to update the selected timespan if it is currently set.
         if (!selectedGraphTimespan || selectedGraphTimespan.value !== timespan.value) {
             setSelectedGraphTimespan(timespan);
-            if (seriesDateBounds) {
+            if (masterDateBounds) {
                 // this will trigger state change event for sensorTypes which will cause chart props to update
                 const newZoom: DateBounds = {
-                    beginDate: moment(seriesDateBounds.endTime - timespan.value).toISOString(),
-                    beginTime: seriesDateBounds.endTime - timespan.value,
-                    endTime: seriesDateBounds.endTime,
-                    endDate: moment(seriesDateBounds.endTime).toISOString()
+                    beginDate: moment(masterDateBounds.endTime - timespan.value).toISOString(),
+                    beginTime: masterDateBounds.endTime - timespan.value,
+                    endTime: masterDateBounds.endTime,
+                    endDate: moment(masterDateBounds.endTime).toISOString()
                 };
                 setZoom(newZoom);
 

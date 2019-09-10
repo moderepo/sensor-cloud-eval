@@ -70,19 +70,20 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
         zoom: props.zoom,
       });
   
-      // if the user zoomed out all the way, use the props.TSDB.dateBounds begin and end instead
-      if (event.target.minZoomed <= props.TSDB.dateBounds.beginTime &&
-        event.target.maxZoomed >= props.TSDB.dateBounds.endTime) {
+      const minZoom: number = Math.floor(event.target.minZoomed / 1000) * 1000;
+      const maxZoom: number = Math.floor(event.target.maxZoomed / 1000) * 1000;
+      if (minZoom <= props.TSDB.allTimeDateBounds.beginTime && maxZoom >= props.TSDB.allTimeDateBounds.endTime) {
+        // if the user zoomed out all the way, use the props.TSDB.dateBounds begin and end instead
         props.onZoomAndPan(
           props.TSDB,
-          props.TSDB.dateBounds.beginTime,
-          props.TSDB.dateBounds.endTime
+          props.TSDB.allTimeDateBounds.beginTime,
+          props.TSDB.allTimeDateBounds.endTime
         );
       } else {
         props.onZoomAndPan(
           props.TSDB,
-          event.target.minZoomed,
-          event.target.maxZoomed
+          minZoom,
+          maxZoom
         );
       }
     }
@@ -106,8 +107,8 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     dateAxis.dateFormatter = new am4core.DateFormatter();
     dateAxis.tooltipDateFormat = 'YYYY-MM-dd HH:mm:ss';
     dateAxis.keepSelection = true;
-    dateAxis.min = props.TSDB.dateBounds.beginTime;
-    dateAxis.max = props.TSDB.dateBounds.endTime;
+    dateAxis.min = props.TSDB.allTimeDateBounds.beginTime;
+    dateAxis.max = props.TSDB.allTimeDateBounds.endTime;
     dateAxis.strictMinMax = true;
 
     newChart.dateFormatter.dateFormat = 'i';
