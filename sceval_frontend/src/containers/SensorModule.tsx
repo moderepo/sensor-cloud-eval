@@ -73,9 +73,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     const [isLoadingPage, setIsLoadingPage] = useState<boolean>(true);
     // state to show that we are loading chart data
     const [isLoadingTSDB, setIsLoadingTSDB] = useState<boolean>(true);
-    // contains data from TSDB fetch
-    const [sensorTypes, setSensorTypes] = useState<SensorDataBundle[]>([]);
-    const [activeSensors, setActiveSensors] = useState<SensorDataBundle[]>([]);
+    // The complete list of ALL the sensor information including the inactive sensors
+    const [allSensorBundles, setAllSensorBundles] = useState<SensorDataBundle[]>([]);
+    // The list of active sensors
+    const [activeSensorBundles, setActiveSensorBundles] = useState<SensorDataBundle[]>([]);
     // list of sensors offline
     const [offlineSensors, setOfflineSensors] = useState<Array<any>>([]);
     // sensor module settings modal display state
@@ -136,17 +137,17 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         console.log('Fetch details data');
         setIsLoadingTSDB(true);
         
-        if (sensorTypes) {
+        if (allSensorBundles) {
             console.log(currentZoom, seriesDateBounds);
             if (seriesDateBounds && seriesDateBounds.beginTime >= currentZoom.beginTime &&
                 seriesDateBounds.endTime <= currentZoom.endTime) {
                 // look like the user zoomed out all the way. This mean we can just use the time series
                 // snapshot data and don't need to load more details data
-                sensorTypes.forEach((bundle: SensorDataBundle, index: number): void => {
+                allSensorBundles.forEach((bundle: SensorDataBundle, index: number): void => {
                     // need to create a copy of the bundle so that it is treated as new object and cause
                     // react to fire state change event
                     const updatedBundle: SensorDataBundle = Object.assign({}, bundle);
-                    sensorTypes[index] = updatedBundle;
+                    allSensorBundles[index] = updatedBundle;
                     updatedBundle.timeSeriesData = [...updatedBundle.timeSeriesDataSnapshot];   // copy the snapshot
                 });
             } else {
@@ -154,7 +155,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 // One of the charts zoomed or panned so we need to sync up other charts to have the same zoom and pan.
                 // also, we need to load data for the start and end timespan
                 const timeSeriesDataArray: TimeSeriesData[] = [];
-                for (let sensorBundle of sensorTypes) {
+                for (let sensorBundle of allSensorBundles) {
                     // Only request data for active sensors
                     if (sensorBundle.seriesId && sensorBundle.active) {
                         try {
@@ -174,7 +175,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 );
 
                 // update the sensor bundle timeseries data
-                sensorTypes.forEach((sensorBundle: SensorDataBundle, index: number): void => {
+                allSensorBundles.forEach((sensorBundle: SensorDataBundle, index: number): void => {
                     // Only request data for active sensors
                     if (sensorBundle.seriesId) {
                         let seriesData: DataPoint[] = [];
@@ -190,7 +191,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                         // need to create a copy of the bundle so that it is treated as new object and cause
                         // react to fire state change event
                         const updatedBundle: SensorDataBundle = Object.assign({}, sensorBundle);
-                        sensorTypes[index] = updatedBundle;
+                        allSensorBundles[index] = updatedBundle;
 
                         // Insert newly loaded series data into timeSeriesDataSnapshot
                         updatedBundle.timeSeriesData = [];
@@ -220,8 +221,8 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 });
             }
 
-            setSensorTypes([...sensorTypes]);
-            setActiveSensors(sensorTypes.filter((sensorBundle: SensorDataBundle): boolean => {
+            setAllSensorBundles([...allSensorBundles]);
+            setActiveSensorBundles(allSensorBundles.filter((sensorBundle: SensorDataBundle): boolean => {
                 return sensorBundle.active;
             }));
             setIsLoadingTSDB(false);
@@ -549,8 +550,8 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         });
 
         setGraphTimespanOptions(timespanOptions);
-        setSensorTypes(sensors);
-        setActiveSensors(sensors.filter((sensorBundle: SensorDataBundle): boolean => {
+        setAllSensorBundles(sensors);
+        setActiveSensorBundles(sensors.filter((sensorBundle: SensorDataBundle): boolean => {
             return sensorBundle.active;
         }));
 
@@ -700,12 +701,13 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                 // if we have gone through all RT data:
                                 if (index === wsData.length - 1) {
                                     // if activeSensors already exists:
-                                    if (activeSensors) {
-                                        let updatedActiveArray: any = activeSensors;
+                                    if (activeSensorBundles) {
+                                        let updatedActiveArray: any = activeSensorBundles;
                                         rtData.forEach((newSensor: any) => {
                                             // filter and check if RT data for the online sensor exists
-                                            const dataExists = activeSensors.filter((onlineSensor: any): boolean => {
-                                                return onlineSensor.type === newSensor.type;
+                                            const dataExists = activeSensorBundles.filter(
+                                                (onlineSensor: any): boolean => {
+                                                    return onlineSensor.type === newSensor.type;
                                             });
                                             // if the sensor already has previous RT data, update it
                                             if (dataExists.length === 1) {
@@ -720,7 +722,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                             }
                                         });
                                         // after loop finishes, set active sensors to updated data set 
-                                        setActiveSensors(updatedActiveArray.sort((a: any, b: any) => {
+                                        setActiveSensorBundles(updatedActiveArray.sort((a: any, b: any) => {
                                             if (a.type < b.type) {
                                                 return -1;
                                             }
@@ -740,7 +742,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                             }
                                             return 0;
                                         }); 
-                                        setActiveSensors(sortedSensors); // set real time data
+                                        setActiveSensorBundles(sortedSensors); // set real time data
                                     }
                                     // set global RT values for AmCharts
                                     sensorContext.actions.setRTValues(rtNumbers);   
@@ -757,7 +759,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 ModeConnection.removeObserver(webSocketMessageHandler);
             };
     // method invoke dependencies
-    },  [homeId, activeSensors, editingModuleSettings, selectedGateway, 
+    },  [homeId, activeSensorBundles, editingModuleSettings, selectedGateway, 
         selectedModule, TSDBDataFetched]);
 
     /**
@@ -784,7 +786,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         startTime: number,
         endTime: number
     ): Promise<void> => {
-        if (sensorTypes) {
+        if (allSensorBundles) {
             const startDate: string = moment(startTime).toISOString();
             const endDate: string = moment(endTime).toISOString();
 
@@ -810,15 +812,15 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
      * @param isUserInteracting 
      */
     const onChartFocusHandler = (target: SensorDataBundle, isUserInteracting: boolean): void => {
-        if (sensorTypes) {
-            sensorTypes.forEach((bundle: SensorDataBundle): void => {
+        if (allSensorBundles) {
+            allSensorBundles.forEach((bundle: SensorDataBundle): void => {
                 if (bundle.seriesId === target.seriesId) {
                     bundle.chartHasFocus = isUserInteracting;
                 } else {
                     bundle.chartHasFocus = false;
                 }
             });
-            setSensorTypes([...sensorTypes]);
+            setAllSensorBundles([...allSensorBundles]);
         }
     };
 
@@ -879,7 +881,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     settingChanged = true;
                 }
             } else {
-                // The length are different which mean they are different
+                // The length are different which mean the lists are different
                 updatedSensorModuleObject.value.sensors = updatedSensorsList;
                 settingChanged = true;
             }
@@ -895,6 +897,8 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     );
                     setSelectedSensorModuleObj(updatedSensorModuleObject);
                     setSettingsModalVisible(false);
+
+                    // update the active and inactive sensor bundles
                 } catch (error) {
                     alert(handleErrors(error && error.message ? error.message : error));
                     console.error(error);
@@ -1338,7 +1342,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                 <div className="data-cols col-12 col-xl-6 d-flex flex-row">
                                     <div className="data-col">
                                         <div className="data-name">Sensors Active</div>
-                                        <div className="data-value">{activeSensors.length}</div>
+                                        <div className="data-value">{activeSensorBundles.length}</div>
                                     </div>
                                     { selectedModule && selectedModule.split(':')[0] === '0101' &&
                                     <div className="data-col">
@@ -1366,9 +1370,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     <div
                         className="sensor-graph-container"
                     >
-                        { activeSensors && activeSensors.length > 0 ?
+                        { activeSensorBundles && activeSensorBundles.length > 0 ?
                             // if TSDB data exists for the active sensors:
-                            activeSensors.map((sensor: SensorDataBundle, index: any) => {
+                            activeSensorBundles.map((sensor: SensorDataBundle, index: any) => {
                                 return renderSensorType(sensor);
                             })
                         :
