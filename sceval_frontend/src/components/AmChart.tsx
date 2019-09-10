@@ -246,7 +246,11 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
   useEffect(() => {
     if (sensorChart) {
       const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
-      if (!props.hasFocus && props.zoom && props.zoom.beginTime && props.zoom.endTime) {
+      const currentMinZoom: number = dateAxis.minZoomed ? Math.floor(dateAxis.minZoomed / 1000) * 1000 : 0;
+      const currentMaxZoom: number = dateAxis.maxZoomed ? Math.floor(dateAxis.maxZoomed / 1000) * 1000 : 0;
+      if (props.zoom && props.zoom.beginTime && props.zoom.endTime && !props.hasFocus &&
+        (currentMinZoom !== props.zoom.beginTime || currentMaxZoom !== props.zoom.endTime)) {
+          
         console.log('Updating zoom: ', {
           series_id: props.TSDB.seriesId,
           zoom: props.zoom,

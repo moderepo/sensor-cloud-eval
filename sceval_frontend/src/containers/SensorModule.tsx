@@ -14,7 +14,7 @@ import {
 import modeAPI from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
 import moment, { Moment } from 'moment';
-import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
+import { Menu, Dropdown, Icon, Checkbox, Modal, Input, Radio } from 'antd';
 import ModeConnection  from '../controllers/ModeConnection';
 import { determineUnit, evaluateSensorModelName, evaluateSensorModel, parseSensorId } from '../utils/SensorTypes';
 import {
@@ -89,7 +89,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     const [zoom, setZoom] = useState<DateBounds>();
 
     const [graphTimespanOptions, setGraphTimespanOptions] = useState<GraphTimespan[]>([]);
-    const [selectedGraphTimespan, setSelectedGraphTimespan] = useState<GraphTimespan>();
 
     const [chartOptions, setChartOptions] = useState<ChartOptions>({
         fillChart: false,
@@ -98,6 +97,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     });
 
     const [sensorModuleSettings, setSensorModuleSettings] = useState<SensorModuleSettings>();
+    const [showRealtime, setShowRealtime] = useState<boolean>(false);
 
     // to keep track of component mounted/unmounted event so we don't call set state when component is unmounted
     let componentUnmounted: boolean;
@@ -274,23 +274,23 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         const range: number = endTime - beginTime;
 
         const predefinedOptions: GraphTimespan[] = [
-            { value: Constants.YEAR_IN_MS * 10, label: '10 Years' },
-            { value: Constants.YEAR_IN_MS * 5, label: '5 Years' },
-            { value: Constants.YEAR_IN_MS * 2, label: '2 Years' },
-            { value: Constants.YEAR_IN_MS, label: '1 Year' },
-            { value: Constants.MONTH_IN_MS * 6, label: '6 Months' },
-            { value: Constants.MONTH_IN_MS * 2, label: '2 Months' },
-            { value: Constants.MONTH_IN_MS, label: '1 Month' },
-            { value: Constants.WEEK_IN_MS * 2, label: '2 Weeks' },
-            { value: Constants.WEEK_IN_MS, label: '1 Week' },
-            { value: Constants.DAY_IN_MS * 2, label: '2 Days' },
-            { value: Constants.DAY_IN_MS, label: '1 Day' },
-            { value: Constants.HOUR_IN_MS * 12, label: '12 Hours' },
-            { value: Constants.HOUR_IN_MS * 6, label: '6 Hours' },
-            { value: Constants.HOUR_IN_MS * 2, label: '2 Hours' },
-            { value: Constants.HOUR_IN_MS, label: '1 Hour' },
-            { value: Constants.MINUTE_IN_MS * 30, label: '30 Minutes' },
-            { value: Constants.MINUTE_IN_MS * 15, label: '15 Minutes' },
+            { value: Constants.YEAR_IN_MS * 10, label: 'Last 10 Years' },
+            { value: Constants.YEAR_IN_MS * 5, label: 'Last 5 Years' },
+            { value: Constants.YEAR_IN_MS * 2, label: 'Last 2 Years' },
+            { value: Constants.YEAR_IN_MS, label: 'Last 1 Year' },
+            { value: Constants.MONTH_IN_MS * 6, label: 'Last 6 Months' },
+            { value: Constants.MONTH_IN_MS * 2, label: 'Last 2 Months' },
+            { value: Constants.MONTH_IN_MS, label: 'Last 1 Month' },
+            { value: Constants.WEEK_IN_MS * 2, label: 'Last 2 Weeks' },
+            { value: Constants.WEEK_IN_MS, label: 'Last 1 Week' },
+            { value: Constants.DAY_IN_MS * 2, label: 'Last 2 Days' },
+            { value: Constants.DAY_IN_MS, label: 'Last 1 Day' },
+            { value: Constants.HOUR_IN_MS * 12, label: 'Last 12 Hours' },
+            { value: Constants.HOUR_IN_MS * 6, label: 'Last 6 Hours' },
+            { value: Constants.HOUR_IN_MS * 2, label: 'Last 2 Hours' },
+            { value: Constants.HOUR_IN_MS, label: 'Last 1 Hour' },
+            { value: Constants.MINUTE_IN_MS * 30, label: 'Last 30 Minutes' },
+            { value: Constants.MINUTE_IN_MS * 15, label: 'Last 15 Minutes' },
         ];
 
         const options: Set<GraphTimespan> = new Set<GraphTimespan>();
@@ -320,9 +320,8 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             options.add(result);
         });
 
-        // Convert the Set to Array and also add the 'Real-time' option to the beginning
+        // Convert the Set to Array
         return [
-            { value: 0, label: 'Real-time' },
             ...Array.from(options.values())
         ];
     };
@@ -848,7 +847,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     const onChartFocusHandler = (target: SensorDataBundle, hasFocus: boolean): void => {
         if (allSensorBundles) {
             // If the target focus changed then update all charts
-            if (!target.chartHasFocus && hasFocus) {
+            if (target.chartHasFocus !== hasFocus) {
                 allSensorBundles.forEach((bundle: SensorDataBundle): void => {
                     if (bundle.seriesId === target.seriesId) {
                         bundle.chartHasFocus = hasFocus;
@@ -1004,23 +1003,19 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
      * @param timespan 
      */
     const toggleGraphTimespan = (timespan: GraphTimespan): void => {
-        // Don't need to update the selected timespan if it is currently set.
-        if (!selectedGraphTimespan || selectedGraphTimespan.value !== timespan.value) {
-            setSelectedGraphTimespan(timespan);
-            if (masterDateBounds) {
-                // this will trigger state change event for sensorTypes which will cause chart props to update
-                const newZoom: DateBounds = {
-                    beginDate: moment(masterDateBounds.endTime - timespan.value).toISOString(),
-                    beginTime: masterDateBounds.endTime - timespan.value,
-                    endTime: masterDateBounds.endTime,
-                    endDate: moment(masterDateBounds.endTime).toISOString()
-                };
-                setZoom(newZoom);
+        if (masterDateBounds) {
+            // this will trigger state change event for sensorTypes which will cause chart props to update
+            const newZoom: DateBounds = {
+                beginDate: moment(masterDateBounds.endTime - timespan.value).toISOString(),
+                beginTime: masterDateBounds.endTime - timespan.value,
+                endTime: masterDateBounds.endTime,
+                endDate: moment(masterDateBounds.endTime).toISOString()
+            };
+            setZoom(newZoom);
 
-                // Need to load detail data for the zoomed in area. However, don't do it right away.
-                // Use debouncer to wait for some milliseconds before doing it.
-                getDetailDataDebouncer(newZoom);
-            }
+            // Need to load detail data for the zoomed in area. However, don't do it right away.
+            // Use debouncer to wait for some milliseconds before doing it.
+            getDetailDataDebouncer(newZoom);
         }
     };
 
@@ -1058,35 +1053,55 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     };
 
     /**
-     * render helper for graph timespan options
+     * Render helper for graph timespan options. There will be 2 menus. 1 menu is to switch between
+     * "Real-time" and "Historic". If historic data is selected, show another menu which let the user
+     * select the time span
+     * 
      */
     const renderGraphTimespanToggle = (): React.ReactNode => {
-        const menu = (
+        const graphTimespanMenu = (
             <Menu>
-                {   graphTimespanOptions.map((option: GraphTimespan, index: any) => {
-                        return (
-                            <Menu.Item 
-                                key={index}
-                                className="menu-setting-item"
-                            >
-                                <option 
-                                    value={option.value}
-                                    onClick={() => toggleGraphTimespan(option)}
-                                >
-                                    {option.label}
-                                </option>
-                            </Menu.Item>
-                        );
-                    })
-                }
+                {graphTimespanOptions.map((timespan: GraphTimespan) => {
+                    return(
+                        <Menu.Item key={timespan.value} className="menu-setting-item">
+                            <option onClick={() => toggleGraphTimespan(timespan)}>
+                                {timespan.label}
+                            </option>
+                        </Menu.Item>
+                    );
+                })}
             </Menu>
         );
         return (
-            <Dropdown overlay={menu} className="dropdown">
-                <a className="default-timespan-value sensing-interval d-flex align-items-center justify-content-center">
-                    {selectedGraphTimespan ? selectedGraphTimespan.label : 'Select One'}<Icon type="down" />
-                </a>
-            </Dropdown>
+            <div className="graph-timespan-options">
+                <div className="realtime-options d-flex flex-column align-items-start">
+                    <Radio
+                        name="realtime-setting"
+                        checked={showRealtime}
+                        onClick={() => setShowRealtime(true)}
+                    >
+                        Real-time Graph
+                    </Radio>
+                    <Radio
+                        name="realtime-setting"
+                        checked={!showRealtime}
+                        onClick={() => setShowRealtime(false)}
+                    >
+                        Static Graph
+                    </Radio>
+                </div>
+
+                {!showRealtime &&
+                    // If not showing realtime, show these options
+                    <div className="static-time-options d-flex flex-column align-items-end">
+                        <Dropdown overlay={graphTimespanMenu} className="dropdown">
+                            <a className="default-timespan-value d-flex align-items-center justify-content-center">
+                                Select Timespan <Icon type="down" />
+                            </a>
+                        </Dropdown>
+                    </div>
+                }
+            </div>
         );
     };
 

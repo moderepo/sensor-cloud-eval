@@ -149,6 +149,21 @@
               }
             }
           }
+
+          .graph-timespan-options {
+            .ant-radio-wrapper {
+              font-size: 12px;
+              padding: 1px 0;
+            }
+
+            .static-time-options {
+              margin-top: 10px;
+              .default-timespan-value {
+                font-size: 14px;
+                width: auto;
+              }
+            }
+          }
         }
       }
     }
