@@ -95,7 +95,8 @@
           }
 
           .gateway-name,
-          .sensor-model {
+          .sensor-model,
+          .sensor-count {
             width: 100%;
             text-align: left;
             margin-top: 5px;
@@ -138,9 +139,11 @@
             font-size: 25px;
           }
           .chart-options {
+            text-align: left;
             .chart-option {
               font-size: 12px;
               width: 100%;
+              padding: 1px 0;
               input {
                 margin-right: 5px;
               }
@@ -297,8 +300,16 @@
       }
     }
 
-    .ant-checkbox-wrapper {
-      margin: 5px;
+    .sensor-type-togglers {
+      margin: 0;
+      .ant-checkbox-wrapper {
+        margin: 0;
+        padding: 2px 5px;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
     }
   }
   .ant-modal-footer {

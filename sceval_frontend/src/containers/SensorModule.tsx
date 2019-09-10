@@ -28,8 +28,6 @@ import {
 import { Constants } from '../utils/Constants';
 import { Home } from '../components/entities/API';
 import { RouteParams } from '../components/entities/Routes';
-import { string, DateFormatter, time } from '@amcharts/amcharts4/core';
-import { pointsToPath } from '@amcharts/amcharts4/.internal/core/rendering/Path';
 import handleErrors from '../utils/ErrorMessages';
 
 const loader = require('../common_images/notifications/loading_ring.svg');
@@ -981,40 +979,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 }
             }
         }
-        /*
-        let filteredActiveSensors: any = Constants.ALPS_SENSOR_SET.filter((sensor: any): boolean => {
-            // if the user does not request the sensor to be turned off
-            return !offlineSensors.includes(sensor);
-        });
-        // perform kv updates
-        if (props.match.params.deviceId) {
-            const gateway = props.match.params.deviceId;
-            // copy the current selected sensor module object and replace the module's name and list of sensors
-            const updatedSensorModuleObj: SensorModuleInterface = Object.assign({}, selectedSensorModuleObj);
-            if (sensorModuleName) {
-                updatedSensorModuleObj.value.name = sensorModuleName;
-            }
-            updatedSensorModuleObj.value.sensors = filteredActiveSensors;
-
-            // update KV store for the device
-            modeAPI.setDeviceKeyValueStore(parseInt(gateway, 10), updatedSensorModuleObj.key, updatedSensorModuleObj)
-            .then((deviceResponse: any) => {
-                if (componentUnmounted) {
-                    return;
-                }
-                setEditingModuleSettings(true);
-                return deviceResponse;
-            }).catch((reason: any) => {
-                console.error('reason', reason);
-            });
-            // re-render changes
-            setEditingModuleSettings(false);
-            // hide module settings
-            setModuleSettingsVisible(false);
-            // hide modal
-            setModalVisible(false);
-        }
-        */
     };
 
     /**
@@ -1035,7 +999,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         }
     };
 
-    // handler for toggling the graph timespan dropdown
+    /**
+     * handler for toggling the graph timespan dropdown
+     * @param timespan 
+     */
     const toggleGraphTimespan = (timespan: GraphTimespan): void => {
         // Don't need to update the selected timespan if it is currently set.
         if (!selectedGraphTimespan || selectedGraphTimespan.value !== timespan.value) {
@@ -1057,6 +1024,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         }
     };
 
+    /**
+     * Render the dropdown to show/hide sensor module settings modal.
+     */
     const renderModuleSettingsDropdown = () => {
         const menu = (
             <Menu>
@@ -1087,7 +1057,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         );
     };
 
-    // render helper for graph timespan menu
+    /**
+     * render helper for graph timespan options
+     */
     const renderGraphTimespanToggle = (): React.ReactNode => {
         const menu = (
             <Menu>
@@ -1117,7 +1089,12 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             </Dropdown>
         );
     };
-    // sensing interval helper method for changing timeframe of receving real-time data
+
+    /**
+     * sensing interval helper method for changing timeframe of receving real-time data
+     * @param sensorModuleObj 
+     * @param interval 
+     */
     const setSensingInterval = 
         (sensorModuleObj: SensorModuleInterface | null | undefined, interval: SensingInterval): void => {
         if (selectedGateway && sensorModuleObj && interval && interval.value > 0 &&
@@ -1139,7 +1116,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             });
         }
     };
-    // render helper for sensing interval menu
+
+    /**
+     * render helper for sensing interval menu
+     */
     const renderSensingIntervalOptions = (sensorModuleObj: SensorModuleInterface|null|undefined): React.ReactNode => {
         if (!sensorModuleObj) {
             return null;
@@ -1198,6 +1178,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         );
     };
 
+    /**
+     * Render the graph options which allow the user to turn on/off some of the graph features
+     * e.g. fill chart, show bullets,etc...
+     */
     const renderGraphOptions = (): React.ReactNode => {
         return (
             <div className="chart-options d-flex flex-column align-items-start justify-content-start">
@@ -1205,39 +1189,44 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     className="chart-option d-flex flex-row align-items-start justify-content-start"
                     key="show-gradient"
                 >
-                    <label>
-                        <input
-                            type="checkbox"
-                            checked={chartOptions.fillChart}
-                            onChange={(event) => {
-                                let newOptions: ChartOptions = Object.assign({}, chartOptions);
-                                newOptions.fillChart = !chartOptions.fillChart;
-                                setChartOptions(newOptions);
-                            }}
-                        />Fill Chart
-                    </label>
+                    <Checkbox 
+                        className="chart-option"
+                        value={chartOptions.fillChart}
+                        onClick={(event) => {
+                            let newOptions: ChartOptions = Object.assign({}, chartOptions);
+                            newOptions.fillChart = !chartOptions.fillChart;
+                            setChartOptions(newOptions);
+                        }}
+                        checked={chartOptions.fillChart}
+                    >Fill Chart
+                    </Checkbox>
                 </div>
                 <div
                     className="chart-option d-flex flex-row align-items-start justify-content-start"
                     key="show-bullets"
                 >
-                    <label>
-                        <input
-                            type="checkbox"
-                            checked={chartOptions.showBullets}
-                            onChange={(event) => {
-                                let newOptions: ChartOptions = Object.assign({}, chartOptions);
-                                newOptions.showBullets = !chartOptions.showBullets;
-                                setChartOptions(newOptions);
-                            }}
-                        />Show Bullets
-                    </label>
+                    <Checkbox 
+                        className="chart-option"
+                        value={chartOptions.showBullets}
+                        onClick={(event) => {
+                            let newOptions: ChartOptions = Object.assign({}, chartOptions);
+                            newOptions.showBullets = !chartOptions.showBullets;
+                            setChartOptions(newOptions);
+                        }}
+                        checked={chartOptions.showBullets}
+                    >Show Bullet
+                    </Checkbox>
                 </div>
             </div>
         );
     };
 
-    const renderSensorType = (sensor: SensorDataBundle): React.ReactNode => {
+    /**
+     * This will render 1 sensor bundle. A sensor bundle UI includes the sensor's current value/mix/min/avg
+     * and a chart
+     * @param sensor 
+     */
+    const renderSensorbundle = (sensor: SensorDataBundle): React.ReactNode => {
         if (!sensor) {
             return null;
         }
@@ -1347,10 +1336,12 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     </div>
                     <div className="sensor-types">
                         <label className="label-title">Select Types of Data to Collect</label>
+                        < div className="sensor-type-togglers row d-flex flex-row flex-wrap">
                         {
                             sensorModuleSettings.sensors.map((sensorSetting: SensorTypeSetting)  => {
                                 return (
                                     <Checkbox 
+                                        className="sensor-type-toggler col-4"
                                         key={sensorSetting.type}
                                         value={sensorSetting.type}
                                         onClick={() => toggleSelectedSensorType(sensorSetting)}
@@ -1360,6 +1351,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                 );
                             })
                         }
+                        </ div>
                     </div>
                 </div>
             </Modal>
@@ -1406,6 +1398,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                         { selectedModule &&
                                             `Sensor model: ${evaluateSensorModelName(selectedModule.split(':')[0])}`
                                         }</div>
+                                        <div className="sensor-count">Active Sensors: {activeSensorBundles.length}</div>
                                     </div>
                                     <div className="dropdown-menu-container">
                                         {renderModuleSettingsDropdown()}
@@ -1416,10 +1409,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                     }
                                 </div>
                                 <div className="data-cols col-12 col-xl-6 d-flex flex-row">
-                                    <div className="data-col">
-                                        <div className="data-name">Sensors Active</div>
-                                        <div className="data-value">{activeSensorBundles.length}</div>
-                                    </div>
                                     { selectedModule && selectedModule.split(':')[0] === '0101' &&
                                     <div className="data-col">
                                         <div className="data-name col-dropdown">Sensing Interval</div>
@@ -1449,7 +1438,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                         { activeSensorBundles && activeSensorBundles.length > 0 ?
                             // if TSDB data exists for the active sensors:
                             activeSensorBundles.map((sensor: SensorDataBundle, index: any) => {
-                                return renderSensorType(sensor);
+                                return renderSensorbundle(sensor);
                             })
                         :
                             // if the response is not empty
