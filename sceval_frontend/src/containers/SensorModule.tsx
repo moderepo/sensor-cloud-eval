@@ -565,7 +565,11 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 timeSeriesDataSnapshot: seriesData,
                 timeSeriesData: seriesData,
                 chartHasFocus: false,
-                curVal: seriesData && seriesData.length > 0 ? seriesData[seriesData.length - 1].value : 0,
+                currentDataPoint: seriesData && seriesData.length > 0 ? seriesData[seriesData.length - 1] : {
+                    date: moment(Date.now()).toISOString(),
+                    timestamp: Date.now(),
+                    value: 0,
+                },
                 avgVal: avg,
                 maxVal: maxVal,
                 minVal: minVal
@@ -710,14 +714,51 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             // websocket message handler for RT data
             const webSocketMessageHandler: any = {
                 notify: (message: any): void => {
-                    return;
                     if (componentUnmounted) {
                         return;
                     }
-                    const moduleData = message;
+
                     // if app receives real time data, and it pertains to the selected Module:
-                    if (homeId && moduleData.eventType === Constants.EVENT_REALTIME_DATA
-                    && moduleData.eventData.timeSeriesData[0].seriesId.includes(selectedModule)) {
+                    if (message.eventType === Constants.EVENT_REALTIME_DATA &&
+                        homeId && masterDateBounds && allSensorBundles &&
+                        message.eventData && message.eventData.timeSeriesData &&
+                        message.eventData.timeSeriesData.length > 0 &&
+                        message.eventData.timeSeriesData[0].seriesId) {
+
+                        // find out which sensor bundle this series belong to
+                        const timeSeriesData: any = message.eventData.timeSeriesData[0];
+                        const seriesId: string = timeSeriesData.seriesId;
+                        const sensorBundle: SensorDataBundle | undefined = allSensorBundles.find(
+                            (bundle: SensorDataBundle): boolean => {
+                            return seriesId === bundle.seriesId;
+                        });
+
+                        if (sensorBundle) {
+                            let timestamp: number = moment(timeSeriesData.timestamp).valueOf();
+                            timestamp = Math.floor(timestamp / 1000) * 1000;            // round timestamp to SECONDS
+
+                            const dataPoint: DataPoint = {
+                                date: moment(timestamp).toISOString(),
+                                timestamp: timestamp,
+                                value: timeSeriesData.value
+                            };
+
+                            sensorBundle.currentDataPoint = dataPoint;
+                            sensorBundle.timeSeriesData = [...sensorBundle.timeSeriesData];
+                            sensorBundle.timeSeriesData.push(dataPoint);
+
+                            sensorBundle.allTimeDateBounds.endTime = dataPoint.timestamp;
+                            sensorBundle.allTimeDateBounds.endDate = dataPoint.date;
+                            sensorBundle.allTimeDateBounds = Object.assign({}, sensorBundle.allTimeDateBounds);
+
+                            setMasterDateBounds(Object.assign({}, masterDateBounds));
+                            setAllSensorBundles([... allSensorBundles]);
+                            setActiveSensorBundles(allSensorBundles.filter((bundle: SensorDataBundle): boolean => {
+                                return bundle.active;
+                            }));
+                        }
+
+                        /*
                         const wsData = moduleData.eventData.timeSeriesData;
                         let rtData: any = [];
                         let rtNumbers: any = [];
@@ -789,10 +830,13 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                 }
                             }
                         });
+                        */
                     }
                 }
             };
+
             ModeConnection.addObserver(webSocketMessageHandler);
+
             // Return cleanup function to be called when the component is unmounted
             return (): void => {
                 componentUnmounted = true;
@@ -800,7 +844,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             };
     // method invoke dependencies
     },  [homeId, activeSensorBundles, editingModuleSettings, selectedGateway, 
-        selectedModule, TSDBDataFetched]);
+        selectedModule, masterDateBounds, allSensorBundles]);
 
     const onUserInteractingWithChartHandler = (sensorBundle: SensorDataBundle): void => {
         // cancle debounce if there is one
@@ -1266,7 +1310,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     </div>
                     <Fragment>
                         <div className="unit-value">
-                            {roundValue(sensor.curVal, sensor.type)}
+                            {roundValue(sensor.currentDataPoint.value, sensor.type)}
                             <span className="unit">{sensor.unit}</span>
                         </div>
                         <div className="graph-info-container">

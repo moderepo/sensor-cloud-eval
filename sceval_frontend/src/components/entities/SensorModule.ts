@@ -74,7 +74,8 @@ export interface SensorDataBundle {
     currentDateBounds: DateBounds;
     // time-series data for sensor
     timeSeriesData: DataPoint[];
-    curVal: number;
+    // The most recent data point, use for realtime chart
+    currentDataPoint: DataPoint;
     avgVal: number;
     minVal: number;
     maxVal: number;

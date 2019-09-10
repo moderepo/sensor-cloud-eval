@@ -152,7 +152,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     // Add a scrollbar so the user can zoom/pan but make it hiddne initially until the user click on the chart
     newChart.scrollbarX = new am4charts.XYChartScrollbar();
     (newChart.scrollbarX as am4charts.XYChartScrollbar).series.push(series);
- 
+
     // format cursor:
     newChart.cursor = new am4charts.XYCursor();
     newChart.cursor.lineY.opacity = 0;
@@ -250,7 +250,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       const currentMaxZoom: number = dateAxis.maxZoomed ? Math.floor(dateAxis.maxZoomed / 1000) * 1000 : 0;
       if (props.zoom && props.zoom.beginTime && props.zoom.endTime && !props.hasFocus &&
         (currentMinZoom !== props.zoom.beginTime || currentMaxZoom !== props.zoom.endTime)) {
-          
+
         console.log('Updating zoom: ', {
           series_id: props.TSDB.seriesId,
           zoom: props.zoom,
@@ -303,6 +303,18 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       sensorChart.data = props.TSDB.timeSeriesData;
     }
   },        [props.TSDB]);
+
+  useEffect(() => {
+    if (props.TSDB && sensorChart) {
+      /*
+      console.log('Update bounds: ', props.TSDB.allTimeDateBounds);
+      const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
+      dateAxis.min = props.TSDB.allTimeDateBounds.beginTime;
+      dateAxis.max = props.TSDB.allTimeDateBounds.endTime;
+      dateAxis.invalidate();
+      */
+    }
+  },        [props.TSDB.allTimeDateBounds]);
 
   useEffect(() => {
     if (sensorChart) {
