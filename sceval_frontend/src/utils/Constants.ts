@@ -35,7 +35,7 @@ export namespace Constants {
 
   // How long to delay before dispatching chart zoom event
   export const CHART_ZOOM_EVENT_DELAY_IN_MS: number = 20;
-  export const CHART_DETAIL_REQUEST_DELAY_IN_MS: number = 3000;
+  export const CHART_FETCH_DATA_DELAY_IN_MS: number = 3000;
 
   // Months and years values will assume months are 30 days and years are 365 days. This is not
   // accurate but it is good enough. If you need a correct value, don't use these constants.

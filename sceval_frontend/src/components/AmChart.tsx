@@ -19,6 +19,8 @@ interface AmChartProps extends React.Props<any> {
   zoom?: DateBounds;
   zoomEventDispatchDelay?: number;
   hasFocus: boolean;            // Used for showing/hiding scrollbar
+  fillChart?: boolean;
+  showBullets?: boolean;
   onUserInteracting?: (target: SensorDataBundle) => any;
   onZoomAndPan?: (target: SensorDataBundle, startTime: number, endTime: number) => any;
   onFocusChanged?: (target: SensorDataBundle, hasFocus: boolean) => any;
@@ -129,29 +131,27 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       series.tooltip.getFillFromObject = false;
       series.tooltip.background.fill = am4core.color('#7FCBCF');
     }
-    // series.fill = am4core.color('#7FCBCF');
-    series.stroke = am4core.color('#7FCBCF');
-    // series.fillOpacity = 1;
 
+    series.stroke = am4core.color('#7FCBCF');
+    series.strokeWidth = 3;
+    series.fillOpacity = 0.3;
+    if (props.fillChart) {
+      series.fill = am4core.color('#C6E4F2');
+    } else {
+      series.fill = am4core.color(undefined);
+    }
+
+    if (props.showBullets) {
+      const bullet: am4charts.CircleBullet = series.bullets.push(new am4charts.CircleBullet());
+      bullet.strokeWidth = 0;
+      bullet.width = 3;
+      bullet.fill = am4core.color('#7FCBCF');
+    }
+ 
     // Add a scrollbar so the user can zoom/pan but make it hiddne initially until the user click on the chart
     newChart.scrollbarX = new am4charts.XYChartScrollbar();
     (newChart.scrollbarX as am4charts.XYChartScrollbar).series.push(series);
  
-    const bullet = series.bullets.push(new am4charts.Bullet());
-    const square = bullet.createChild(am4core.Rectangle);
-    square.width = 5;
-    square.height = 5;
-    square.opacity = 1;
-    square.horizontalCenter = 'middle';
-    square.verticalCenter = 'middle';
-
-    // format graph gradient:
-    var gradient = new am4core.LinearGradient();
-    gradient.addColor(newChart.colors.getIndex(0), 0.5);
-    gradient.addColor(newChart.colors.getIndex(0), 0);
-    // gradient.rotation = 90;
-    // series.fill = gradient;
-
     // format cursor:
     newChart.cursor = new am4charts.XYCursor();
     newChart.cursor.lineY.opacity = 0;
@@ -298,6 +298,39 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       sensorChart.data = props.TSDB.timeSeriesData;
     }
   },        [props.TSDB]);
+
+  useEffect(() => {
+    if (sensorChart) {
+      const series: am4charts.XYSeries = sensorChart.series.getIndex(0) as am4charts.XYSeries;
+      if (props.fillChart) {
+        series.fill = am4core.color('#C6E4F2');
+      } else {
+        series.fill = am4core.color(undefined);
+      }
+      series.invalidate();
+    }
+  },        [props.fillChart]);
+
+  useEffect(() => {
+    if (sensorChart) {
+      const series: am4charts.XYSeries = sensorChart.series.getIndex(0) as am4charts.XYSeries;
+      if (props.showBullets) {
+        if (series.bullets.length <= 0) {
+          // If have not created bullet, create it
+          const bullet: am4charts.CircleBullet = series.bullets.push(new am4charts.CircleBullet());
+          bullet.strokeWidth = 0;
+          bullet.width = 3;
+          bullet.fill = am4core.color('#7FCBCF');
+        } else {
+          // if bullet already created, show it
+          (series.bullets.getIndex(0) as am4charts.CircleBullet).show();
+        }
+      } else if (series.bullets.length > 0) {
+        (series.bullets.getIndex(0) as am4charts.CircleBullet).hide();
+      }
+      series.invalidate();
+    }
+  },        [props.showBullets]);
 
   useEffect(() => {
     // Listen to the sensorChart, timespan, and rtValues changes and update the chart

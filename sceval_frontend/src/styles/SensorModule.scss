@@ -137,6 +137,15 @@
             padding-top: 8px;
             font-size: 25px;
           }
+          .chart-options {
+            .chart-option {
+              font-size: 12px;
+              width: 100%;
+              input {
+                margin-right: 5px;
+              }
+            }
+          }
         }
       }
     }

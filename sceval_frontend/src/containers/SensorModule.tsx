@@ -41,6 +41,12 @@ interface SensorModuleProps extends React.Props<any> {
     isLoggedIn: boolean;
 }
 
+interface ChartOptions {
+    fillChart: boolean;
+    showBullets: boolean;
+    fetchDataDelay: number;
+}
+
 export const SensorModule = withRouter((props: SensorModuleProps & RouteComponentProps<RouteParams>) => {
     // homeId state
     const [homeId, setHomeId] = useState<number>(0);
@@ -85,6 +91,12 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
     const [graphTimespanOptions, setGraphTimespanOptions] = useState<GraphTimespan[]>([]);
     const [selectedGraphTimespan, setSelectedGraphTimespan] = useState<GraphTimespan>();
+
+    const [chartOptions, setChartOptions] = useState<ChartOptions>({
+        fillChart: false,
+        showBullets: false,
+        fetchDataDelay: Constants.CHART_FETCH_DATA_DELAY_IN_MS,
+    });
 
     // to keep track of component mounted/unmounted event so we don't call set state when component is unmounted
     let componentUnmounted: boolean;
@@ -735,7 +747,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
      * for performance optimization, we don't want to fetch data too often. We want to wait until the user stop
      * zooming/panning and then load more data. Therefore, we need to use debounce to delay data fetch.
      */
-    const getDetailDataDebouncer: any = debounce(requestDetailedData, Constants.CHART_DETAIL_REQUEST_DELAY_IN_MS);
+    const getDetailDataDebouncer: any = debounce(requestDetailedData, Constants.CHART_FETCH_DATA_DELAY_IN_MS);
 
     const onUserInteractingWithChartHandler = (sensorBundle: SensorDataBundle): void => {
         // cancle debounce if there is one
@@ -972,15 +984,16 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             return null;
         }
 
-        const intervalSet: SensingInterval[] = [];
-        intervalSet.push({ value: 2, unit: 'seconds', multiplier: 1});
-        intervalSet.push({ value: 5, unit: 'seconds', multiplier: 1});
-        intervalSet.push({ value: 10, unit: 'seconds', multiplier: 1});
-        intervalSet.push({ value: 15, unit: 'seconds', multiplier: 1});
-        intervalSet.push({ value: 30, unit: 'seconds', multiplier: 1});
-        intervalSet.push({ value: 1, unit: 'minutes', multiplier: 60});
-        intervalSet.push({ value: 5, unit: 'minutes', multiplier: 60});
-        intervalSet.push({ value: 10, unit: 'minutes', multiplier: 60});
+        const intervalSet: SensingInterval[] = [
+            { value: 2, unit: 'seconds', multiplier: 1},
+            { value: 5, unit: 'seconds', multiplier: 1},
+            { value: 10, unit: 'seconds', multiplier: 1},
+            { value: 15, unit: 'seconds', multiplier: 1},
+            { value: 30, unit: 'seconds', multiplier: 1},
+            { value: 1, unit: 'minutes', multiplier: 60},
+            { value: 5, unit: 'minutes', multiplier: 60},
+            { value: 10, unit: 'minutes', multiplier: 60}
+        ];
 
         const menu = (
             <Menu>
@@ -1021,6 +1034,45 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     <Icon type="down" />
                 </a>
             </Dropdown>
+        );
+    };
+
+    const renderGraphOptions = (): React.ReactNode => {
+        return (
+            <div className="chart-options d-flex flex-column align-items-start justify-content-start">
+                <div
+                    className="chart-option d-flex flex-row align-items-start justify-content-start"
+                    key="show-gradient"
+                >
+                    <label>
+                        <input
+                            type="checkbox"
+                            checked={chartOptions.fillChart}
+                            onChange={(event) => {
+                                let newOptions: ChartOptions = Object.assign({}, chartOptions);
+                                newOptions.fillChart = !chartOptions.fillChart;
+                                setChartOptions(newOptions);
+                            }}
+                        />Fill Chart
+                    </label>
+                </div>
+                <div
+                    className="chart-option d-flex flex-row align-items-start justify-content-start"
+                    key="show-bullets"
+                >
+                    <label>
+                        <input
+                            type="checkbox"
+                            checked={chartOptions.showBullets}
+                            onChange={(event) => {
+                                let newOptions: ChartOptions = Object.assign({}, chartOptions);
+                                newOptions.showBullets = !chartOptions.showBullets;
+                                setChartOptions(newOptions);
+                            }}
+                        />Show Bullets
+                    </label>
+                </div>
+            </div>
         );
     };
 
@@ -1070,12 +1122,11 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                 <AmChart
                                     TSDB={sensor}
                                     identifier={sensor.type}
-                                    zoomEventDispatchDelay={Math.min(
-                                        1000,
-                                        Constants.CHART_ZOOM_EVENT_DELAY_IN_MS
-                                    )}
+                                    zoomEventDispatchDelay={Constants.CHART_ZOOM_EVENT_DELAY_IN_MS}
                                     zoom={zoom}
                                     hasFocus={sensor.chartHasFocus}
+                                    fillChart={chartOptions.fillChart}
+                                    showBullets={chartOptions.showBullets}
                                     onUserInteracting={onUserInteractingWithChartHandler}
                                     onZoomAndPan={onZoomAndPanHandler}
                                     onFocusChanged={onChartFocusHandler}
@@ -1203,6 +1254,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                             <div className="data-col">
                                 <div className="data-name col-dropdown">Graph Timespan</div>
                                 {renderGraphTimespanToggle()}
+                            </div>
+                            <div className="data-col">
+                                <div className="data-name col-dropdown">Graph Options</div>
+                                {renderGraphOptions()}
                             </div>
                         </div>
                     </div>
