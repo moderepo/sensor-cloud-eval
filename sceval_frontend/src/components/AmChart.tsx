@@ -7,6 +7,7 @@ import { Context, context } from '../context/Context';
 import { DateBounds } from '../components/entities/SensorModule';
 import { DataPoint } from './entities/API';
 import { Constants } from '../utils/Constants';
+import { consoleLog } from '../utils/Utils';
 const debounce = require('debounce');
 
 am4core.useTheme(am4themes_animated);
@@ -61,7 +62,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       event.target.minZoomed !== undefined &&
       event.target.maxZoomed !== undefined
     ) {
-      console.log('On Zoom Event Dispatch: ', {
+      consoleLog('On Zoom Event Dispatch: ', {
         series_id: props.identifier,
         zoom: props.zoom,
       });
@@ -88,7 +89,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
   };
 
   useEffect(() => {
-    console.log('Creating chart');
+    consoleLog('Creating chart');
 
     // create amChart instance with custom identifier
     const newChart: am4charts.XYChart = am4core.create(props.identifier, am4charts.XYChart);
@@ -169,7 +170,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     // Listen to chart ready event and then disable the scrollbar
     // If we disable it before it is rendered, the scrollbar will be blank
     newChart.events.on('ready', (event: any): void => {
-      console.log('Chart ready: ', props.identifier);
+      consoleLog('Chart ready: ', props.identifier);
       newChart.scrollbarX.disabled = true;
       
       // handle initial zoom if there is one set
@@ -205,7 +206,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       /**
        * Zoom/pan events get fired for every pixel the chart is zoomed or panned. For performance
        * optimization, we won't need to do anything until the user stop zoom/pan so we will use
-       * debounce to delay the event. We won't dispatch the event until the user stoped zooming
+       * debouncer to delay the event. We won't dispatch the event until the user stoped zooming
        * or panning for props.zoomEventDispatchDelay milliseconds.
        */
       const dispatchEventDelay: number = props.zoomEventDispatchDelay !== undefined ?
@@ -218,7 +219,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
         // Notify the user is intracting with the chart
         chartInteractionEventDebouncer(event);
 
-        // Use debouncer to notify that the user zoomed/panned
+        // Use debounce to notify that the user zoomed/panned
         zoomPanEventDebouncer(event);
       };
 
@@ -250,7 +251,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       if (props.zoom && props.zoom.beginTime && props.zoom.endTime && !props.hasFocus &&
         (currentMinZoom !== props.zoom.beginTime || currentMaxZoom !== props.zoom.endTime)) {
 
-        console.log('Updating zoom: ', {
+        consoleLog('Updating zoom: ', {
           series_id: props.identifier,
           zoom: props.zoom,
         });
@@ -276,7 +277,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     // of updarting chart data.
     if (props.data && sensorChart && !sensorChart.isDisposed()) {
       const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
-      console.log('Updating data: ', {
+      consoleLog('Updating data: ', {
         series_id: props.identifier,
         zoom: props.zoom,
       });
@@ -305,7 +306,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
 
   useEffect(() => {
     if (sensorChart && !sensorChart.isDisposed() && props.dataDateBounds && !props.isRealtime) {
-      console.log('Update bounds: ', props.dataDateBounds);
+      consoleLog('Update bounds: ', props.dataDateBounds);
       const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
       // set the bounds for the axis
       dateAxis.min = props.dataDateBounds.beginTime;

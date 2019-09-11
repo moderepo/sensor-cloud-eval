@@ -29,6 +29,7 @@ import { Constants } from '../utils/Constants';
 import { Home } from '../components/entities/API';
 import { RouteParams } from '../components/entities/Routes';
 import handleErrors from '../utils/ErrorMessages';
+import { consoleLog, consoleError } from '../utils/Utils';
 
 const loader = require('../common_images/notifications/loading_ring.svg');
 const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
@@ -127,17 +128,17 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         insertToSnapshotData: boolean = true): Promise<void> => {
 
         if (!dateBounds) {
-            console.log('Fetch details data canceled');
+            consoleLog('Fetch details data canceled');
             return;
         }
 
-        console.log('Fetch details data');
+        consoleLog('Fetch details data');
         setIsLoadingTSData(true);
         
         let dataUpdated: boolean = false;
 
         if (allSensorBundles) {
-            console.log(dateBounds, masterDateBounds);
+            consoleLog(dateBounds, masterDateBounds);
             if (masterDateBounds && masterDateBounds.beginTime === dateBounds.beginTime &&
                 masterDateBounds.endTime === dateBounds.endTime) {
                 // If the dateBounds is exactly the same as the masterDateBounds. This mean the suer just zoomed out all
@@ -167,10 +168,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                     homeId, sensorBundle.seriesId, dateBounds.beginDate, dateBounds.endDate
                                 ));
                             } catch (error) {
-                                console.log('Failed to load time series data for series id: ', sensorBundle.seriesId);
+                                consoleLog('Failed to load time series data for series id: ', sensorBundle.seriesId);
                             }
                         } else {
-                            console.log('Requesting data for the same data, ngnoring the request: ', sensorBundle.type);
+                            consoleLog('Requesting data for the same data, ngnoring the request: ', sensorBundle.type);
                         }
                     }
                 }
@@ -469,7 +470,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             try {
                 timeSeriesDataArray.push(await modeAPI.getTimeSeriesData(home.id, seriesInfo.id, beginDate, endDate));
             } catch (error) {
-                console.log('Failed to load time series data for series id: ', seriesInfo.id);
+                consoleLog('Failed to load time series data for series id: ', seriesInfo.id);
             }
         }
         const allTimeSeriesData: Map<string, DataPoint[]> = convertTimeSeriesDataArrayToMap(timeSeriesDataArray);
@@ -648,7 +649,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
             initialize().catch((error: ErrorResponse): void => {
                 // Failed initialize
-                console.log('Initialize failed');
+                consoleLog('Initialize failed');
                 setIsLoadingPage(false);
                 setIsLoadingTSData(false);
             });
@@ -718,7 +719,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
     const onUserInteractingWithChartHandler = (targetId: string): void => {
         // cancle debounce if there is one
-        console.log('Cancel debounce');
+        consoleLog('Cancel debounce');
 
         // Call debounce but pass zoom as null. We will check for null in the requestDetailedData function
         getDetailDataDebouncer.clear();
@@ -775,7 +776,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         }
 
         // cancle debounce if there is one
-        console.log('Cancel debounce');
+        consoleLog('Cancel debounce');
 
         // Call debounce but pass zoom as null. We will check for null in the requestDetailedData function
         getDetailDataDebouncer.clear();
@@ -1099,7 +1100,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 setSelectedSensorModuleObj(updatedSensorModuleObj);
             },  (error: any): void => {
                 alert('Unable to update device key value store');
-                console.log('Unable to update device key value store', error);
+                consoleLog('Unable to update device key value store', error);
             });
         }
     };
