@@ -65,18 +65,14 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     const [selectedSensorModuleObj, setSelectedSensorModuleObj] = useState<SensorModuleInterface|null>();
     // selected gateway state
     const [selectedGateway, setSelectedGateway] = useState<number>(0);
-    // state of all TSDB data being fetched
-    const [TSDBDataFetched, setTSDBDataFetched] = useState<boolean>(false);
     // state to show that the page is loading so the user doesn't think it frozen
     const [isLoadingPage, setIsLoadingPage] = useState<boolean>(true);
     // state to show that we are loading chart data
-    const [isLoadingTSDB, setIsLoadingTSDB] = useState<boolean>(true);
+    const [isLoadingTSData, setIsLoadingTSData] = useState<boolean>(true);
     // The complete list of ALL the sensor information including the inactive sensors
     const [allSensorBundles, setAllSensorBundles] = useState<SensorDataBundle[]>([]);
     // The list of active sensors
     const [activeSensorBundles, setActiveSensorBundles] = useState<SensorDataBundle[]>([]);
-    // list of sensors offline
-    const [offlineSensors, setOfflineSensors] = useState<Array<any>>([]);
     // sensor module settings modal display state
     const [settingsModalVisible, setSettingsModalVisible] = useState<boolean>(false);
     // editing sensor module settings state
@@ -86,7 +82,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     // The min/max date bounds of all the sensor time series
     const [masterDateBounds, setMasterDateBounds] = useState<DateBounds>();
     // The current zoom bounds
-    const [zoom, setZoom] = useState<DateBounds>();
+    const [zoom, setZoom] = useState<DateBounds | undefined>();
 
     const [graphTimespanOptions, setGraphTimespanOptions] = useState<GraphTimespan[]>([]);
 
@@ -136,7 +132,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         }
 
         console.log('Fetch details data');
-        setIsLoadingTSDB(true);
+        setIsLoadingTSData(true);
         
         let dataUpdated: boolean = false;
 
@@ -253,7 +249,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 }));
             }
 
-            setIsLoadingTSDB(false);
+            setIsLoadingTSData(false);
         }
     };
 
@@ -488,8 +484,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         const sensors: Array<SensorDataBundle> = [];
         allSensorTypes.forEach((sensorType: string) => {
             // sensorType = acceleration_y:0 so we need to remove :0 to get the actual name
-            const sensorTypeLowercase: string = sensorType.toLocaleLowerCase();
-            const typeName: string = sensorTypeLowercase.split(':')[0].replace(/_/g, ' ');
+            const sensorTypeLowercase: string = sensorType.toLocaleLowerCase();            
+            const typeName: string = sensorTypeLowercase.split(':')[0];
+            const userFriendlyName: string = typeName.replace(/_/g, ' ');
             const unit: any = determineUnit(typeName.toLowerCase());
 
             // NOTE: sensorModuleData.value.sensors are in uppercase
@@ -566,7 +563,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 seriesId: seriesId,
                 unit: unit,
                 type: sensorType,
-                name: typeName,
+                name: userFriendlyName,
                 active: isActive,
                 allTimeDateBounds: {
                     beginDate: beginDate,
@@ -630,7 +627,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         });
 
         setIsLoadingPage(false);
-        setIsLoadingTSDB(false);
+        setIsLoadingTSData(false);
     };
 
     // the URL should contain deviceId and sensorModuleId. If not, take the user
@@ -647,87 +644,20 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     useEffect(
         () => {
             setIsLoadingPage(true);
-            setIsLoadingTSDB(true);
+            setIsLoadingTSData(true);
 
             initialize().catch((error: ErrorResponse): void => {
                 // Failed initialize
                 console.log('Initialize failed');
                 setIsLoadingPage(false);
-                setIsLoadingTSDB(false);
+                setIsLoadingTSData(false);
             });
-
-            if (!componentUnmounted) {
-                setTSDBDataFetched(true);
-            }
     },  []);
 
     // React hook's componentDidMount and componentDidUpdate
     useEffect(
         () => {
             componentUnmounted = false;
-
-            /*
-            if (homeId !== 0 && selectedGateway && selectedModule) {
-
-                // fetch module data from KV store
-                modeAPI.getDeviceKeyValueStore(
-                    selectedGateway, `${Constants.SENSOR_MODULE_KEY_PREFIX}${selectedModule}`
-                ).then((keyValueStore: KeyValueStore) => {
-                    if (componentUnmounted) {
-                        return;
-                    }
-
-                    setSelectedSensorModuleObj(keyValueStore);
-                    
-                    const moduleSensors = keyValueStore.value.sensors;
-                    // set name of sensor
-                    setSensorModuleName(keyValueStore.value.name);
-                    // set full sensor list and quantity
-                    setFullSensorList(moduleSensors);
-                    setActiveSensorQuantity(moduleSensors.length);
-                    // determine offline sensors
-                    let sensorsOffline: any = Constants.ALPS_SENSOR_SET.filter((sensor: any): boolean => {
-                        return !keyValueStore.value.sensors.includes(sensor);
-                    });
-                    setOfflineSensors(sensorsOffline);
-
-                    modeAPI.getAllTimeSeriesInfo(homeId).then((tsdbInfo: TimeSeriesInfo[]) => {
-                            if (componentUnmounted) {
-                                return;
-                            }
-                            // filter response initially by selected module
-                            const filteredTSDBData: any = tsdbInfo.filter((tsdbData: any): boolean => {
-                                return tsdbData.id.includes(selectedModule);
-                            });
-                            // filter again for online sensors
-                            const onlineTSDBData: any = filteredTSDBData.filter((filteredData: any): boolean => {
-                                const sensorType = filteredData.id.split('-')[1].toUpperCase();
-                                return moduleSensors.includes(sensorType);
-                            });
-                            setOfflineSensors(sensorsOffline);
-                            let sensors: any = [];
-                            // for online sensors, perform TSDB fetch
-                            if (onlineTSDBData.length > 0 && !TSDBDataFetched) {
-                                onlineTSDBData.forEach((sensor: any, index: any) => {
-                                    const format = sensor.id.split('-')[1];
-                                    const sType = format.split(':')[0];
-                                    const unit = determineUnit(sType);
-                                    if (unit !== undefined) {
-                                        console.log('invoked.');
-                                        performTSDBFetch(
-                                            homeId, sensors, sType, sensor.id, unit, 
-                                            onlineTSDBData);
-                                    }
-                                });
-                            }
-                        });
-                // catch any errors in sensor module settings fetch
-                }).catch((error: ErrorResponse): void => {
-                    alert(`Unable to get sensor module settings because of this error '${error.message}'`);
-                    console.log(error);
-                });
-            }
-            */
 
             // websocket message handler for RT data
             const webSocketMessageHandler: any = {
@@ -738,7 +668,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
                     // if app receives real time data, and it pertains to the selected Module:
                     if (message.eventType === Constants.EVENT_REALTIME_DATA &&
-                        homeId && masterDateBounds && allSensorBundles &&
+                        homeId && allSensorBundles &&
                         message.eventData && message.eventData.timeSeriesData &&
                         message.eventData.timeSeriesData.length > 0) {
                         
@@ -762,7 +692,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                     value: data.value
                                 };
     
-                                sensorBundle.currentDataPoint = dataPoint;    
+                                sensorBundle.currentDataPoint = dataPoint;
                             }
                         });
 
@@ -772,80 +702,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                 return bundle.active;
                             }));
                         }
-
-                        /*
-                        const wsData = moduleData.eventData.timeSeriesData;
-                        let rtData: any = [];
-                        let rtNumbers: any = [];
-                        // for each sensor returned in the event:
-                        wsData.forEach((sensor: any, index: any) => {
-                            const format = sensor.seriesId.split('-')[1];
-                            // if the sensor is online:
-                            if (!offlineSensors.includes(format.toUpperCase())) {
-                                const sType = format.split(':')[0];
-                                // update the rtData object
-                                rtData.push({
-                                    seriesID: sensor.seriesId,
-                                    type: sType,
-                                    timestamp: sensor.timestamp,
-                                    rtValue: sensor.value
-                                });
-                                rtNumbers.push({
-                                    type: sType,
-                                    val: sensor.value
-                                });
-                                // if we have gone through all RT data:
-                                if (index === wsData.length - 1) {
-                                    // if activeSensors already exists:
-                                    if (activeSensorBundles) {
-                                        let updatedActiveArray: any = activeSensorBundles;
-                                        rtData.forEach((newSensor: any) => {
-                                            // filter and check if RT data for the online sensor exists
-                                            const dataExists = activeSensorBundles.filter(
-                                                (onlineSensor: any): boolean => {
-                                                    return onlineSensor.type === newSensor.type;
-                                            });
-                                            // if the sensor already has previous RT data, update it
-                                            if (dataExists.length === 1) {
-                                                updatedActiveArray.forEach((updatedSensor: any) => {
-                                                    if (updatedSensor.type === newSensor.type) {
-                                                        updatedSensor.rtValue = newSensor.rtValue;
-                                                    }
-                                                });
-                                            // otherwise just simply push to new array and update
-                                            } else {
-                                                updatedActiveArray.push(newSensor);
-                                            }
-                                        });
-                                        // after loop finishes, set active sensors to updated data set 
-                                        setActiveSensorBundles(updatedActiveArray.sort((a: any, b: any) => {
-                                            if (a.type < b.type) {
-                                                return -1;
-                                            }
-                                            if (a.type > b.type) {
-                                                return 1;
-                                            }
-                                            return 0;
-                                        })); 
-                                    // if this is the first RT data event, just simply sort and push data set
-                                    } else {
-                                        const sortedSensors = rtData.sort((a: any, b: any) => {
-                                            if (a.type < b.type) {
-                                                return -1;
-                                            }
-                                            if (a.type > b.type) {
-                                                return 1;
-                                            }
-                                            return 0;
-                                        }); 
-                                        setActiveSensorBundles(sortedSensors); // set real time data
-                                    }
-                                    // set global RT values for AmCharts
-                                    sensorContext.actions.setRTValues(rtNumbers);   
-                                }
-                            }
-                        });
-                        */
                     }
                 }
             };
@@ -858,15 +714,14 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 ModeConnection.removeObserver(webSocketMessageHandler);
             };
     // method invoke dependencies
-    },  [homeId, activeSensorBundles, editingModuleSettings, selectedGateway, 
-        selectedModule, masterDateBounds, allSensorBundles, realtimeMode]);
+    },  [homeId, selectedGateway, selectedModule, allSensorBundles]);
 
     const onUserInteractingWithChartHandler = (targetId: string): void => {
         // cancle debounce if there is one
         console.log('Cancel debounce');
 
         // Call debounce but pass zoom as null. We will check for null in the requestDetailedData function
-        getDetailDataDebouncer(null);
+        getDetailDataDebouncer.clear();
     };
 
     /**
@@ -923,7 +778,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         console.log('Cancel debounce');
 
         // Call debounce but pass zoom as null. We will check for null in the requestDetailedData function
-        getDetailDataDebouncer(null);
+        getDetailDataDebouncer.clear();
     };
 
     /**
@@ -1112,19 +967,49 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         );
     };
 
+    useEffect(() => {
+        if (masterDateBounds && selectedSensorModuleObj) {
+            if (realtimeMode) {
+                // Load time series data for the last X seconds. X seconds will depends on the module's sensing
+                // interval. We don't want to show too many points or too few points therefore we need to make it base
+                // on sensing interval. For example: If the sensing interval is 5 seconds and we show 1 hours, it
+                // would show too many points, 720 points. And if the sensing interval is 30 minutes, show 1 hours of
+                // data would be too little.
+                const interval: number = selectedSensorModuleObj && selectedSensorModuleObj.value.interval ?
+                    selectedSensorModuleObj.value.interval : 5;
+
+                // Calculate what the range of the data is base on the number of points we want to show and the interval
+                const range: number = interval * Constants.REALTIME_CHART_MAX_DATA_POINTS * 1000;
+                
+                const endTime: number = Date.now();
+                const beginTime: number = endTime - range;
+                const newZoom: DateBounds = {
+                    beginTime: beginTime,
+                    beginDate: moment(beginTime).toISOString(),
+                    endTime: endTime,
+                    endDate: moment(endTime).toISOString(),
+                };
+                // setZoom(newZoom);
+                fetchDetailedData(newZoom, false);
+            } else {
+                setZoom(Object.assign({}, masterDateBounds));
+                fetchDetailedData(masterDateBounds);
+            }
+        }
+   },         [realtimeMode]);
+
     /**
      * Change realtime mode to the specified value.
      * @param realtime 
      */
     const changeRealtimeMode = (realtime: boolean): void => {
         setRealtimeMode(realtime);
-
         if (realtime) {
-            // Load time series data for the last X seconds. X seconds will depends on the module's sensing interval.
-            // We don't want to show too many points or too few points therefore we need to make it base on sensing
-            // interval. For example: If the sensing interval is 5 seconds and we show 1 hours, it would show too
-            // many points, 720 points. And if the sensing interval is 30 minutes, show 1 hours of data would be
-            // too little.
+            // Load time series data for the last X seconds. X seconds will depends on the module's sensing
+            // interval. We don't want to show too many points or too few points therefore we need to make it base
+            // on sensing interval. For example: If the sensing interval is 5 seconds and we show 1 hours, it
+            // would show too many points, 720 points. And if the sensing interval is 30 minutes, show 1 hours of
+            // data would be too little.
             const interval: number = selectedSensorModuleObj && selectedSensorModuleObj.value.interval ?
                 selectedSensorModuleObj.value.interval : 5;
 
@@ -1133,17 +1018,17 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             
             const endTime: number = Date.now();
             const beginTime: number = endTime - range;
-            const newZoom: DateBounds = {
+            const timespan: DateBounds = {
                 beginTime: beginTime,
                 beginDate: moment(beginTime).toISOString(),
                 endTime: endTime,
                 endDate: moment(endTime).toISOString(),
             };
-            // setZoom(newZoom);
-            fetchDetailedData(newZoom, false);
+            setZoom(undefined);
+            fetchDetailedData(timespan, false);
         } else {
-            // Change the zoom back to 100%
-            setZoom(Object.assign({}, masterDateBounds));
+            setZoom(undefined);
+            fetchDetailedData(masterDateBounds);
         }
     };
 
@@ -1332,13 +1217,17 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         if (!sensor) {
             return null;
         }
-        const roundValue = (value: number, type: string): string => {
-            if (type === 'uv') {
-                return value.toFixed(3);
-            }
-            if (type === 'pressure') {
+        const roundValue = (value: number, type: string, isCurVal: boolean): string => {
+            if (isCurVal) {
+                if (type === 'pressure') {
+                    return value.toFixed(1);
+                }
+            } else {
+                if (type === 'uv') {
+                    return value.toFixed(3);
+                }
                 return value.toFixed(1);
-            }            
+            }
             return value.toFixed(2);    // default
         };
 
@@ -1353,16 +1242,16 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     </div>
                     <Fragment>
                         <div className="unit-value">
-                            {roundValue(sensor.currentDataPoint.value, sensor.type)}
+                            {roundValue(sensor.currentDataPoint.value, sensor.name, true)}
                             <span className="unit">{sensor.unit}</span>
                         </div>
                         <div className="graph-info-container">
                             <div className="sensor-insight">
-                                Maximum: <strong>{roundValue(sensor.maxVal, sensor.type)}</strong></div>
+                                Maximum: <strong>{roundValue(sensor.maxVal, sensor.name, false)}</strong></div>
                             <div className="sensor-insight">
-                                Minimum: <strong>{roundValue(sensor.minVal, sensor.type)}</strong></div>
+                                Minimum: <strong>{roundValue(sensor.minVal, sensor.name, false)}</strong></div>
                             <div className="sensor-insight">
-                                Average: <strong>{roundValue(sensor.avgVal, sensor.type)}</strong></div>
+                                Average: <strong>{roundValue(sensor.avgVal, sensor.name, false)}</strong></div>
                         </div>
                     </Fragment>
                 </div>
@@ -1387,7 +1276,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                     onZoomAndPan={onZoomAndPanHandler}
                                     onFocusChanged={onChartFocusHandler}
                                 />
-                                {isLoadingTSDB &&
+                                {isLoadingTSData &&
                                     // If is loading details data, show an overlay on top of the chart to disable
                                     // the user from interacting with the chart
                                     <div
