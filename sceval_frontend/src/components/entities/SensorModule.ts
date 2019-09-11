@@ -67,10 +67,11 @@ export interface SensorDataBundle {
     // Whether or not this sensor is active
     active: boolean;
     // the boundaries of the time series data, the date of the very first and very last data point
-    allTimeDateBounds: DateBounds;
+    allTimeDateBounds?: DateBounds;
     // snapshot of the time series data from the very first to very last data point
     timeSeriesDataSnapshot: DataPoint[];
-    // The date bounds of the current time series data
+    // The date bounds of the current timeSeriesData we previously requested. We keep track of this
+    // bounds so that if something trigger the data to be loaded again, we can skip it since we already have the data.
     currentDateBounds: DateBounds;
     // time-series data for sensor
     timeSeriesData: DataPoint[];

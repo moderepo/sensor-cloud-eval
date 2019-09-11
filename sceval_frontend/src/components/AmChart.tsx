@@ -9,21 +9,24 @@ import { DataPoint } from './entities/API';
 import { Constants } from '../utils/Constants';
 const debounce = require('debounce');
 
-// am4core.useTheme(am4themes_animated);
+am4core.useTheme(am4themes_animated);
 
 interface AmChartProps extends React.Props<any> {
   // amchart chart identifier
   identifier: string;
+  name: string;
   // time series data passed to chart
-  TSDB: SensorDataBundle;
+  data: DataPoint[];
+  dataDateBounds?: DateBounds;
+  newDataPoint?: DataPoint;
   zoom?: DateBounds;
   zoomEventDispatchDelay?: number;
   hasFocus: boolean;            // Used for showing/hiding scrollbar
   fillChart?: boolean;
   showBullets?: boolean;
-  onUserInteracting?: (target: SensorDataBundle) => any;
-  onZoomAndPan?: (target: SensorDataBundle, startTime: number, endTime: number) => any;
-  onFocusChanged?: (target: SensorDataBundle, hasFocus: boolean) => any;
+  onUserInteracting?: (targetId: string) => any;
+  onZoomAndPan?: (targetId: string, startTime: number, endTime: number) => any;
+  onFocusChanged?: (targetId: string, hasFocus: boolean) => any;
 }
 
 export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
@@ -48,7 +51,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
    */
   const dispatchChartInteractionEvent = (event: any): void => {
     if (props.hasFocus && props.onUserInteracting) {
-      props.onUserInteracting(props.TSDB);
+      props.onUserInteracting(props.identifier);
     }
   };
 
@@ -66,22 +69,24 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       event.target.maxZoomed !== undefined
     ) {
       console.log('On Zoom Event Dispatch: ', {
-        series_id: props.TSDB.seriesId,
+        series_id: props.identifier,
         zoom: props.zoom,
       });
   
       const minZoom: number = Math.floor(event.target.minZoomed / 1000) * 1000;
       const maxZoom: number = Math.floor(event.target.maxZoomed / 1000) * 1000;
-      if (minZoom <= props.TSDB.allTimeDateBounds.beginTime && maxZoom >= props.TSDB.allTimeDateBounds.endTime) {
-        // if the user zoomed out all the way, use the props.TSDB.dateBounds begin and end instead
+      if (props.dataDateBounds && minZoom <= props.dataDateBounds.beginTime &&
+        maxZoom >= props.dataDateBounds.endTime) {
+
+        // if the user zoomed out all the way, use the props.dataDateBounds begin and end instead
         props.onZoomAndPan(
-          props.TSDB,
-          props.TSDB.allTimeDateBounds.beginTime,
-          props.TSDB.allTimeDateBounds.endTime
+          props.identifier,
+          props.dataDateBounds.beginTime,
+          props.dataDateBounds.endTime
         );
       } else {
         props.onZoomAndPan(
-          props.TSDB,
+          props.identifier,
           minZoom,
           maxZoom
         );
@@ -90,12 +95,12 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
   };
 
   useEffect(() => {
-    console.log('rereating chart');
+    console.log('Creating chart');
 
     // create amChart instance with custom identifier
     const newChart: am4charts.XYChart = am4core.create(props.identifier, am4charts.XYChart);
     setSensorChart(newChart);
-    newChart.data = props.TSDB.timeSeriesData;
+    newChart.data = props.data;
 
     // push  new x-value axis
     let dateAxis = newChart.xAxes.push(new am4charts.DateAxis());
@@ -107,9 +112,14 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     dateAxis.dateFormatter = new am4core.DateFormatter();
     dateAxis.tooltipDateFormat = 'YYYY-MM-dd HH:mm:ss';
     dateAxis.keepSelection = true;
-    dateAxis.min = props.TSDB.allTimeDateBounds.beginTime;
-    dateAxis.max = props.TSDB.allTimeDateBounds.endTime;
-    dateAxis.strictMinMax = true;
+
+    // If the allTimeDateBounds is set, set the axis bounds to the same value to force the 
+    // axis to line up
+    if (props.dataDateBounds) {
+      dateAxis.min = props.dataDateBounds.beginTime;
+      dateAxis.max = props.dataDateBounds.endTime;
+      dateAxis.strictMinMax = true;
+    }
 
     newChart.dateFormatter.dateFormat = 'i';
     newChart.dateFormatter.inputDateFormat = 'i';
@@ -122,7 +132,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
 
     // format data series:
     let series: am4charts.LineSeries = newChart.series.push(new am4charts.LineSeries());
-    series.name = props.TSDB.name;
+    series.name = props.name;
     series.dataFields.dateX = 'date';
     series.dataFields.valueY = 'value';
 
@@ -165,7 +175,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     // Listen to chart ready event and then disable the scrollbar
     // If we disable it before it is rendered, the scrollbar will be blank
     newChart.events.on('ready', (event: any): void => {
-      console.log('Chart ready: ', props.TSDB.seriesId);
+      console.log('Chart ready: ', props.identifier);
       newChart.scrollbarX.disabled = true;
       
       if (props.zoom) {
@@ -252,7 +262,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
         (currentMinZoom !== props.zoom.beginTime || currentMaxZoom !== props.zoom.endTime)) {
 
         console.log('Updating zoom: ', {
-          series_id: props.TSDB.seriesId,
+          series_id: props.identifier,
           zoom: props.zoom,
         });
 
@@ -275,10 +285,10 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
   useEffect(() => {
     // This can be called multiple times when data is updated so make sure we are not in the middle
     // of updarting chart data.
-    if (props.TSDB && sensorChart) {
+    if (props.data && sensorChart) {
       const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
       console.log('Updating data: ', {
-        series_id: props.TSDB.seriesId,
+        series_id: props.identifier,
         zoom: props.zoom,
       });
   
@@ -300,21 +310,42 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       });
 
       // change chart data
-      sensorChart.data = props.TSDB.timeSeriesData;
+      sensorChart.data = props.data;
     }
-  },        [props.TSDB]);
+  },        [props.data]);
+
+  /**
+   * 
+   */
+  useEffect(() => {
+    /*
+    if (sensorChart && sensorChart.data) {
+      if (sensorChart.data.length > 10) {
+        sensorChart.removeData(1);
+      }
+      sensorChart.addData(props.TSDB.currentDataPoint);
+    }
+    */
+  },        [props.newDataPoint]);
 
   useEffect(() => {
-    if (props.TSDB && sensorChart) {
-      /*
-      console.log('Update bounds: ', props.TSDB.allTimeDateBounds);
+    if (sensorChart) {
+      console.log('Update bounds: ', props.dataDateBounds);
       const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
-      dateAxis.min = props.TSDB.allTimeDateBounds.beginTime;
-      dateAxis.max = props.TSDB.allTimeDateBounds.endTime;
+      if (props.dataDateBounds) {
+        // set the bounds for the axis
+        dateAxis.min = props.dataDateBounds.beginTime;
+        dateAxis.max = props.dataDateBounds.endTime;
+        dateAxis.strictMinMax = true;
+      } else {
+        // Remove bounds from the axis
+        dateAxis.min = 0;
+        dateAxis.max = 0;
+        dateAxis.strictMinMax = false;
+      }
       dateAxis.invalidate();
-      */
     }
-  },        [props.TSDB.allTimeDateBounds]);
+  },        [props.dataDateBounds]);
 
   useEffect(() => {
     if (sensorChart) {
@@ -378,7 +409,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       <div
         onPointerDown={(event: any) => {
           if (props.onFocusChanged) {
-            props.onFocusChanged(props.TSDB, true);
+            props.onFocusChanged(props.identifier, true);
           }
         }}
         id={props.identifier}
@@ -389,7 +420,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
           className="compress-button"
           onClick={() => {
             if (props.onFocusChanged) {
-              props.onFocusChanged(props.TSDB, false);
+              props.onFocusChanged(props.identifier, false);
             }
           }}
         >

@@ -97,7 +97,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     });
 
     const [sensorModuleSettings, setSensorModuleSettings] = useState<SensorModuleSettings>();
-    const [showRealtime, setShowRealtime] = useState<boolean>(false);
+    const [realtimeMode, setRealtimeMode] = useState<boolean>(false);
 
     // to keep track of component mounted/unmounted event so we don't call set state when component is unmounted
     let componentUnmounted: boolean;
@@ -126,7 +126,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     /**
      * Request for detailed data for the given date bounds
      */
-    const fetchDetailedData = async (dateBounds: DateBounds): Promise<void> => {
+    const fetchDetailedData = async (dateBounds: DateBounds | null | undefined): Promise<void> => {
         if (!dateBounds) {
             console.log('Fetch details data canceled');
             return;
@@ -139,10 +139,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
         if (allSensorBundles) {
             console.log(dateBounds, masterDateBounds);
-            if (masterDateBounds && masterDateBounds.beginTime >= dateBounds.beginTime &&
-                masterDateBounds.endTime <= dateBounds.endTime) {
-                // look like the user zoomed out all the way. This mean we can just use the time series
-                // snapshot data and don't need to load more details data
+            if (masterDateBounds && masterDateBounds.beginTime === dateBounds.beginTime &&
+                masterDateBounds.endTime === dateBounds.endTime) {
+                // If the dateBounds is exactly the same as the masterDateBounds. This mean the suer just zoomed out all
+                // the way so we can just use the time serie snapshot data and don't need to load more details data
                 allSensorBundles.forEach((bundle: SensorDataBundle, index: number): void => {
                     // need to create a copy of the bundle so that it is treated as new object and cause
                     // react to fire state change event
@@ -392,12 +392,14 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
         // for each time series, load the time series' bounds so we know when is the series' very first
         // and very last data point
+        /*
+        // TODO - This block of code uses the GET timeRange API to get the timeseries' begin and end time.
+        // However, this API might not be efficient so for now, we will use the Home's create date and today's
+        // date as the timeseries's time range
         const timeSeriesBounds: TimeSeriesBounds[] = [];
         for (let series of allTimeSeriesInfo) {
             try {
                 timeSeriesBounds.push(await modeAPI.getTimeSeriesBounds(home.id, series.id));
-                // Only need 1 time series bounds so we can stop right away
-                break;
             } catch (error) {
                 console.error(error);
                 break;
@@ -440,6 +442,15 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         beginDate = moment(beginTime).toISOString();
         endTime = Math.floor(endTime / 1000) * 1000;
         endDate = moment(endTime).toISOString();
+        */
+
+        // Round the begin and end time to the nearest seconds, ignoring the milliseconds.
+        let beginTime: number = moment(home.creationTime).valueOf();
+        let endTime: number = Date.now();
+        beginTime = Math.floor(beginTime / 1000) * 1000;
+        endTime = Math.floor(endTime / 1000) * 1000;
+        let beginDate: string = moment(beginTime).toISOString();
+        let endDate = moment(endTime).toISOString();
 
         // Once we know the begin and end time, we can build the list of graph timespan options the user can choose
         // We will build this list dynamically base on the range of the begin/end time because using 1 fixed list
@@ -722,36 +733,33 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     if (message.eventType === Constants.EVENT_REALTIME_DATA &&
                         homeId && masterDateBounds && allSensorBundles &&
                         message.eventData && message.eventData.timeSeriesData &&
-                        message.eventData.timeSeriesData.length > 0 &&
-                        message.eventData.timeSeriesData[0].seriesId) {
-
-                        // find out which sensor bundle this series belong to
-                        const timeSeriesData: any = message.eventData.timeSeriesData[0];
-                        const seriesId: string = timeSeriesData.seriesId;
-                        const sensorBundle: SensorDataBundle | undefined = allSensorBundles.find(
-                            (bundle: SensorDataBundle): boolean => {
-                            return seriesId === bundle.seriesId;
+                        message.eventData.timeSeriesData.length > 0) {
+                        
+                        // For each data point in the timeSeriesData, find out which sensor bundle it belong
+                        // to and add it to the associated bundle.
+                        let dataUpdated: boolean = false;
+                        message.eventData.timeSeriesData.forEach((data: any): void => {
+                            const sensorBundle: SensorDataBundle | undefined = allSensorBundles.find(
+                                (bundle: SensorDataBundle): boolean => {
+                                return data.seriesId === bundle.seriesId;
+                            });
+    
+                            if (sensorBundle) {
+                                dataUpdated = true;
+                                let timestamp: number = moment(data.timestamp).valueOf();
+                                timestamp = Math.floor(timestamp / 1000) * 1000;        // round timestamp to SECONDS
+    
+                                const dataPoint: DataPoint = {
+                                    date: moment(timestamp).toISOString(),
+                                    timestamp: timestamp,
+                                    value: data.value
+                                };
+    
+                                sensorBundle.currentDataPoint = dataPoint;    
+                            }
                         });
 
-                        if (sensorBundle) {
-                            let timestamp: number = moment(timeSeriesData.timestamp).valueOf();
-                            timestamp = Math.floor(timestamp / 1000) * 1000;            // round timestamp to SECONDS
-
-                            const dataPoint: DataPoint = {
-                                date: moment(timestamp).toISOString(),
-                                timestamp: timestamp,
-                                value: timeSeriesData.value
-                            };
-
-                            sensorBundle.currentDataPoint = dataPoint;
-                            sensorBundle.timeSeriesData = [...sensorBundle.timeSeriesData];
-                            sensorBundle.timeSeriesData.push(dataPoint);
-
-                            sensorBundle.allTimeDateBounds.endTime = dataPoint.timestamp;
-                            sensorBundle.allTimeDateBounds.endDate = dataPoint.date;
-                            sensorBundle.allTimeDateBounds = Object.assign({}, sensorBundle.allTimeDateBounds);
-
-                            setMasterDateBounds(Object.assign({}, masterDateBounds));
+                        if (dataUpdated) {
                             setAllSensorBundles([... allSensorBundles]);
                             setActiveSensorBundles(allSensorBundles.filter((bundle: SensorDataBundle): boolean => {
                                 return bundle.active;
@@ -844,9 +852,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             };
     // method invoke dependencies
     },  [homeId, activeSensorBundles, editingModuleSettings, selectedGateway, 
-        selectedModule, masterDateBounds, allSensorBundles]);
+        selectedModule, masterDateBounds, allSensorBundles, realtimeMode]);
 
-    const onUserInteractingWithChartHandler = (sensorBundle: SensorDataBundle): void => {
+    const onUserInteractingWithChartHandler = (targetId: string): void => {
         // cancle debounce if there is one
         console.log('Cancel debounce');
 
@@ -859,7 +867,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
      * We will load data for the zoomed range for each chart.
      */
     const onZoomAndPanHandler = async (
-        target: SensorDataBundle,
+        targetId: string,
         startTime: number,
         endTime: number
     ): Promise<void> => {
@@ -867,7 +875,8 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             const startDate: string = moment(startTime).toISOString();
             const endDate: string = moment(endTime).toISOString();
 
-            // this will trigger state change event for sensorTypes which will cause chart props to update
+            // this will trigger state change event for zoom state which will cause all chart to get the new
+            // zoom value and sync up the zoom level
             const newZoom: DateBounds = {
                 beginTime: startTime,
                 endTime: endTime,
@@ -876,30 +885,30 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             };
             setZoom(newZoom);
 
-            // Need to load detail data for the zoomed in area. However, don't do it right away.
-            // Use debouncer to wait for some milliseconds before doing it.
-            getDetailDataDebouncer(newZoom);
+            if (!realtimeMode) {
+                // Need to load detail data for the zoomed in area. However, don't do it right away.
+                // Use debouncer to wait for some milliseconds before loading data because the user
+                // might continue zooming/panning
+                getDetailDataDebouncer(newZoom);
+            }
         }
     };
 
     /**
      * The user start/end interaction with one of the charts. We will set that chart as active/inactive and set all
      * other chart as inactive
-     * @param target 
+     * @param targetId 
      * @param hasFocus 
      */
-    const onChartFocusHandler = (target: SensorDataBundle, hasFocus: boolean): void => {
+    const onChartFocusHandler = (targetId: string, hasFocus: boolean): void => {
         if (allSensorBundles) {
-            // If the target focus changed then update all charts
-            if (target.chartHasFocus !== hasFocus) {
-                allSensorBundles.forEach((bundle: SensorDataBundle): void => {
-                    if (bundle.seriesId === target.seriesId) {
-                        bundle.chartHasFocus = hasFocus;
-                    } else {
-                        bundle.chartHasFocus = false;
-                    }
-                });
-            }
+            allSensorBundles.forEach((bundle: SensorDataBundle): void => {
+                if (bundle.seriesId === targetId) {
+                    bundle.chartHasFocus = hasFocus;
+                } else {
+                    bundle.chartHasFocus = false;
+                }
+            });
             setAllSensorBundles([...allSensorBundles]);
         }
 
@@ -1014,7 +1023,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                         });
 
                         // Fetch data for the new selected sensors
-                        getDetailDataDebouncer(zoom);
+                        fetchDetailedData(zoom);
                     }
                 } catch (error) {
                     alert(handleErrors(error && error.message ? error.message : error));
@@ -1046,7 +1055,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
      * handler for toggling the graph timespan dropdown
      * @param timespan 
      */
-    const toggleGraphTimespan = (timespan: GraphTimespan): void => {
+    const selectGraphTimespan = (timespan: GraphTimespan): void => {
         if (masterDateBounds) {
             // this will trigger state change event for sensorTypes which will cause chart props to update
             const newZoom: DateBounds = {
@@ -1059,7 +1068,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
             // Need to load detail data for the zoomed in area. However, don't do it right away.
             // Use debouncer to wait for some milliseconds before doing it.
-            getDetailDataDebouncer(newZoom);
+            fetchDetailedData(newZoom);
         }
     };
 
@@ -1097,6 +1106,31 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     };
 
     /**
+     * Change realtime mode to the specified value.
+     * @param realtime 
+     */
+    const changeRealtimeMode = (realtime: boolean): void => {
+        setRealtimeMode(realtime);
+
+        if (realtime) {
+            // Load time series data for the last hour
+            const endTime: number = Date.now();
+            const beginTime: number = endTime - Constants.HOUR_IN_MS;
+            const newZoom: DateBounds = {
+                beginTime: beginTime,
+                beginDate: moment(beginTime).toISOString(),
+                endTime: endTime,
+                endDate: moment(endTime).toISOString(),
+            };
+            setZoom(newZoom);
+            fetchDetailedData(newZoom);
+        } else {
+            // Change the zoom back to 100%
+            setZoom(Object.assign({}, masterDateBounds));
+        }
+    };
+
+    /**
      * Render helper for graph timespan options. There will be 2 menus. 1 menu is to switch between
      * "Real-time" and "Historic". If historic data is selected, show another menu which let the user
      * select the time span
@@ -1108,7 +1142,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 {graphTimespanOptions.map((timespan: GraphTimespan) => {
                     return(
                         <Menu.Item key={timespan.value} className="menu-setting-item">
-                            <option onClick={() => toggleGraphTimespan(timespan)}>
+                            <option onClick={() => selectGraphTimespan(timespan)}>
                                 {timespan.label}
                             </option>
                         </Menu.Item>
@@ -1119,23 +1153,16 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         return (
             <div className="graph-timespan-options">
                 <div className="realtime-options d-flex flex-column align-items-start">
-                    <Radio
+                    <Checkbox
                         name="realtime-setting"
-                        checked={showRealtime}
-                        onClick={() => setShowRealtime(true)}
+                        checked={realtimeMode}
+                        onClick={() => changeRealtimeMode(!realtimeMode)}
                     >
                         Real-time Graph
-                    </Radio>
-                    <Radio
-                        name="realtime-setting"
-                        checked={!showRealtime}
-                        onClick={() => setShowRealtime(false)}
-                    >
-                        Static Graph
-                    </Radio>
+                    </Checkbox>
                 </div>
 
-                {!showRealtime &&
+                {!realtimeMode &&
                     // If not showing realtime, show these options
                     <div className="static-time-options d-flex flex-column align-items-end">
                         <Dropdown overlay={graphTimespanMenu} className="dropdown">
@@ -1273,7 +1300,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                             setChartOptions(newOptions);
                         }}
                         checked={chartOptions.showBullets}
-                    >Show Bullet
+                    >Show Bullets
                     </Checkbox>
                 </div>
             </div>
@@ -1324,15 +1351,17 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     </Fragment>
                 </div>
                 {
-                    sensor.timeSeriesData ? (
+                    sensor.seriesId && sensor.timeSeriesData ? (
                         // if TSDB data for particular sensor exists, display chart
                         <Fragment>
                             <div className="graph-container">
                                 <AmChart
-                                    TSDB={sensor}
-                                    identifier={sensor.type}
+                                    identifier={sensor.seriesId}
+                                    name={sensor.name}
                                     zoomEventDispatchDelay={Constants.CHART_ZOOM_EVENT_DELAY_IN_MS}
                                     zoom={zoom}
+                                    data={sensor.timeSeriesData}
+                                    dataDateBounds={masterDateBounds}
                                     hasFocus={sensor.chartHasFocus}
                                     fillChart={chartOptions.fillChart}
                                     showBullets={chartOptions.showBullets}
