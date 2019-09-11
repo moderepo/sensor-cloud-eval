@@ -37,7 +37,6 @@
       margin-left: 0;
       margin-right: 0;
       border-bottom: 1px solid $border-grey;
-
       .module-left-container {
         background-color: $base-background;
         border: solid 1px #b5c0d8;
@@ -213,6 +212,10 @@
     @media (min-width:1200px) {
       .module-left-container {
         max-width: 600px;
+      }
+      .extended {
+        max-width: 800px;
+        width: 800px;
       }
       .module-details {
         .data-cols {
