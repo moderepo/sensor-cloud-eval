@@ -188,7 +188,7 @@ const MyAccount = withRouter(
                 }
               </div>
               <img src={name} />
-              <h4>Name:</h4>
+              <h4>Name</h4>
               {!isEditing ? (
                 <div className="user-data">{username}</div>
               ) : (
@@ -202,10 +202,10 @@ const MyAccount = withRouter(
                 />
               )}
               <img className="mail" src={email} />
-              <h4> Email:</h4>
+              <h4> Email</h4>
               <div className="user-data">{userData.value.user.email}</div>
               <img src={password} />
-              <h4>Password:</h4>
+              <h4>Password</h4>
               {!isEditing ? (
                 <div className="user-data">•••••••••</div>
               ) : (
@@ -230,7 +230,6 @@ const MyAccount = withRouter(
               )}
             </div>
             <div className="sign-out-section">
-              <h3>Sign Out</h3>
               <button className="sign-out-button" onClick={logout}>
                 Sign Out
               </button>

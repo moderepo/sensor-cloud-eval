@@ -411,7 +411,8 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                   className="action-button"
                   onClick={event => addSensorModules(event, deviceId)}
                 >
-                  + Add Sensor Modules
+                  <img src={plus} className="plus" />
+                  Add Modules
                 </button>
                 {renderDropDownSetting(deviceId)}
               </>

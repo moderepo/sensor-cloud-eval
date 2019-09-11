@@ -14,7 +14,7 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
   // stores the associated home
   const [home, setHome] = useState<number>();
   // stores the state of the claim code being typed
-  const [claimCode, setClaimCode] = useState<string>();
+  const [claimCode, setClaimCode] = useState<string>('');
   // stores any device errors that may occur when submitting the claim code
   const [addDeviceError, setAddDeviceError] = useState<boolean>(false);
 

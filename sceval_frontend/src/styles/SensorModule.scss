@@ -21,6 +21,10 @@
       width: 7px;
     }
   }
+  .back-button:hover {
+    text-decoration: none;
+    opacity: 0.7;
+  }
   .module-container {
     background-color: $base-background;
     border-radius: 4px;
@@ -46,6 +50,9 @@
         margin: 0;
 
         .dropdown-menu-container {
+          border-radius: 5px;
+          border: 2px solid $base-black;
+          padding: 2px 8px;
           position: absolute;
           top: 20px;
           right: 20px;
@@ -254,6 +261,9 @@
       color: $base-black;
     }
   }
+  .ant-input:hover {
+    border-color: $base-turquoise;
+  }
   .sensor-module-form {
     text-align: center;
     .label-title {
@@ -275,9 +285,30 @@
 
     .ant-checkbox-wrapper {
       margin: 5px;
+      .ant-checkbox-checked {
+        .ant-checkbox-inner {
+          background-color: $base-turquoise;
+          border-color: $base-turquoise;
+        }
+      }
+      .ant-checkbox-inner {
+        border-color: $base-turquoise;
+      }
     }
   }
   .ant-modal-footer {
     text-align: center;
+  }
+  .ant-btn-primary {
+    border: 2px solid $base-black;
+    background-color: $base-black;
+    border-radius: 4px;
+    color: $base-background;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .ant-btn-primary:hover {
+    opacity: 0.7;
   }
 }

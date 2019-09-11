@@ -83,6 +83,13 @@
         color: $base-background;
         background-color: $base-black;
       }
+      .add-sensor-module:hover {
+        opacity: 0.7;
+      }
+
+      .start-scan:hover {
+        opacity: 0.7;
+      }
 
       .add-sensor-module:disabled {
         opacity: 0.5;

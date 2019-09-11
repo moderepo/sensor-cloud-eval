@@ -23,12 +23,9 @@
       margin: 0 5px 0 5px;
       font-size: 14px !important;
       font-weight: 500;
-      height: 35px;
-      padding: 5px 15px 6px;
-      line-height: 1.7;
+      padding: 12px 40px;
       text-align: center;
       white-space: nowrap;
-      vertical-align: middle;
       border-radius: 4px;
       margin-right: 3.5vw;
       .plus {
@@ -37,6 +34,7 @@
     }
     .add-gateway-button:hover{
       text-decoration: none;
+      opacity: 0.7;
     }
   }
 
@@ -86,8 +84,11 @@
         .gateway-settings {
           float: right;
           .action-button {
+            .plus {
+              padding-right: 5px;
+            }
             margin-right: 5px;
-            min-width: 200px;
+            min-width: 130px;
           }
 
           .done-button {
@@ -100,6 +101,9 @@
             text-decoration: none;
             font-size: 14px;
             font-weight: 700;
+          }
+          .done-button:hover {
+            opacity: 0.7;
           }
 
           .sce-dropdown-menu {
@@ -210,6 +214,10 @@
   text-decoration: none;
   font-size: 14px;
   font-weight: 700;
+}
+.ant-dropdown-link:hover {
+  text-decoration: none;
+  color: $base-black;
 }
 
 .menu-setting-item {
