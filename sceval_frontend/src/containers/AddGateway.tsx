@@ -5,17 +5,21 @@ import { LoginInfo } from '../components/entities/User';
 import AppContext from '../controllers/AppContext';
 import { Home } from '../components/entities/API';
 import modeAPI from '../controllers/ModeAPI';
-
+// required images imported
 const connect = require('../common_images/devices/1-plug.svg');
 const gw = require('../common_images/devices/gateway-large.svg');
 const numbers = require('../common_images/devices/numbers.svg');
 
 const AddGateway = withRouter((props: RouteComponentProps) => {
+  // stores the associated home
   const [home, setHome] = useState<number>();
+  // stores the state of the claim code being typed
   const [claimCode, setClaimCode] = useState<string>();
+  // stores any device errors that may occur when submitting the claim code
   const [addDeviceError, setAddDeviceError] = useState<boolean>(false);
 
   const initialize = async () => {
+    // get the user's login information
     const loginInfo: LoginInfo = await AppContext.restoreLogin();
     // get home associated with project
     const homeObj: Home = await modeAPI.getHome(loginInfo.user.id);
@@ -25,7 +29,10 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
   useEffect(() => {
     initialize();
   },        []);
-
+  /**
+   * Method for handling the submission of a claim code. 
+   * If an error occurs, the method will catch the error and handle it accordingly.
+   */
   const submitClaimCode = async () => {
     try {
       if (home && claimCode) {
@@ -43,7 +50,10 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
       },         2000);
     }
   };
-
+  /**
+   * Method updating the state of the claim code.
+   * @param event 
+   */
   const handleClaimCodeEntry = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
     setClaimCode(event.target.value);
