@@ -126,7 +126,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     /**
      * Request for detailed data for the given date bounds
      */
-    const fetchDetailedData = async (dateBounds: DateBounds | null | undefined): Promise<void> => {
+    const fetchDetailedData = async (
+        dateBounds: DateBounds | null | undefined,
+        insertToSnapshotData: boolean = true): Promise<void> => {
+
         if (!dateBounds) {
             console.log('Fetch details data canceled');
             return;
@@ -208,29 +211,33 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                             // Update the current data date bounds so we know which bounds the current data belong to
                             updatedBundle.currentDateBounds = Object.assign({}, dateBounds);
 
-                            // Insert newly loaded series data into timeSeriesDataSnapshot
-                            updatedBundle.timeSeriesData = [];
-                            let i: number = 0;
-                            for (i = 0; i < updatedBundle.timeSeriesDataSnapshot.length; i++) {
-                                let point: DataPoint = updatedBundle.timeSeriesDataSnapshot[i];
-                                if (point.timestamp < dateBounds.beginTime) {
-                                    updatedBundle.timeSeriesData.push(point);
-                                } else {
-                                    // found a point that is greater than the zoom area
-                                    break;
+                            if (insertToSnapshotData) {
+                                // Insert newly loaded series data into timeSeriesDataSnapshot
+                                updatedBundle.timeSeriesData = [];
+                                let i: number = 0;
+                                for (i = 0; i < updatedBundle.timeSeriesDataSnapshot.length; i++) {
+                                    let point: DataPoint = updatedBundle.timeSeriesDataSnapshot[i];
+                                    if (point.timestamp < dateBounds.beginTime) {
+                                        updatedBundle.timeSeriesData.push(point);
+                                    } else {
+                                        // found a point that is greater than the zoom area
+                                        break;
+                                    }
                                 }
-                            }
-                            // add the newly loaded point in the middle of updatedBundle.timeSeriesData
-                            seriesData.forEach((newPoint: DataPoint): void => {
-                                updatedBundle.timeSeriesData.push(newPoint);
-                            });
-                            // Add points from snapshot that is later than the zoom end time into
-                            // updatedBundle.timeSeriesData
-                            for (; i < updatedBundle.timeSeriesDataSnapshot.length; i++) {
-                                let point: DataPoint = updatedBundle.timeSeriesDataSnapshot[i];
-                                if (point.timestamp > dateBounds.endTime) {
-                                    updatedBundle.timeSeriesData.push(point);
+                                // add the newly loaded point in the middle of updatedBundle.timeSeriesData
+                                seriesData.forEach((newPoint: DataPoint): void => {
+                                    updatedBundle.timeSeriesData.push(newPoint);
+                                });
+                                // Add points from snapshot that is later than the zoom end time into
+                                // updatedBundle.timeSeriesData
+                                for (; i < updatedBundle.timeSeriesDataSnapshot.length; i++) {
+                                    let point: DataPoint = updatedBundle.timeSeriesDataSnapshot[i];
+                                    if (point.timestamp > dateBounds.endTime) {
+                                        updatedBundle.timeSeriesData.push(point);
+                                    }
                                 }
+                            } else {
+                                updatedBundle.timeSeriesData = seriesData;
                             }
                         } else {
                             // We didn't laod data for the bundle, don't need to change anything
@@ -1113,17 +1120,27 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         setRealtimeMode(realtime);
 
         if (realtime) {
-            // Load time series data for the last hour
+            // Load time series data for the last X seconds. X seconds will depends on the module's sensing interval.
+            // We don't want to show too many points or too few points therefore we need to make it base on sensing
+            // interval. For example: If the sensing interval is 5 seconds and we show 1 hours, it would show too
+            // many points, 720 points. And if the sensing interval is 30 minutes, show 1 hours of data would be
+            // too little.
+            const interval: number = selectedSensorModuleObj && selectedSensorModuleObj.value.interval ?
+                selectedSensorModuleObj.value.interval : 5;
+
+            // Calculate what the range of the data is base on the number of points we want to show and the interval
+            const range: number = interval * Constants.REALTIME_CHART_MAX_DATA_POINTS * 1000;
+            
             const endTime: number = Date.now();
-            const beginTime: number = endTime - Constants.HOUR_IN_MS;
+            const beginTime: number = endTime - range;
             const newZoom: DateBounds = {
                 beginTime: beginTime,
                 beginDate: moment(beginTime).toISOString(),
                 endTime: endTime,
                 endDate: moment(endTime).toISOString(),
             };
-            setZoom(newZoom);
-            fetchDetailedData(newZoom);
+            // setZoom(newZoom);
+            fetchDetailedData(newZoom, false);
         } else {
             // Change the zoom back to 100%
             setZoom(Object.assign({}, masterDateBounds));
@@ -1134,7 +1151,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
      * Render helper for graph timespan options. There will be 2 menus. 1 menu is to switch between
      * "Real-time" and "Historic". If historic data is selected, show another menu which let the user
      * select the time span
-     * 
      */
     const renderGraphTimespanToggle = (): React.ReactNode => {
         const graphTimespanMenu = (
@@ -1361,7 +1377,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                     zoomEventDispatchDelay={Constants.CHART_ZOOM_EVENT_DELAY_IN_MS}
                                     zoom={zoom}
                                     data={sensor.timeSeriesData}
-                                    dataDateBounds={masterDateBounds}
+                                    newDataPoint={realtimeMode ? sensor.currentDataPoint : undefined}
+                                    dataDateBounds={realtimeMode ? sensor.currentDateBounds : sensor.allTimeDateBounds}
+                                    isRealtime={realtimeMode}
                                     hasFocus={sensor.chartHasFocus}
                                     fillChart={chartOptions.fillChart}
                                     showBullets={chartOptions.showBullets}

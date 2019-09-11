@@ -4,7 +4,7 @@ import * as am4charts from '@amcharts/amcharts4/charts';
 import am4themes_animated from '@amcharts/amcharts4/themes/animated';
 import moment from 'moment';
 import { Context, context } from '../context/Context';
-import { SensorDataBundle, DateBounds } from '../components/entities/SensorModule';
+import { DateBounds } from '../components/entities/SensorModule';
 import { DataPoint } from './entities/API';
 import { Constants } from '../utils/Constants';
 const debounce = require('debounce');
@@ -17,7 +17,8 @@ interface AmChartProps extends React.Props<any> {
   name: string;
   // time series data passed to chart
   data: DataPoint[];
-  dataDateBounds?: DateBounds;
+  dataDateBounds: DateBounds;
+  isRealtime: boolean;
   newDataPoint?: DataPoint;
   zoom?: DateBounds;
   zoomEventDispatchDelay?: number;
@@ -30,18 +31,10 @@ interface AmChartProps extends React.Props<any> {
 }
 
 export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
-  // expanded or closed mode state
-  const [expandedMode, setExpandedMode] = useState<boolean>(false);
   // graph height state
   const [graphHeight, setGraphHeight] = useState<string>('300px');
-  // latest real-time value state
-  const [latestRTVal, setlatestRTVal] = useState();
-  // latest date state
-  const [latestDate, setlatestDate] = useState();
   // sensor chart state
   const [sensorChart, setSensorChart] = useState<am4charts.XYChart>();
-  // declare context hook
-  const sensorContext: Context = useContext(context);
 
   let componentUnmounted: boolean = false;
 
@@ -115,11 +108,9 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
 
     // If the allTimeDateBounds is set, set the axis bounds to the same value to force the 
     // axis to line up
-    if (props.dataDateBounds) {
-      dateAxis.min = props.dataDateBounds.beginTime;
-      dateAxis.max = props.dataDateBounds.endTime;
-      dateAxis.strictMinMax = true;
-    }
+    dateAxis.min = props.dataDateBounds.beginTime;
+    dateAxis.max = props.dataDateBounds.endTime;
+    dateAxis.strictMinMax = !props.isRealtime;
 
     newChart.dateFormatter.dateFormat = 'i';
     newChart.dateFormatter.inputDateFormat = 'i';
@@ -186,7 +177,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
         if (props.hasFocus) {
           dateAxis.events.disable();
         }
-        dateAxis.zoomToDates(moment(props.zoom.beginDate).toDate(), moment(props.zoom.endDate).toDate());
+        dateAxis.zoomToDates(moment(props.zoom.beginDate).toDate(), moment(props.zoom.endDate).toDate(), false, true);
         dateAxis.events.enable();
       }
     });
@@ -204,7 +195,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
    * user stop interacting with the chart
    */
   useEffect(() => {
-    if (sensorChart) {
+    if (sensorChart && !sensorChart.isDisposed()) {
       
       const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
       if (props.hasFocus) {
@@ -254,7 +245,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
    * is fast and not do anything unneccessary
    */
   useEffect(() => {
-    if (sensorChart) {
+    if (sensorChart && !sensorChart.isDisposed()) {
       const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
       const currentMinZoom: number = dateAxis.minZoomed ? Math.floor(dateAxis.minZoomed / 1000) * 1000 : 0;
       const currentMaxZoom: number = dateAxis.maxZoomed ? Math.floor(dateAxis.maxZoomed / 1000) * 1000 : 0;
@@ -273,7 +264,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
         if (props.hasFocus) {
           dateAxis.events.disable();
         }
-        dateAxis.zoomToDates(moment(props.zoom.beginDate).toDate(), moment(props.zoom.endDate).toDate());
+        dateAxis.zoomToDates(moment(props.zoom.beginDate).toDate(), moment(props.zoom.endDate).toDate(), false, true);
         dateAxis.events.enable();
       }
     }
@@ -285,7 +276,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
   useEffect(() => {
     // This can be called multiple times when data is updated so make sure we are not in the middle
     // of updarting chart data.
-    if (props.data && sensorChart) {
+    if (props.data && sensorChart && !sensorChart.isDisposed()) {
       const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
       console.log('Updating data: ', {
         series_id: props.identifier,
@@ -314,41 +305,45 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     }
   },        [props.data]);
 
-  /**
-   * 
-   */
   useEffect(() => {
-    /*
-    if (sensorChart && sensorChart.data) {
-      if (sensorChart.data.length > 10) {
-        sensorChart.removeData(1);
-      }
-      sensorChart.addData(props.TSDB.currentDataPoint);
-    }
-    */
-  },        [props.newDataPoint]);
-
-  useEffect(() => {
-    if (sensorChart) {
+    if (sensorChart && !sensorChart.isDisposed() && props.dataDateBounds) {
       console.log('Update bounds: ', props.dataDateBounds);
       const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
-      if (props.dataDateBounds) {
-        // set the bounds for the axis
-        dateAxis.min = props.dataDateBounds.beginTime;
-        dateAxis.max = props.dataDateBounds.endTime;
-        dateAxis.strictMinMax = true;
-      } else {
-        // Remove bounds from the axis
-        dateAxis.min = 0;
-        dateAxis.max = 0;
-        dateAxis.strictMinMax = false;
-      }
+      // set the bounds for the axis
+      dateAxis.min = props.dataDateBounds.beginTime;
+      dateAxis.max = props.dataDateBounds.endTime;
       dateAxis.invalidate();
     }
   },        [props.dataDateBounds]);
 
   useEffect(() => {
-    if (sensorChart) {
+    if (sensorChart && !sensorChart.isDisposed()) {
+      const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
+      dateAxis.strictMinMax = !props.isRealtime;
+      dateAxis.invalidate();
+    }
+  },        [props.isRealtime]);
+
+  /**
+   * 
+   */
+  useEffect(() => {
+    if (sensorChart && !sensorChart.isDisposed() && sensorChart.data && props.newDataPoint && props.isRealtime) {
+      // We will remove 1 data point and then add the new point. However, if there isn't many
+      // data points currently, we won't remove any so that the chart don't look empty
+      if (sensorChart.data.length > 10) {
+        sensorChart.removeData(1);
+      }
+      sensorChart.addData(props.newDataPoint);
+      const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
+      dateAxis.min = (sensorChart.data[0] as DataPoint).timestamp;
+      dateAxis.max = props.newDataPoint.timestamp;
+      dateAxis.invalidate();
+    }
+  },        [props.newDataPoint]);
+
+  useEffect(() => {
+    if (sensorChart && !sensorChart.isDisposed()) {
       const series: am4charts.XYSeries = sensorChart.series.getIndex(0) as am4charts.XYSeries;
       if (props.fillChart) {
         series.fill = am4core.color('#C6E4F2');
@@ -360,7 +355,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
   },        [props.fillChart]);
 
   useEffect(() => {
-    if (sensorChart) {
+    if (sensorChart && !sensorChart.isDisposed()) {
       const series: am4charts.XYSeries = sensorChart.series.getIndex(0) as am4charts.XYSeries;
       if (props.showBullets) {
         if (series.bullets.length <= 0) {
@@ -379,30 +374,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       series.invalidate();
     }
   },        [props.showBullets]);
-
-  useEffect(() => {
-    // Listen to the sensorChart, timespan, and rtValues changes and update the chart
-    // data but only for real-time data view
-    /*
-    if (
-      props.timespan === 'real-time' &&
-      sensorChart &&
-      sensorContext.state.rtValues
-    ) {
-      const sData = sensorContext.state.rtValues.filter((sensor: any) => {
-        return sensor.type === props.TSDB.type;
-      });
-      if (sData.length > 0) {
-        sensorChart.removeData(1);
-        sensorChart.addData({
-          date: moment().toISOString(),
-          value: sData[0].val.toFixed(2)
-        });
-      }
-    }
-    // invoke dependencies
-    */
-  },        [sensorChart, sensorContext.state.rtValues]);
 
   return (
     <div>
