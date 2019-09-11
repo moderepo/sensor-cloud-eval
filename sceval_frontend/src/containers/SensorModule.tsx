@@ -742,13 +742,15 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                             );
                         }) :
                         // if the response is not empty
-                        !noTSDBData ?
+                        !noTSDBData && !TSDBDataFetched ?
                         <div className="sensor-data-loader">
                             <img src={loader} />
                         </div> :
                         // if the TSDB data for the timeframe is actually empty
                         <div className="sensor-data-loader">
-                            No Data Available For This Timeframe
+                            No data is available for this timeframe. To assess further, 
+                            make sure your sensor-module is turned on. You can also try
+                            making the sensing interval shorter.
                         </div>
                         }
                     </div>

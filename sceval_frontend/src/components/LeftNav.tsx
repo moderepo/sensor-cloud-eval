@@ -21,8 +21,6 @@ export const LeftNav: React.FC<LeftNavProps & React.Props<any>> = (props: LeftNa
         if (appContext.state.userData.user.name !== username) {
           setUsername(appContext.state.userData.user.name);
         }
-      } else {
-        console.log('invoked but not hitting case');
       }
     },
     [appContext, userInfo]
