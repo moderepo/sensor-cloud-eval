@@ -538,29 +538,48 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 // Here is the algorithm. lets say the date bounds/range is 1 year and the max # of data
                 // points we can render is 12 then we need 1 point per month. The interval will ber 1 month.
 
-                const dataBucket: Array<DataPoint> = 
-                    new Array<DataPoint>(Constants.SNAPSHOT_CHART_MAX_DATA_POINTS);
+                const dataBucket: Array<DataPoint[]> = 
+                    new Array<DataPoint[]>(Constants.SNAPSHOT_CHART_MAX_DATA_POINTS);
 
-                // Go through all the data point and take 1 point for each interval
+                // Go through all the data point and compute the averge of all the points for each interval
                 // Once this is done, seriesData.length should be ABOUT Constants.SNAPSHOT_CHART_MAX_DATA_POINTS
                 // The length can be less depending on how the data points are spread out. If the data points
                 // are not uniformly spread out then there will be less points after filtered
-                seriesData.forEach((point: DataPoint, index: number): boolean => {
+                seriesData.forEach((point: DataPoint, index: number): void => {
                     // find out which bucket this point belongs to and whether or not there is already another
                     // points in the bucket.
                     const bucketNumber: number = Math.floor((point.timestamp - firstBucketTS) / interval);
-                    if (bucketNumber >= 0 &&
-                        bucketNumber < dataBucket.length &&
-                        dataBucket[bucketNumber] === undefined) {
-
-                        dataBucket[bucketNumber] = point;
-                        return true;
+                    if (bucketNumber >= 0 && bucketNumber < dataBucket.length) {
+                        if (dataBucket[bucketNumber] === undefined) {
+                            // No point in bucket yet, create an array and add the point to it
+                            dataBucket[bucketNumber] = [point];
+                        } else {
+                            // bucket already have some point, add this point to the bucket
+                            dataBucket[bucketNumber].push(point);
+                        }
                     }
-                    return false;
                 });
 
-                seriesData = dataBucket.filter((point: DataPoint): boolean => {
-                    return point !== undefined;
+                // Get all the buckets that contains data and build an array of data series with the average
+                // time and value of each bucket
+                seriesData = dataBucket.filter((bucket: DataPoint[]): boolean => {
+                    // This will filter out buckets that don't have data
+                    return bucket !== undefined && bucket.length > 0;
+                }).map((bucket: DataPoint[]): DataPoint => {
+                    // Take the average of all the DataPoint in a bucket and return 1 DataPoint
+                    let timestamp: number = 0;
+                    let total: number = 0;
+                    for (let point of bucket) {
+                        timestamp = timestamp + point.timestamp;
+                        total = total + point.value;
+                    }
+                    // Take the average timestamp and round it up to the nearest SECONDS
+                    timestamp = Math.floor((timestamp / bucket.length) / 1000) * 1000;
+                    return {
+                        timestamp: timestamp,
+                        date: moment(timestamp).toISOString(),
+                        value: Math.floor(total /  bucket.length),
+                    };
                 });
             }
 
