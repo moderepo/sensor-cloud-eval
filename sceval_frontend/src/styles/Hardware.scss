@@ -12,8 +12,12 @@
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 0.4px;
-    .header {
-      max-width: 500px;
+    .hardware-header {
+      font-size: 35px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      color: $base-black;
+      margin-bottom: 20px;
     }
     .add-gateway-button {
       float: right;
@@ -32,7 +36,7 @@
         margin-right: 10px;
       }
     }
-    .add-gateway-button:hover{
+    .add-gateway-button:hover {
       text-decoration: none;
       opacity: 0.7;
     }
@@ -221,10 +225,10 @@
 }
 
 .menu-setting-item {
-  text-decoration: none!important;
+  text-decoration: none !important;
 }
 
-.menu-setting-item:hover{
-  background-color: lighten($base-turquoise, 20%)!important;
+.menu-setting-item:hover {
+  background-color: lighten($base-turquoise, 20%) !important;
   color: $base-black;
 }

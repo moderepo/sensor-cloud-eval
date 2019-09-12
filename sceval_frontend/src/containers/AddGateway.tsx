@@ -33,21 +33,24 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
    * Method for handling the submission of a claim code. 
    * If an error occurs, the method will catch the error and handle it accordingly.
    */
-  const submitClaimCode = async () => {
-    try {
-      if (home && claimCode) {
-        const status = await modeAPI.addDevice(home, claimCode);
-        if (status === 201) {
-          setAddDeviceError(false);
-          setClaimCode('');
-          props.history.push('/devices');
+  const submitClaimCode = async (event?: React.KeyboardEvent<HTMLInputElement>) => {
+    // if the event exists, and  the event key corresponds to enter, or method invoked by click:
+    if ((event && event.key === 'Enter') || !event) {
+      try {
+        if (home && claimCode) {
+          const status = await modeAPI.addDevice(home, claimCode);
+          if (status === 201) {
+            setAddDeviceError(false);
+            setClaimCode('');
+            props.history.push('/devices');
+          }
         }
+      } catch (error) {
+        setAddDeviceError(true);
+        setTimeout(() => {
+          setAddDeviceError(false);
+        },         2000);
       }
-    } catch (error) {
-      setAddDeviceError(true);
-      setTimeout(() => {
-        setAddDeviceError(false);
-      },         2000);
     }
   };
   /**
@@ -62,7 +65,7 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
   return (
     <>
     <div className="add-gateway-section">
-      <h1 className="add-gateway-header">Add Gateway</h1>
+      <h1 className="page-header add-gateway-header">Add Gateway</h1>
       <div className="directions">
         <div className="direction-set">
           <div className="number-text">
@@ -96,6 +99,7 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
         <div className="claim-code-entry">
           <Input
             placeholder="Claim code"
+            onKeyDown={e => submitClaimCode(e)}
             value={claimCode}
             onChange={handleClaimCodeEntry}
           />

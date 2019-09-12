@@ -14,7 +14,7 @@ $saveMargin: auto;
 $saveMarginTop: 20px;
 $savePadding: 0px 15px;
 $saveWidth: fit-content;
-$saveTransition: opacity .5s ease-out; // apply to webkit, moz, o
+$saveTransition: opacity 0.5s ease-out; // apply to webkit, moz, o
 $saveVisibility: visible;
 $saveTransition: visibility 0s 2s, opacity 2s;
 $saveDuration: 3s; // apply to webkit and animation
@@ -39,6 +39,13 @@ $font-family: "ProximaNova", "Helvetica Neue", Helvetica, Arial, sans-serif;
   opacity: 0.7;
 }
 
+.page-header {
+  font-size: 35px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: $base-black;
+}
+
 .circled-number {
   background-color: lighten($base-turquoise, 20%);
   float: left;
@@ -57,11 +64,16 @@ $font-family: "ProximaNova", "Helvetica Neue", Helvetica, Arial, sans-serif;
 $animationName: fade-out; // apply to webkit and animation
 
 // fade out (just include variables.scss to leverage)
- @keyframes fade-out {
-    0% {opacity: 1;}
-    100% {opacity: 0;}
- }
-.save-animation, .warning-animation {
+@keyframes fade-out {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.save-animation,
+.warning-animation {
   text-align: center;
   border-radius: $saveRadius;
   margin: $saveMargin;
@@ -84,7 +96,7 @@ $animationName: fade-out; // apply to webkit and animation
 .warning-animation {
   background-color: $base-warning;
   border: $base-warning;
-  animation-duration:  5s;
+  animation-duration: 5s;
   color: $base-background;
 }
 

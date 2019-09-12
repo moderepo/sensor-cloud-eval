@@ -508,7 +508,8 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
       <div className="hardware-section">
         <div className="page-header">
           {selectedDevice === 0 ? (
-            <h1>Hardware
+            <h1 className="hardware-header">
+            Hardware
             <NavLink
               className="add-gateway-button"
               to="/add_gateway"

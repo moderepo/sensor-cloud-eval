@@ -141,9 +141,7 @@ const MyAccount = withRouter(
     return (
       <div>
         <div className="account-section">
-          <div className="page-header">
-            <h1>My Account</h1>
-          </div>
+          <h1 className="page-header">My Account</h1>
           <div className="info-container">
             <div
               className={
