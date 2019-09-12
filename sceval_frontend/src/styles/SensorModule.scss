@@ -111,6 +111,11 @@
         padding-top: 20px;
         justify-content: center;
 
+        &.disable-control {
+          pointer-events: none;
+          opacity: 0.5;
+        }
+
         .data-col {
           background-color: $base-background;
           border: solid 1px #b5c0d8;

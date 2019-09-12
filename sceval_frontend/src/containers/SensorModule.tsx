@@ -333,16 +333,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     /**
      * initialize the page by loading all the required data
      */
-    const initialize = async (): Promise<any> => {
-
-        // check for NULL up here so we don't have to check for null everywhere else below
-        if (!props.match.params.deviceId || !props.match.params.sensorModuleId) {
-            return;
-        }
-
-        // get selected deviceId and selectedModuleId from URL params
-        const sensorModuleId: string = props.match.params.sensorModuleId;
-        const gateway: number = Number(props.match.params.deviceId);
+    const initialize = async (gateway: number, sensorModuleId: string): Promise<any> => {
 
         // restore login
         await AppContext.restoreLogin();
@@ -357,11 +348,23 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         const sensorModuleData: SensorModuleInterface = await modeAPI.getDeviceKeyValueStore(
             gateway, `${Constants.SENSOR_MODULE_KEY_PREFIX}${sensorModuleId}`);
 
+        setHomeId(home.id);
+        setSelectedGateway(gateway);
+        setSelectedModule(props.match.params.sensorModuleId);
+        setSelectedSensorModuleObj(sensorModuleData);
+    };
+
+    const initializeTimeSeries = async (
+        home: number,
+        gateway: number,
+        sensorModuleId: string,
+        sensorModuleObj: SensorModuleInterface) => {
+        
         // this is the complete list of the sensor type this sensor module has, including disabled sensors
         let allSensorTypes: string[] = [];
 
         let sensorModel: SensorModelInterface | undefined = evaluateSensorModel(
-            parseSensorId(sensorModuleData.value.id).model
+            parseSensorId(sensorModuleObj.value.id).model
         );
         if (sensorModel && sensorModel.moduleSchema) {
             // if we found the sensor model definition and it has a schema, use the moduleSchema to get the
@@ -369,7 +372,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             allSensorTypes = sensorModel.moduleSchema;
         } else {
             // Use the sensor module's "sensors" array as the list of possible sensot type
-            allSensorTypes = sensorModuleData.value.sensors;
+            allSensorTypes = sensorModuleObj.value.sensors;
         }
 
         // sort sensor types by names
@@ -381,7 +384,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         // sensors
         let allTimeSeriesInfo: TimeSeriesInfo[] = [];
         try {
-            allTimeSeriesInfo = (await modeAPI.getAllTimeSeriesInfo(home.id)).filter(
+            allTimeSeriesInfo = (await modeAPI.getAllTimeSeriesInfo(home)).filter(
                 (series: TimeSeriesInfo): boolean => {
                     // time series id will contain the sensor module id and the sensor type e.g.
                     // 0101:28a183311676-acceleration_y:0
@@ -403,7 +406,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         const timeSeriesBounds: TimeSeriesBounds[] = [];
         for (let series of allTimeSeriesInfo) {
             try {
-                timeSeriesBounds.push(await modeAPI.getTimeSeriesBounds(home.id, series.id));
+                timeSeriesBounds.push(await modeAPI.getTimeSeriesBounds(home, series.id));
             } catch (error) {
                 console.error(error);
                 break;
@@ -469,7 +472,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         const timeSeriesDataArray: TimeSeriesData[] = [];
         for (let seriesInfo of allTimeSeriesInfo) {
             try {
-                timeSeriesDataArray.push(await modeAPI.getTimeSeriesData(home.id, seriesInfo.id, beginDate, endDate));
+                timeSeriesDataArray.push(await modeAPI.getTimeSeriesData(home, seriesInfo.id, beginDate, endDate));
             } catch (error) {
                 consoleLog('Failed to load time series data for series id: ', seriesInfo.id);
             }
@@ -492,7 +495,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             const unit: any = determineUnit(typeName.toLowerCase());
 
             // NOTE: sensorModuleData.value.sensors are in uppercase
-            const isActive: boolean = sensorModuleData.value.sensors.includes(sensorType);
+            const isActive: boolean = sensorModuleObj.value.sensors.includes(sensorType);
 
             // Find the time series info associated with the sensorType. NOTE: series info might not exist for a
             // sensor type if the sensor type never activated. So it is possible to have no series info. For this
@@ -596,11 +599,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             sensors.push(sensorData);
         });
 
-        setHomeId(home.id);
-        setSelectedGateway(gateway);
-        setSelectedModule(props.match.params.sensorModuleId);
-        setSelectedSensorModuleObj(sensorModuleData);
-
         // remember the min/max bounds of all the data series
         setMasterDateBounds({
             beginDate: beginDate,
@@ -617,7 +615,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
         // Create the sensor module settings state used for the sensor module settings modal
         setSensorModuleSettings({
-            name: sensorModuleData.value.name,
+            name: sensorModuleObj.value.name,
             sensors: sensors.map(
                 (sensorBundle: SensorDataBundle): SensorTypeSetting => {
                 return {
@@ -627,9 +625,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 };
             })
         });
-
-        setIsLoadingPage(false);
-        setIsLoadingTSData(false);
     };
 
     // the URL should contain deviceId and sensorModuleId. If not, take the user
@@ -642,19 +637,41 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
     /**
      * This useEffect does not depend on any state so it will only get called once, when the component is mounted
+     * We use this to load the neccessary data which the page depends on
      */
     useEffect(
         () => {
-            setIsLoadingPage(true);
-            setIsLoadingTSData(true);
+            if (props.match.params.deviceId && props.match.params.sensorModuleId) {
+                setIsLoadingPage(true);
 
-            initialize().catch((error: ErrorResponse): void => {
-                // Failed initialize
-                consoleLog('Initialize failed');
-                setIsLoadingPage(false);
-                setIsLoadingTSData(false);
-            });
-    },  []);
+                initialize(Number(props.match.params.deviceId), props.match.params.sensorModuleId).then((): void => {
+                    setIsLoadingPage(false);
+                }).catch((error: ErrorResponse): void => {
+                    // Failed initialize
+                    consoleLog('Initialize failed');
+                    setIsLoadingPage(false);
+                });
+            }
+    },  [props.match.params.deviceId, props.match.params.sensorModuleId]);
+
+    /**
+     * This useEffected is used for loading time series data. This depends on the selectedGateway, selectedModule, etc.
+     * So once those info are loaded, we can start loading time series data
+     */
+    useEffect(
+        () => {
+            if (homeId && selectedGateway && selectedModule && selectedSensorModuleObj) {
+                setIsLoadingTSData(true);
+
+                initializeTimeSeries(homeId, selectedGateway, selectedModule, selectedSensorModuleObj).then(() => {
+                    setIsLoadingTSData(false);
+                }).catch((error: ErrorResponse): void => {
+                    // Failed initialize timeseries
+                    consoleLog('Initialize time series failed');
+                    setIsLoadingTSData(false);
+                });
+            }
+    },  [homeId, selectedGateway, selectedModule, selectedSensorModuleObj, homeId]);
 
     // React hook's componentDidMount and componentDidUpdate
     useEffect(
@@ -973,7 +990,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         if (masterDateBounds && selectedSensorModuleObj) {
             if (realtimeMode) {
                 // Load time series data for the last X seconds. X seconds will depends on the module's sensing
-                // interval. We don't want to show too many points or too few points therefore we need to make it base
+                // interval. We don't want to show too many points or too few points therefore we need to make it based
                 // on sensing interval. For example: If the sensing interval is 5 seconds and we show 1 hours, it
                 // would show too many points, 720 points. And if the sensing interval is 30 minutes, show 1 hours of
                 // data would be too little.
@@ -1015,7 +1032,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             const interval: number = selectedSensorModuleObj && selectedSensorModuleObj.value.interval ?
                 selectedSensorModuleObj.value.interval : 5;
 
-            // Calculate what the range of the data is base on the number of points we want to show and the interval
+            // Calculate what the range of the data is based on the number of points we want to show and the interval
             const range: number = interval * Constants.REALTIME_CHART_MAX_DATA_POINTS * 1000;
             
             const endTime: number = Date.now();
@@ -1405,7 +1422,12 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                         settingsModalVisible && renderSensorModuleSettingsModal()
                                     }
                                 </div>
-                                <div className="data-cols col-12 col-xl-6 d-flex flex-row">
+                                <div
+                                    className={
+                                        'data-cols col-12 col-xl-6 d-flex flex-row' +
+                                        (isLoadingTSData ? ' disable-control' : '')
+                                    }
+                                >
                                     { selectedModule && selectedModule.split(':')[0] === '0101' &&
                                     <div className="data-col">
                                         <div className="data-name col-dropdown">Sensing Interval</div>
@@ -1432,22 +1454,24 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     <div
                         className="sensor-graph-container"
                     >
-                        { activeSensorBundles && activeSensorBundles.length > 0 ?
+                        { activeSensorBundles && activeSensorBundles.length > 0 ? (
                             // if TSDB data exists for the active sensors:
                             activeSensorBundles.map((sensor: SensorDataBundle, index: any) => {
                                 return renderSensorbundle(sensor);
                             })
-                        :
-                            // if the response is not empty
-                            isLoadingPage ?
-                            <div className="sensor-data-loader">
-                                <img src={loader} />
-                            </div> :
-                            // if the TSDB data for the timeframe is actually empty
-                            <div className="sensor-data-loader">
-                                No Active Sensor
-                            </div>
-                        }
+                        ) : (
+                            // if TSDB data DOES NOT exists
+                            (isLoadingPage || isLoadingTSData) ? (
+                                <div className="sensor-data-loader">
+                                    <img src={loader} />
+                                </div>
+                            ) : (
+                                // if the TSDB data for the timeframe is actually empty
+                                <div className="sensor-data-loader">
+                                    No Active Sensor
+                                </div>
+                            )
+                        )}
                     </div>
                 </div>
             </div>
