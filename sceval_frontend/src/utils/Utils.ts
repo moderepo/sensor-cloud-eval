@@ -7,9 +7,17 @@
   * so that we can easily turn on/off without having to remove console.log from every where
   */
 export function consoleLog (...args: any[]) {
-  // console.log(args);
+  // console.log(...args);
+}
+
+export function consoleWarn (...args: any[]) {
+  // console.warn(...args);
 }
 
 export function consoleError (...args: any[]) {
-  // console.error(args);
+  // console.error(...args);
+}
+
+export function consoleDir (...args: any[]) {
+  // console.dir(...args);
 }
