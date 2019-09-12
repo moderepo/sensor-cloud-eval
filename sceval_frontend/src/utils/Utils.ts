@@ -7,27 +7,31 @@
   * so that we can easily turn on/off without having to remove console.log from every where
   */
 
-const enableLogging: boolean = false;
-export function consoleLog (...args: any[]) {
-  if (enableLogging) {
-    console.log(...args);
-  }
+const enableLogging: boolean = true;
+
+let log;
+let warn;
+let error;
+let dir;
+if (enableLogging) {
+  // If logging enabled, create logger functions that points to console functions
+  log = console.log;
+  warn = console.warn;
+  error = console.error;
+  dir = console.dir;
+} else {
+  // If logging disabled, create logger function that point to do nothing function
+  const doNothing = (): void => {
+    // do nothing
+  };
+  log = doNothing;
+  warn = doNothing;
+  error = doNothing;
+  dir = doNothing;
 }
 
-export function consoleWarn (...args: any[]) {
-  if (enableLogging) {
-    console.warn(...args);
-  }
-}
-
-export function consoleError (...args: any[]) {
-  if (enableLogging) {
-    console.error(...args);
-  }
-}
-
-export function consoleDir (...args: any[]) {
-  if (enableLogging) {
-    console.dir(...args);
-  }
-}
+// Expose these logger function
+export const consoleLog = log;
+export const consoleWarn = warn;
+export const consoleError = error;
+export const consoleDir = dir;
