@@ -396,7 +396,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
         // for each time series, load the time series' bounds so we know when is the series' very first
         // and very last data point
-        /*
+        
         // TODO - This block of code uses the GET timeRange API to get the timeseries' begin and end time.
         // However, this API might not be efficient so for now, we will use the Home's create date and today's
         // date as the timeseries's time range
@@ -446,15 +446,16 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         beginDate = moment(beginTime).toISOString();
         endTime = Math.floor(endTime / 1000) * 1000;
         endDate = moment(endTime).toISOString();
-        */
 
         // Round the begin and end time to the nearest seconds, ignoring the milliseconds.
+        /*
         let beginTime: number = moment(home.creationTime).valueOf();
         let endTime: number = Date.now();
         beginTime = Math.floor(beginTime / 1000) * 1000;
         endTime = Math.floor(endTime / 1000) * 1000;
         let beginDate: string = moment(beginTime).toISOString();
         let endDate = moment(endTime).toISOString();
+        */
 
         // Once we know the begin and end time, we can build the list of graph timespan options the user can choose
         // We will build this list dynamically base on the range of the begin/end time because using 1 fixed list
