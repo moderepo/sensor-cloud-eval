@@ -84,6 +84,20 @@
       .action-button {
         margin-left: 5px;
       }
+      .cancel-button {
+        background-color: $base-background;
+        border: 2px solid $base-black;
+        border-color: $base-black;
+        color: $base-black;
+        font-family: $font-family;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 8px 8px;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: 2px;
+        border-radius: 4px;
+      }
     }
 
     .user-info-section button {

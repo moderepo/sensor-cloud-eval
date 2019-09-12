@@ -158,15 +158,15 @@ const MyAccount = withRouter(
                   </button>
                 ) : (
                   <Fragment>
-                    <button onClick={editUserInfo} className="action-button">
-                      Cancel
-                    </button>
                     <button
                       onClick={event => saveChanges(event)}
                       disabled={!formValid}
                       className="action-button update-account"
                     >
                       Save Changes
+                    </button>
+                    <button onClick={editUserInfo} className="cancel-button">
+                      Cancel
                     </button>
                   </Fragment>
                 )}

@@ -60,7 +60,9 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
   };
 
   return (
+    <>
     <div className="add-gateway-section">
+      <h1 className="add-gateway-header">Add Gateway</h1>
       <div className="directions">
         <div className="direction-set">
           <div className="number-text">
@@ -99,19 +101,20 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
           />
         </div>
         <div className="claim-code-section">
-          <Button
-            className="add-button"
+        <NavLink to="/devices" className="back-to-hardware">
+            Cancel
+          </NavLink>
+          <button
+            className="action-button"
             onClick={() => submitClaimCode()}
             disabled={claimCode === ''}
           >
             Add
-          </Button>
-          <NavLink to="/devices" className="back-to-hardware">
-            Back
-          </NavLink>
+          </button>
         </div>
       </div>
     </div>
+    </>
   );
 });
 

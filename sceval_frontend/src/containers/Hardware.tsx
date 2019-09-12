@@ -206,14 +206,14 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     }
   };
 
-  // render delete device modal handler function for clicking on the 'Delete Device' setting for a gateway
+  // render delete gateway modal handler function for clicking on the 'Delete Gateway' setting for a gateway
   const renderDeleteDeviceModal = (
     deviceId: number,
   ): void => {
     confirm({
-      title: `Are you sure you want to delete device #${deviceId}?`,
+      title: `Are you sure you want to delete gateway #${deviceId}?`,
       content:
-        'Please note that your device must be configured to allow On-Demand Device Provisioning \
+        'Please note that your device must be configured to allow On-Demand Gateway Provisioning \
         in order to sucessfully remove the device from your home.',
       onOk: async () => {
         setDeletionMode(true);
@@ -364,7 +364,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
               setDeviceDeleteError(false);
             }}
           >
-            Delete Device
+            Delete Gateway
           </a>
         </Menu.Item>
       </Menu>

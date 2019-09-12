@@ -1,8 +1,10 @@
 @import 'variables.scss';
 
 .back-to-hardware {
-    background-color: $base-black;
-    color: $base-background;
+    background-color: $base-background;
+    border: 2px solid $base-black;
+    border-color: $base-black;
+    color: $base-black;
     font-family: $font-family;
     margin: 10vh 0 0 3vw;
     font-size: 14px;
@@ -10,21 +12,28 @@
     padding: 5px 15px 6px;
     text-align: center;
     white-space: nowrap;
-    vertical-align: middle;
+    vertical-align: 2px;
     border-radius: 4px;
 }
-.back-to-hardware:hover {
-    color: $base-background;
+
+.back-to-hardware:hover{
     text-decoration: none;
-    opacity: 0.7;
+    color: $base-black;
 }
 
 .add-gateway-section {
+    background-color: $section-background;
+    height: 100%;
+    padding-top: 2vh;
+    .add-gateway-header {
+        margin-left: 11vw;
+    }
     .directions {
+        margin: 0vh 5vw 2vh 11vw;
+        background-color: $base-background;
         box-shadow: $base-box-shadow;
         border-radius: 4px;
-        padding: 20px 0px 2px 40px;
-        margin: 2vh 22vw;
+        padding: 5vh 22vw;
         justify-content: center;
         display: grid;
         grid-gap: 1em;
@@ -50,27 +59,15 @@
             }
         }
     }
-}
-
-.add-gateway {
-    display: block;
-    background-color: $base-black;
-    color: $base-background;
-    font-family: $font-family;
-    margin: 20px 10px 0 5px;
-    font-size: 14px;
-    font-weight: 500;
-    height: 35px;
-    padding: 5px 15px 6px;
-    line-height: 1.7;
-    text-align: center;
-    white-space: nowrap;
-    border-radius: 4px;
+    .action-button {
+        padding: 2px 7px;
+        vertical-align: middle;
+    }
 }
 .claim-code-entry {
     display: flex;
     justify-content: center;
-    margin: 3vh 10vw 0 10vw;
+    margin: 3vh 5vw 0 5vw;
 }
 .ant-input:hover {
     border-color: $base-turquoise;
@@ -84,8 +81,11 @@
 .add-button, .back-to-hardware {
     margin: 0px 5px;
 }
+.action-button:disabled {
+    opacity: 0.7;
+}
+
 .add-button:not(:disabled):hover{
     opacity: 0.7;
     color: $base-black;
-    border-color: $base-turquoise;
 }
