@@ -97,7 +97,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     newChart.data = props.data;
 
     // push  new x-value axis
-    let dateAxis = newChart.xAxes.push(new am4charts.DateAxis());
+    const dateAxis = newChart.xAxes.push(new am4charts.DateAxis());
     // dateAxis.renderer.minGridDistance = 30;
     dateAxis.renderer.grid.template.location = 0;
     dateAxis.renderer.labels.template.fill = am4core.color('#7FCBCF');
@@ -119,7 +119,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     newChart.dateFormatter.inputDateFormat = 'i';
 
     // push new y-value axis
-    let valueAxis = newChart.yAxes.push(new am4charts.ValueAxis());
+    const valueAxis = newChart.yAxes.push(new am4charts.ValueAxis());
     valueAxis.renderer.labels.template.fill = am4core.color('#7FCBCF');
     valueAxis.renderer.minWidth = 60;
     valueAxis.extraMin = 0;
@@ -130,7 +130,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     }
 
     // format data series:
-    let series: am4charts.LineSeries = newChart.series.push(new am4charts.LineSeries());
+    const series: am4charts.LineSeries = newChart.series.push(new am4charts.LineSeries());
     series.name = props.name;
     series.dataFields.dateX = 'date';
     series.dataFields.valueY = 'value';

@@ -135,7 +135,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         consoleLog('Fetch details data');
         setIsLoadingTSData(true);
         
-        let dataUpdated: boolean = false;
+        let updatedBundles: SensorDataBundle[] | null = null;
 
         if (allSensorBundles) {
             consoleLog(dateBounds, masterDateBounds);
@@ -143,14 +143,13 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 masterDateBounds.endTime === dateBounds.endTime) {
                 // If the dateBounds is exactly the same as the masterDateBounds. This mean the suer just zoomed out all
                 // the way so we can just use the time serie snapshot data and don't need to load more details data
-                allSensorBundles.forEach((bundle: SensorDataBundle, index: number): void => {
+                updatedBundles = allSensorBundles.map((bundle: SensorDataBundle): SensorDataBundle => {
                     // need to create a copy of the bundle so that it is treated as new object and cause
                     // react to fire state change event
                     const updatedBundle: SensorDataBundle = Object.assign({}, bundle);
-                    allSensorBundles[index] = updatedBundle;
                     updatedBundle.timeSeriesData = [...updatedBundle.timeSeriesDataSnapshot];   // copy the snapshot
+                    return bundle;
                 });
-                dataUpdated = true;
             } else {
 
                 // One of the charts zoomed or panned so we need to sync up other charts to have the same zoom and pan.
@@ -177,75 +176,74 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 }
 
                 if (timeSeriesDataArray.length > 0) {
-                    // at least one of the data series loaded data. Mark as data updated
-                    dataUpdated = true;
-                }
+                    // We loaded data for at least one of the series so need to add that data to the bundle it
+                    // belongs to
 
-                // Convert allTimeSeriesDataArray to map of just the DataPoint array so we can look up time series
-                // data by seriesId faster.
-                const allTimeSeriesData: Map<string, DataPoint[]> = convertTimeSeriesDataArrayToMap(
-                    timeSeriesDataArray
-                );
+                    // Convert allTimeSeriesDataArray to map of just the DataPoint array so we can look up time series
+                    // data by seriesId faster.
+                    const allTimeSeriesData: Map<string, DataPoint[]> = convertTimeSeriesDataArrayToMap(
+                        timeSeriesDataArray
+                    );
 
-                // update the sensor bundle timeseries data
-                allSensorBundles.forEach((sensorBundle: SensorDataBundle, index: number): void => {
-                    if (sensorBundle.seriesId) {
-                        if (allTimeSeriesData.has(sensorBundle.seriesId)) {
-                            let seriesData: DataPoint[] = [];
+                    // update the sensor bundle timeseries data
+                    updatedBundles = allSensorBundles.map((sensorBundle: SensorDataBundle): SensorDataBundle => {
+                        if (!sensorBundle.seriesId || !allTimeSeriesData.has(sensorBundle.seriesId)) {
+                            // Sensor does not have time series id or we did not load new data for this bundle, 
+                            // the bundle has not change so just return the same object
+                            return sensorBundle;
+                        }
+                        
+                        let combinedSeriesData: DataPoint[] = [];
 
-                            // NOTE: Need to create temp and check for null so that compiler doesn't require
-                            // seriesData to be defined as DataPoint[] | undefined
-                            const temp: DataPoint[] | undefined = allTimeSeriesData.get(sensorBundle.seriesId);
-                            if (temp !== undefined) {
-                                seriesData = temp;
+                        let loadedSeriesData: DataPoint[] | undefined = allTimeSeriesData.get(sensorBundle.seriesId);
+
+                        if (insertToSnapshotData) {
+                            // Insert newly loadedSeriesData into timeSeriesDataSnapshot
+                            let snapshot: DataPoint[] = sensorBundle.timeSeriesDataSnapshot;
+                            let i: number = 0;
+                            // Add points from snapshot that is earlier than the zoom begin time into seriesData
+                            for (i = 0; i < snapshot.length; i++) {
+                                if (snapshot[i].timestamp < dateBounds.beginTime) {
+                                    combinedSeriesData.push(snapshot[i]);
+                                } else {
+                                    // found a point that is greater than the zoom area
+                                    break;
+                                }
                             }
-
-                            // need to create a copy of the bundle so that it is treated as new object and cause
-                            // react to fire state change event
-                            const updatedBundle: SensorDataBundle = Object.assign({}, sensorBundle);
-                            allSensorBundles[index] = updatedBundle;
-
-                            // Update the current data date bounds so we know which bounds the current data belong to
-                            updatedBundle.currentDateBounds = Object.assign({}, dateBounds);
-
-                            if (insertToSnapshotData) {
-                                // Insert newly loaded series data into timeSeriesDataSnapshot
-                                updatedBundle.timeSeriesData = [];
-                                let i: number = 0;
-                                for (i = 0; i < updatedBundle.timeSeriesDataSnapshot.length; i++) {
-                                    let point: DataPoint = updatedBundle.timeSeriesDataSnapshot[i];
-                                    if (point.timestamp < dateBounds.beginTime) {
-                                        updatedBundle.timeSeriesData.push(point);
-                                    } else {
-                                        // found a point that is greater than the zoom area
-                                        break;
-                                    }
-                                }
-                                // add the newly loaded point in the middle of updatedBundle.timeSeriesData
-                                seriesData.forEach((newPoint: DataPoint): void => {
-                                    updatedBundle.timeSeriesData.push(newPoint);
+                            // Add the newly loaded point in the seriesData
+                            if (loadedSeriesData) {
+                                loadedSeriesData.forEach((newPoint: DataPoint): void => {
+                                    combinedSeriesData.push(newPoint);
                                 });
-                                // Add points from snapshot that is later than the zoom end time into
-                                // updatedBundle.timeSeriesData
-                                for (; i < updatedBundle.timeSeriesDataSnapshot.length; i++) {
-                                    let point: DataPoint = updatedBundle.timeSeriesDataSnapshot[i];
-                                    if (point.timestamp > dateBounds.endTime) {
-                                        updatedBundle.timeSeriesData.push(point);
-                                    }
+                            }
+                            // Add points from snapshot that is later than the zoom end time into seriesData
+                            for (; i < snapshot.length; i++) {
+                                if (snapshot[i].timestamp > dateBounds.endTime) {
+                                    combinedSeriesData.push(snapshot[i]);
                                 }
-                            } else {
-                                updatedBundle.timeSeriesData = seriesData;
                             }
                         } else {
-                            // We didn't laod data for the bundle, don't need to change anything
+                            // Don't concatenate loadedSeriesData with snap shot, replace updatedBundle.timeSeriesData
+                            // with the loadedSeriesData instead
+                            if (loadedSeriesData) {
+                                combinedSeriesData = loadedSeriesData;
+                            }
                         }
-                    }
-                });
+
+                        // need to create a copy of the bundle so that it is treated as new object and cause
+                        // react to fire state change event
+                        const updatedBundle: SensorDataBundle = Object.assign({}, sensorBundle);
+                        // Update the current data date bounds so we know which bounds the current data belong to
+                        updatedBundle.currentDateBounds = Object.assign({}, dateBounds);
+                        updatedBundle.timeSeriesData = combinedSeriesData;
+                        return updatedBundle;
+                    });
+                }
             }
 
-            if (dataUpdated) {
-                setAllSensorBundles([...allSensorBundles]);
-                setActiveSensorBundles(allSensorBundles.filter((sensorBundle: SensorDataBundle): boolean => {
+            if (updatedBundles !== null) {
+                setAllSensorBundles(updatedBundles);
+                setActiveSensorBundles(updatedBundles.filter((sensorBundle: SensorDataBundle): boolean => {
                     return sensorBundle.active;
                 }));
             }
@@ -363,7 +361,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         // this is the complete list of the sensor type this sensor module has, including disabled sensors
         let allSensorTypes: string[] = [];
 
-        let sensorModel: SensorModelInterface | undefined = evaluateSensorModel(
+        const sensorModel: SensorModelInterface | undefined = evaluateSensorModel(
             parseSensorId(sensorModuleObj.value.id).model
         );
         if (sensorModel && sensorModel.moduleSchema) {
@@ -371,7 +369,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             // list of all possible sensor type this module has
             allSensorTypes = sensorModel.moduleSchema;
         } else {
-            // Use the sensor module's "sensors" array as the list of possible sensot type
+            // Use the sensor module's "sensors" array as the list of possible sensor type
             allSensorTypes = sensorModuleObj.value.sensors;
         }
 
@@ -450,8 +448,11 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         endTime = Math.floor(endTime / 1000) * 1000;
         endDate = moment(endTime).toISOString();
 
-        // Round the begin and end time to the nearest seconds, ignoring the milliseconds.
         /*
+        // If calling timeRange is too expensive, we will use this block of code instead. This will
+        // get the time series date range base on home's create time and now which is not very accurate
+        // but good enough
+        // Round the begin and end time to the nearest seconds, ignoring the milliseconds.
         let beginTime: number = moment(home.creationTime).valueOf();
         let endTime: number = Date.now();
         beginTime = Math.floor(beginTime / 1000) * 1000;
@@ -463,7 +464,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         // Once we know the begin and end time, we can build the list of graph timespan options the user can choose
         // We will build this list dynamically base on the range of the begin/end time because using 1 fixed list
         // of time span doesn't make sense for some data.
-        let timespanOptions: GraphTimespan[] = buildGraphTimespanOptions(beginTime, endTime);
+        const timespanOptions: GraphTimespan[] = buildGraphTimespanOptions(beginTime, endTime);
 
         // We have the bounds for each series so now we can request for the time series data from begin to end
         // The result for each API call is an object of TimeSeriesData. However, we are only interested in the
@@ -500,7 +501,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             // Find the time series info associated with the sensorType. NOTE: series info might not exist for a
             // sensor type if the sensor type never activated. So it is possible to have no series info. For this
             // case, just treat it as no data
-            let timeSeriesInfo: TimeSeriesInfo | undefined = allTimeSeriesInfo.find(
+            const timeSeriesInfo: TimeSeriesInfo | undefined = allTimeSeriesInfo.find(
                 (seriesInfo: TimeSeriesInfo): boolean => {
                     return seriesInfo.id.includes(sensorTypeLowercase);
                 });
@@ -1218,7 +1219,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                         className="chart-option"
                         value={chartOptions.fillChart}
                         onClick={(event) => {
-                            let newOptions: ChartOptions = Object.assign({}, chartOptions);
+                            const newOptions: ChartOptions = Object.assign({}, chartOptions);
                             newOptions.fillChart = !chartOptions.fillChart;
                             setChartOptions(newOptions);
                         }}
@@ -1234,7 +1235,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                         className="chart-option"
                         value={chartOptions.showBullets}
                         onClick={(event) => {
-                            let newOptions: ChartOptions = Object.assign({}, chartOptions);
+                            const newOptions: ChartOptions = Object.assign({}, chartOptions);
                             newOptions.showBullets = !chartOptions.showBullets;
                             setChartOptions(newOptions);
                         }}
