@@ -10,6 +10,7 @@ Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be u
 - [Installation and Setup](#installation-and-setup)
 - [Prerequisites](#prerequisites)
 - [Quick start](#quick-start)
+- [Setting Up Custom SMS and Email Templates](#setting-up-custom-sms-and-email-templates)
 - [Mode API Reference](https://dev.tinkermode.com/docs/api/)
 - [App Navigation](#app-navigation)
   - [Adding and Deleting Gateways](#adding-and-deleting-gateways)
@@ -69,6 +70,10 @@ $ npm install -g node
 3. Run `npm start` to immediately bring up the application at http://localhost:3000.
 
 4. Navigate to http://localhost:3000 your browser to view the running application.
+
+## Setting Up Custom SMS and Email Templates
+
+The handling of user accounts and authentication involves communication with your users either via SMS texts or emails. MODE allows you to customize the content of these messages so that you can provide your users with the best possible experience. For more information setting up this kind of customization, please take a look at our documentation [here](https://dev.tinkermode.com/docs/handling_user_accounts_authentication.html#customizing-sms-and-email-messages).
 
 ## App Navigation
 
