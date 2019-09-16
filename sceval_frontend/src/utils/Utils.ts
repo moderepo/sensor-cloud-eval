@@ -7,7 +7,7 @@
   * so that we can easily turn on/off without having to remove console.log from every where
   */
 
-const enableLogging: boolean = true;
+const enableLogging: boolean = false;
 
 let log;
 let warn;
