@@ -594,7 +594,13 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 </NavLink>
                 <div className="module-container">
                     <div className="module-details row">
-                        <div className="module-left-container col-12 col-xl-6 d-flex flex-row align-items-center">
+                        <div 
+                            className={ 
+                            selectedModule && evaluateModel(selectedModule.split(':')[0]).includes('OMRON') ?
+                                'module-left-container extended col-12 col-xl-8 d-flex flex-row align-items-center' :
+                                'module-left-container col-12 col-xl-6 d-flex flex-row align-items-center'
+                            }
+                        >
                             <img src={sensorGeneral} />
                             <div className="info-section d-flex flex-column align-items-start justify-content-center">
                                 <div className="device-name">
@@ -658,7 +664,13 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
                             }
                         </div>
-                        <div className="data-cols col-12 col-xl-6 d-flex flex-row">
+                        <div 
+                            className={
+                            selectedModule && evaluateModel(selectedModule.split(':')[0]).includes('OMRON') ?
+                                'data-cols col-12 col-xl-4 d-flex flex-row' :
+                                'data-cols col-12 col-xl-6 d-flex flex-row'
+                            }
+                        >
                             <div className="data-col">
                                 <div className="data-name">Sensors Active</div>
                                 <div className="data-value">{activeSensorQuantity}</div>
@@ -742,13 +754,15 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                             );
                         }) :
                         // if the response is not empty
-                        !noTSDBData ?
+                        !noTSDBData && !TSDBDataFetched ?
                         <div className="sensor-data-loader">
                             <img src={loader} />
                         </div> :
                         // if the TSDB data for the timeframe is actually empty
                         <div className="sensor-data-loader">
-                            No Data Available For This Timeframe
+                            No data is available for this timeframe. To assess further, 
+                            make sure your sensor-module is turned on. You can also try
+                            making the sensing interval shorter.
                         </div>
                         }
                     </div>

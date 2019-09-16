@@ -1,5 +1,8 @@
 import { MODULE_CATELOG } from './Constants';
-
+/**
+ * helper method for determining the unit associated with a provided sensor type.
+ * @param sensorType 
+ */
 export function determineUnit(sensorType: string) {
   switch (sensorType) {
     case 'pressure':
@@ -34,7 +37,10 @@ export function determineUnit(sensorType: string) {
       return;
   }
 }
-
+/**
+ * helper method for determining the hardware model associated with a provided model ID.
+ * @param modelId 
+ */
 export function evaluateModel(modelId: string): string {
   const discoveredModule = MODULE_CATELOG.find((sensorModule: any): boolean => {
     return sensorModule.modelId === modelId;
@@ -45,7 +51,10 @@ export function evaluateModel(modelId: string): string {
     return '';
   }
 }
-
+/**
+ * helper method for determining the image associated with a provided sensor type.
+ * @param sensorType 
+ */
 export function evaluateSensorTypes(sensorType: any): string | undefined {
   const sensorHumidity = require('../common_images/sensors/humidity-active.svg');
   const sensorLight = require('../common_images/sensors/uv-active.svg');

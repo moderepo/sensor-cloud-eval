@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
-    <g fill="none" fill-rule="evenodd" stroke="#2E353C">
+    <g fill="none" fill-rule="evenodd" stroke="#7fcbcf">
         <path stroke-width="1.5" d="M10 19.25c-2.753 0-4.75-1.746-4.75-4.25a4.75 4.75 0 1 1 9.5 0c0 2.504-1.997 4.25-4.75 4.25z"/>
         <circle cx="10" cy="10" r="9" stroke-width="2"/>
         <circle cx="10" cy="7" r="3" stroke-width="1.5"/>
