@@ -1,4 +1,4 @@
-<img align="right" src="https://github.com/moderepo/sensor-cloud-eval/blob/master/sceval_frontend/src/common_images/mode-logo.png">
+<img align="right" src="https://github.com/moderepo/sensor-cloud-eval/blob/readme/v2/sceval_frontend/src/common_images/mode-logo.png">
 
 # Sensor-Cloud-Eval
 
