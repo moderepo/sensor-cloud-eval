@@ -148,7 +148,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     // react to fire state change event
                     const updatedBundle: SensorDataBundle = Object.assign({}, bundle);
                     updatedBundle.timeSeriesData = [...updatedBundle.timeSeriesDataSnapshot];   // copy the snapshot
-                    return bundle;
+                    return updatedBundle;
                 });
             } else {
 
