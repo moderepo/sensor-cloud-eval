@@ -343,15 +343,6 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        .ant-checkbox-checked {
-          .ant-checkbox-inner {
-            background-color: $base-turquoise;
-            border-color: $base-turquoise;
-          }
-        }
-        .ant-checkbox-inner {
-          border-color: $base-turquoise;
-        }
       }
     }
   }
@@ -370,5 +361,16 @@
   }
   .ant-btn-primary:hover {
     opacity: 0.7;
+  }
+}
+.ant-checkbox-wrapper {
+  .ant-checkbox-checked {
+    .ant-checkbox-inner {
+      background-color: $base-turquoise;
+      border-color: $base-turquoise;
+    }
+  }
+  .ant-checkbox-inner {
+    border-color: $base-turquoise;
   }
 }
