@@ -1,5 +1,5 @@
-import modeAPI, { ModeConstants } from './ModeAPI';
-import { ErrorResponse, KeyValueStore, Event } from '../components/entities/API';
+import modeAPI from './ModeAPI';
+import { ErrorResponse, Event } from '../components/entities/API';
 import { ConcreteObservable } from './Observer';
 
 /**

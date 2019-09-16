@@ -141,9 +141,7 @@ const MyAccount = withRouter(
     return (
       <div>
         <div className="account-section">
-          <div className="page-header">
-            <h1>My Account</h1>
-          </div>
+          <h1 className="page-header">My Account</h1>
           <div className="info-container">
             <div
               className={
@@ -158,15 +156,15 @@ const MyAccount = withRouter(
                   </button>
                 ) : (
                   <Fragment>
-                    <button onClick={editUserInfo} className="action-button">
-                      Cancel
-                    </button>
                     <button
                       onClick={event => saveChanges(event)}
                       disabled={!formValid}
                       className="action-button update-account"
                     >
                       Save Changes
+                    </button>
+                    <button onClick={editUserInfo} className="cancel-button">
+                      Cancel
                     </button>
                   </Fragment>
                 )}
@@ -188,7 +186,7 @@ const MyAccount = withRouter(
                 }
               </div>
               <img src={name} />
-              <h4>Name:</h4>
+              <h4>Name</h4>
               {!isEditing ? (
                 <div className="user-data">{username}</div>
               ) : (
@@ -202,10 +200,10 @@ const MyAccount = withRouter(
                 />
               )}
               <img className="mail" src={email} />
-              <h4> Email:</h4>
+              <h4> Email</h4>
               <div className="user-data">{userData.value.user.email}</div>
               <img src={password} />
-              <h4>Password:</h4>
+              <h4>Password</h4>
               {!isEditing ? (
                 <div className="user-data">•••••••••</div>
               ) : (
@@ -230,7 +228,6 @@ const MyAccount = withRouter(
               )}
             </div>
             <div className="sign-out-section">
-              <h3>Sign Out</h3>
               <button className="sign-out-button" onClick={logout}>
                 Sign Out
               </button>

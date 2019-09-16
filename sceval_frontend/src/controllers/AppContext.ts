@@ -13,43 +13,43 @@ export class AppContext {
   private static appSetting: { [id: string]: any };
   private static loginInfo: LoginInfo | null = null;
   private static userChangeObservable = new ConcreteObservable<User>();
-
+  // public method for retreiving AppContext.appSetting
   public static getAppSetting() {
     return AppContext.appSetting;
   }
-
+  // public method for setting AppContext.appSetting
   public static setAppSetting(setting: { [id: string]: any }) {
     AppContext.appSetting = setting;
   }
-
+  // public method for retreiving AppContext.entryName
   public static getEntryName() {
     return AppContext.entryName;
   }
-
+  // public method for setting AppContext.entryName
   public static setEntryName(name: string) {
     AppContext.entryName = name;
   }
-
+  // public method for setting AppContext.appId
   public static setAppId(appId: string) {
     AppContext.appId = appId;
   }
-
+  // public method for setting AppContext.projectId
   public static setProjectId(projectId: number) {
     AppContext.projectId = projectId;
   }
-
+  // public method for retreiving AppContext.projectId
   public static getProjectId() {
     return AppContext.projectId;
   }
-
+  // public method for retreiving AppContext.loginInfo
   public static getLoginInfo() {
     return AppContext.loginInfo;
   }
-
+  // public method for retreiving AppContext.userChangeObservable
   public static getUserChangeObservable() {
     return AppContext.userChangeObservable;
   }
-
+  // public method for posting user login information
   public static async postLoginForm(
     username: string,
     password: string
@@ -62,14 +62,16 @@ export class AppContext {
     );
     return AppContext.setLogin(userInfo);
   }
-
+  // public method for updating the user's username
   public static async changeUserName(newUsername: string): Promise<number> {
     if (AppContext.loginInfo !== null) {
       const user = AppContext.loginInfo.user;
-      const status: number = await modeAPI
-        .updateUserInfo(AppContext.loginInfo.user.id.toString(), {
+      const status: number = await modeAPI.updateUserInfo(
+        AppContext.loginInfo.user.id.toString(),
+        {
           name: newUsername
-        });
+        }
+      );
       user.name = newUsername;
       AppContext.userChangeObservable.notifyAll(user);
       return status;
@@ -77,7 +79,7 @@ export class AppContext {
       throw new UserNameChangeException();
     }
   }
-
+  // public method for updating both the user's username and password
   public static async UpdateUserInfo(
     newUsername: string,
     newPassword: string
@@ -95,13 +97,15 @@ export class AppContext {
       throw new UserNameChangeException();
     }
   }
-
+  // public method for setting the user's login information
   public static setLogin(auth: ClientAuthInfo) {
+    // set the auth token
     modeAPI.setAuthToken(auth.token);
     return new Promise<LoginInfo>(function(
       resolve: (loginInfo: LoginInfo) => void,
       reject: (reason: any) => void
     ) {
+      // retreive the user's information
       modeAPI
         .getUserInfo(auth.userId)
         .then(function(userInfo: User) {
@@ -110,7 +114,7 @@ export class AppContext {
             authToken: auth.token,
             projectId: AppContext.projectId
           };
-
+          // update the login information
           AppContext.updateLoginInfo(loginInfo);
           resolve(loginInfo);
         })
@@ -124,7 +128,7 @@ export class AppContext {
         });
     });
   }
-
+  // public method for restoring the user's login from client storage
   public static restoreLogin() {
     return new Promise(function(
       resolve: (result: LoginInfo) => void,
@@ -178,7 +182,7 @@ export class AppContext {
     modeAPI.setAuthToken('');
     ClientStorage.deleteItem(AppContext.entryName);
   }
-
+  // provide method for updating login information
   private static updateLoginInfo(loginInfo: LoginInfo) {
     ClientStorage.setItem(AppContext.entryName, loginInfo, 0);
     AppContext.loginInfo = loginInfo;

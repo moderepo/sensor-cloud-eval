@@ -124,6 +124,7 @@ export default class RouteDeclarations extends React.Component<RouteDeclarations
           path="/add_gateway"
           component={() => (
             <>
+              <LeftNav isLoggedIn={this.props.isLoggedIn}/>
               <AddGateway
               />
             </>

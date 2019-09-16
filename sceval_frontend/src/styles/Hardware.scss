@@ -12,8 +12,12 @@
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 0.4px;
-    .header {
-      max-width: 500px;
+    .hardware-header {
+      font-size: 35px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      color: $base-black;
+      margin-bottom: 20px;
     }
     .add-gateway-button {
       float: right;
@@ -23,20 +27,18 @@
       margin: 0 5px 0 5px;
       font-size: 14px !important;
       font-weight: 500;
-      height: 35px;
-      padding: 5px 15px 6px;
-      line-height: 1.7;
+      padding: 12px 40px;
       text-align: center;
       white-space: nowrap;
-      vertical-align: middle;
       border-radius: 4px;
       margin-right: 3.5vw;
       .plus {
         margin-right: 10px;
       }
     }
-    .add-gateway-button:hover{
+    .add-gateway-button:hover {
       text-decoration: none;
+      opacity: 0.7;
     }
   }
 
@@ -86,8 +88,11 @@
         .gateway-settings {
           float: right;
           .action-button {
+            .plus {
+              padding-right: 5px;
+            }
             margin-right: 5px;
-            min-width: 200px;
+            min-width: 130px;
           }
 
           .done-button {
@@ -100,6 +105,9 @@
             text-decoration: none;
             font-size: 14px;
             font-weight: 700;
+          }
+          .done-button:hover {
+            opacity: 0.7;
           }
 
           .sce-dropdown-menu {
@@ -211,12 +219,16 @@
   font-size: 14px;
   font-weight: 700;
 }
-
-.menu-setting-item {
-  text-decoration: none!important;
+.ant-dropdown-link:hover {
+  text-decoration: none;
+  color: $base-black;
 }
 
-.menu-setting-item:hover{
-  background-color: lighten($base-turquoise, 20%)!important;
+.menu-setting-item {
+  text-decoration: none !important;
+}
+
+.menu-setting-item:hover {
+  background-color: lighten($base-turquoise, 20%) !important;
   color: $base-black;
 }
