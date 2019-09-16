@@ -21,6 +21,10 @@
       width: 7px;
     }
   }
+  .back-button:hover {
+    text-decoration: none;
+    opacity: 0.7;
+  }
   .module-container {
     background-color: $base-background;
     border-radius: 4px;
@@ -37,7 +41,6 @@
       margin-left: 0;
       margin-right: 0;
       border-bottom: 1px solid $border-grey;
-
       .module-left-container {
         background-color: $base-background;
         border: solid 1px #b5c0d8;
@@ -47,6 +50,9 @@
         margin: 0;
 
         .dropdown-menu-container {
+          border-radius: 5px;
+          border: 2px solid $base-black;
+          padding: 2px 8px;
           position: absolute;
           top: 20px;
           right: 20px;
@@ -177,6 +183,7 @@
       padding-bottom: 20px;
       box-sizing: border-box;
       .sensor-data-loader {
+        margin-top: 20px;
         text-align: center;
         padding: 20px;
         font-size: 20px;
@@ -264,6 +271,10 @@
       .module-left-container {
         max-width: 600px;
       }
+      .extended {
+        max-width: 800px;
+        width: 800px;
+      }
       .module-details {
         .data-cols {
           justify-content: start;
@@ -301,6 +312,9 @@
       color: $base-black;
     }
   }
+  .ant-input:hover {
+    border-color: $base-turquoise;
+  }
   .sensor-module-form {
     text-align: center;
     .label-title {
@@ -329,10 +343,32 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        .ant-checkbox-checked {
+          .ant-checkbox-inner {
+            background-color: $base-turquoise;
+            border-color: $base-turquoise;
+          }
+        }
+        .ant-checkbox-inner {
+          border-color: $base-turquoise;
+        }
       }
     }
   }
+
   .ant-modal-footer {
     text-align: center;
+  }
+  .ant-btn-primary {
+    border: 2px solid $base-black;
+    background-color: $base-black;
+    border-radius: 4px;
+    color: $base-background;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .ant-btn-primary:hover {
+    opacity: 0.7;
   }
 }

@@ -20,7 +20,7 @@
     "noUnusedLocals": false
   },
   "include": [
-    "src",
+    "src"
   ],
   "exclude": [
     "node_modules",
@@ -29,6 +29,6 @@
     "acceptance-tests",
     "webpack",
     "jest",
-    "extracted",
+    "extracted"
   ]
 }

@@ -1,5 +1,11 @@
 import { ClientStorageData } from '../components/entities/User';
 export default class ClientStorage {
+  /**
+   * method for setting an Item in local storage
+   * @param key 
+   * @param value 
+   * @param ttl 
+   */
   static setItem(key: string, value: any, ttl: number) {
     var data: ClientStorageData = {
       value: value
@@ -11,7 +17,10 @@ export default class ClientStorage {
 
     window.localStorage.setItem(key, JSON.stringify(data));
   }
-
+  /**
+   * method for getting an Item in local storage
+   * @param key 
+   */
   static getItem(key: string) {
     const serialized = window.localStorage.getItem(key);
     let data: ClientStorageData;
@@ -40,7 +49,10 @@ export default class ClientStorage {
 
     return data.value;
   }
-
+  /**
+   * method for deleting an Item in local storage
+   * @param key 
+   */
   static deleteItem(key: string) {
     window.localStorage.removeItem(key);
   }

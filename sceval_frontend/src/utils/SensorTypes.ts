@@ -1,6 +1,10 @@
 import { MODULE_CATELOG } from './Constants';
 import { SensorModelInterface } from '../components/entities/SensorModule';
 
+/**
+ * helper method for determining the unit associated with a provided sensor type.
+ * @param sensorType 
+ */
 export function determineUnit(sensorType: string) {
   switch (sensorType) {
     case 'pressure':
@@ -72,7 +76,10 @@ export function evaluateSensorModelName (modelId: string): string {
     return '';
   }
 }
-
+/**
+ * helper method for determining the image associated with a provided sensor type.
+ * @param sensorType 
+ */
 export function evaluateSensorTypes(sensorType: any): string | undefined {
   const sensorHumidity = require('../common_images/sensors/humidity-active.svg');
   const sensorLight = require('../common_images/sensors/uv-active.svg');

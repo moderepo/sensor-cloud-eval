@@ -1,6 +1,9 @@
 import { ModeConstants } from '../controllers/ModeAPI';
 import { Constants } from './Constants';
-
+/**
+ * error handler for user registration, sign-in, and other requests
+ * @param reason 
+ */
 export default function handleErrors(reason: string): string {
   let transformedErr = '';
   switch (reason) {

@@ -206,14 +206,14 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     }
   };
 
-  // render delete device modal handler function for clicking on the 'Delete Device' setting for a gateway
+  // render delete gateway modal handler function for clicking on the 'Delete Gateway' setting for a gateway
   const renderDeleteDeviceModal = (
     deviceId: number,
   ): void => {
     confirm({
-      title: `Are you sure you want to delete device #${deviceId}?`,
+      title: `Are you sure you want to delete gateway #${deviceId}?`,
       content:
-        'Please note that your device must be configured to allow On-Demand Device Provisioning \
+        'Please note that your device must be configured to allow On-Demand Gateway Provisioning \
         in order to sucessfully remove the device from your home.',
       onOk: async () => {
         setDeletionMode(true);
@@ -364,7 +364,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
               setDeviceDeleteError(false);
             }}
           >
-            Delete Device
+            Delete Gateway
           </a>
         </Menu.Item>
       </Menu>
@@ -411,7 +411,8 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                   className="action-button"
                   onClick={event => addSensorModules(event, deviceId)}
                 >
-                  + Add Sensor Modules
+                  <img src={plus} className="plus" />
+                  Add Modules
                 </button>
                 {renderDropDownSetting(deviceId)}
               </>
@@ -507,7 +508,8 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
       <div className="hardware-section">
         <div className="page-header">
           {selectedDevice === 0 ? (
-            <h1>Hardware
+            <h1 className="hardware-header">
+            Hardware
             <NavLink
               className="add-gateway-button"
               to="/add_gateway"

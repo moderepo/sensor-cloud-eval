@@ -1411,7 +1411,12 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                         {selectedSensorModuleObj ? (
                             <Fragment>
                                 <div
-                                    className="module-left-container col-12 col-xl-6 d-flex flex-row align-items-center"
+                                    className={'module-left-container d-flex flex-row align-items-center' +
+                                        (selectedModule &&
+                                        evaluateSensorModelName(parseSensorId(selectedModule).model).includes('OMRON') ?
+                                        'extended col-12 col-xl-8' :
+                                        'col-12 col-xl-6 ')
+                                    }
                                 >
                                     <img src={sensorGeneral} />
                                     <div
@@ -1443,8 +1448,11 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                     }
                                 </div>
                                 <div
-                                    className={
-                                        'data-cols col-12 col-xl-6 d-flex flex-row' +
+                                    className={'data-cols d-flex flex-row' +
+                                        (selectedModule &&
+                                        evaluateSensorModelName(parseSensorId(selectedModule).model).includes('OMRON') ?
+                                        'col-12 col-xl-4' :
+                                        'col-12 col-xl-6 ') +
                                         (isLoadingTSData ? ' disable-control' : '')
                                     }
                                 >
@@ -1488,7 +1496,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                             ) : (
                                 // if the TSDB data for the timeframe is actually empty
                                 <div className="sensor-data-loader">
-                                    No Active Sensor
+                                    No data is available for this timeframe. To assess further, 
+                                    make sure your sensor-module is turned on. You can also try
+                                    making the sensing interval shorter.
                                 </div>
                             )
                         )}

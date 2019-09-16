@@ -5,17 +5,21 @@ import { LoginInfo } from '../components/entities/User';
 import AppContext from '../controllers/AppContext';
 import { Home } from '../components/entities/API';
 import modeAPI from '../controllers/ModeAPI';
-
+// required images imported
 const connect = require('../common_images/devices/1-plug.svg');
 const gw = require('../common_images/devices/gateway-large.svg');
 const numbers = require('../common_images/devices/numbers.svg');
 
 const AddGateway = withRouter((props: RouteComponentProps) => {
+  // stores the associated home
   const [home, setHome] = useState<number>();
-  const [claimCode, setClaimCode] = useState<string>();
+  // stores the state of the claim code being typed
+  const [claimCode, setClaimCode] = useState<string>('');
+  // stores any device errors that may occur when submitting the claim code
   const [addDeviceError, setAddDeviceError] = useState<boolean>(false);
 
   const initialize = async () => {
+    // get the user's login information
     const loginInfo: LoginInfo = await AppContext.restoreLogin();
     // get home associated with project
     const homeObj: Home = await modeAPI.getHome(loginInfo.user.id);
@@ -25,32 +29,43 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
   useEffect(() => {
     initialize();
   },        []);
-
-  const submitClaimCode = async () => {
-    try {
-      if (home && claimCode) {
-        const status = await modeAPI.addDevice(home, claimCode);
-        if (status === 201) {
-          setAddDeviceError(false);
-          setClaimCode('');
-          props.history.push('/devices');
+  /**
+   * Method for handling the submission of a claim code. 
+   * If an error occurs, the method will catch the error and handle it accordingly.
+   */
+  const submitClaimCode = async (event?: React.KeyboardEvent<HTMLInputElement>) => {
+    // if the event exists, and  the event key corresponds to enter, or method invoked by click:
+    if ((event && event.key === 'Enter') || !event) {
+      try {
+        if (home && claimCode) {
+          const status = await modeAPI.addDevice(home, claimCode);
+          if (status === 201) {
+            setAddDeviceError(false);
+            setClaimCode('');
+            props.history.push('/devices');
+          }
         }
+      } catch (error) {
+        setAddDeviceError(true);
+        setTimeout(() => {
+          setAddDeviceError(false);
+        },         2000);
       }
-    } catch (error) {
-      setAddDeviceError(true);
-      setTimeout(() => {
-        setAddDeviceError(false);
-      },         2000);
     }
   };
-
+  /**
+   * Method updating the state of the claim code.
+   * @param event 
+   */
   const handleClaimCodeEntry = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
     setClaimCode(event.target.value);
   };
 
   return (
+    <>
     <div className="add-gateway-section">
+      <h1 className="page-header add-gateway-header">Add Gateway</h1>
       <div className="directions">
         <div className="direction-set">
           <div className="number-text">
@@ -84,24 +99,26 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
         <div className="claim-code-entry">
           <Input
             placeholder="Claim code"
+            onKeyDown={e => submitClaimCode(e)}
             value={claimCode}
             onChange={handleClaimCodeEntry}
           />
         </div>
         <div className="claim-code-section">
-          <Button
-            className="add-button"
+        <NavLink to="/devices" className="back-to-hardware">
+            Cancel
+          </NavLink>
+          <button
+            className="action-button"
             onClick={() => submitClaimCode()}
             disabled={claimCode === ''}
           >
             Add
-          </Button>
-          <NavLink to="/devices" className="back-to-hardware">
-            Back
-          </NavLink>
+          </button>
         </div>
       </div>
     </div>
+    </>
   );
 });
 
