@@ -1,4 +1,6 @@
 import { MODULE_CATELOG } from './Constants';
+import { SensorModelInterface } from '../components/entities/SensorModule';
+
 /**
  * helper method for determining the unit associated with a provided sensor type.
  * @param sensorType 
@@ -37,14 +39,37 @@ export function determineUnit(sensorType: string) {
       return;
   }
 }
+
 /**
- * helper method for determining the hardware model associated with a provided model ID.
+ * Given a sensor id which contains sensor model and id separated by ":". Parse the ID
+ * and return the data as an object with separated model and id.
+ * We need to do this alot so it is better to use this function to do it. Also, this helper
+ * function will also take a separator incase we use a different separator for other sensors.
+ */
+export function parseSensorId (sensorId: string, separator: string = ':'): any {
+  const tokens: string[] = sensorId.split(separator);
+  return {
+    model: tokens[0],
+    id: tokens[1]
+  };
+}
+
+/**
+ * Get the sensor model definition by model id
  * @param modelId 
  */
-export function evaluateModel(modelId: string): string {
-  const discoveredModule = MODULE_CATELOG.find((sensorModule: any): boolean => {
+export function evaluateSensorModel (modelId: string): SensorModelInterface | undefined {
+  return MODULE_CATELOG.find((sensorModule: any): boolean => {
     return sensorModule.modelId === modelId;
   });
+}
+
+/**
+ * Get the sensor model name by model id
+ * @param modelId 
+ */
+export function evaluateSensorModelName (modelId: string): string {
+  const discoveredModule = evaluateSensorModel(modelId);
   if (discoveredModule) {
     return discoveredModule.name;
   } else {

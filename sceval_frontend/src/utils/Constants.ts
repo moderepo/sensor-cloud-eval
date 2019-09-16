@@ -1,3 +1,5 @@
+import { SensorModelInterface } from '../components/entities/SensorModule';
+
 export namespace Constants {
   /**
    * Constants for sensor module-related strings.
@@ -36,11 +38,42 @@ export namespace Constants {
   export const ERROR_CONNECTION_ERROR: string = 'CONNECTION_ERROR';
   export const ERROR_LOGIN_CREDENTIALS_NOT_PRESENT: string =
     'LOGIN_CREDENTIALS_NOT_PRESENT';
+
+  // The maximum number of data points we want to show on the data series snapshot
+  export const SNAPSHOT_CHART_MAX_DATA_POINTS: number = 200;
+
+  export const REALTIME_CHART_MAX_DATA_POINTS: number = 20;
+
+  // How long to delay before dispatching chart zoom event
+  export const CHART_ZOOM_EVENT_DELAY_IN_MS: number = 20;
+  export const CHART_FETCH_DATA_DELAY_IN_MS: number = 1000;
+
+  // Months and years values will assume months are 30 days and years are 365 days. This is not
+  // accurate but it is good enough. If you need a correct value, don't use these constants.
+  export const MINUTE_IN_SECS: number     = 60;       // 1 minute in seconds
+  export const MINUTE_IN_MS: number       = 60 * 1000;  // 1 minute in milliseconds
+  export const HOUR_IN_SECS: number       = 60 * 60;
+  export const HOUR_IN_MS: number         = 60 * 60 * 1000;
+  export const DAY_IN_SECS: number        = 60 * 60 * 24;
+  export const DAY_IN_MS: number          = 60 * 60 * 24 * 1000;
+  export const WEEK_IN_SECS: number       = 60 * 60 * 24 * 7;
+  export const WEEK_IN_MS: number         = 60 * 60 * 24 * 7 * 1000;
+  export const MONTH_IN_SECS: number      = 60 * 60 * 24 * 30;
+  export const MONTH_IN_MS: number        = 60 * 60 * 24 * 30 * 1000;
+  export const YEAR_IN_SECS: number       = 60 * 60 * 24 * 356;
+  export const YEAR_IN_MS: number         = 60 * 60 * 24 * 356 * 1000;
+  export const DECADE_IN_SECS: number     = 60 * 60 * 24 * 356 * 10;
+  export const DECADE_IN_MS: number       = 60 * 60 * 24 * 356 * 10 * 1000;
+  export const CENTURY_IN_SECS: number    = 60 * 60 * 24 * 356 * 100;
+  export const CENTURY_IN_MS: number      = 60 * 60 * 24 * 356 * 100 * 1000;
+  export const MILLENNIUM_IN_SECS: number = 60 * 60 * 24 * 356 * 1000;
+  export const MILLENNIUM_IN_MS: number   = 60 * 60 * 24 * 356 * 1000 * 1000;
 }
+
  /**
   * Sensor module catelog array containing hardware-specific information.
   */
-export const MODULE_CATELOG = [
+export const MODULE_CATELOG: SensorModelInterface[] = [
   {
     'modelId': '0101',
     'vendor': 'Alps',
@@ -71,7 +104,6 @@ export const MODULE_CATELOG = [
       'ACCELERATION_Y:0': 'Acceleration Y',
       'ACCELERATION_Z:0': 'Acceleration Z'
      }
-
   },
   {
     'modelId': '0102',

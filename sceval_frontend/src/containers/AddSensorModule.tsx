@@ -12,7 +12,7 @@ import { Constants } from '../utils/Constants';
 import { SensorModuleInterface, AddSensorModuleState } from '../components/entities/SensorModule';
 import { RouteParams } from '../components/entities/Routes';
 import SensorModuleComp from '../components/SensorModuleComp';
-import { evaluateModel } from '../utils/SensorTypes';
+import { evaluateSensorTypes, evaluateSensorModelName } from '../utils/SensorTypes';
 // required images imported
 const addModule1 = require('../common_images/sensor_modules/add-module-1.svg');
 const addModule2 = require('../common_images/sensor_modules/add-module-2.svg');
@@ -293,7 +293,7 @@ export class AddSensorModule extends Component<
                         <div className="sensor-module-wrapper col-12" key={index}>
                           <SensorModuleComp
                             id={sModule.modelSpecificId}
-                            model={`${evaluateModel(sModule.modelId)}`}
+                            model={`${evaluateSensorModelName(sModule.modelId)}`}
                             sensors={sModule.moduleSchema}
                             isSelected={this.state.selectedModules.includes(sModule)}
                             onClick={

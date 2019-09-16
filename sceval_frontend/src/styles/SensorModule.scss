@@ -101,7 +101,8 @@
           }
 
           .gateway-name,
-          .sensor-model {
+          .sensor-model,
+          .sensor-count {
             width: 100%;
             text-align: left;
             margin-top: 5px;
@@ -115,6 +116,11 @@
         min-height: 100%;
         padding-top: 20px;
         justify-content: center;
+
+        &.disable-control {
+          pointer-events: none;
+          opacity: 0.5;
+        }
 
         .data-col {
           background-color: $base-background;
@@ -143,6 +149,32 @@
             padding-top: 8px;
             font-size: 25px;
           }
+          .chart-options {
+            text-align: left;
+            .chart-option {
+              font-size: 12px;
+              width: 100%;
+              padding: 1px 0;
+              input {
+                margin-right: 5px;
+              }
+            }
+          }
+
+          .graph-timespan-options {
+            .ant-checkbox-wrapper {
+              font-size: 12px;
+              padding: 1px 0;
+            }
+
+            .static-time-options {
+              margin-top: 10px;
+              .default-timespan-value {
+                font-size: 14px;
+                width: auto;
+              }
+            }
+          }
         }
       }
     }
@@ -153,9 +185,12 @@
       .sensor-data-loader {
         margin-top: 20px;
         text-align: center;
+        padding: 20px;
+        font-size: 20px;
       }
     }
     .sensor-container {
+      position: relative;
       box-shadow: $base-box-shadow;
       margin: 20px;
       padding: 20px;
@@ -165,6 +200,7 @@
       display: flex;
       .unit-rt-container,
       .graph-container {
+        position: relative;
         width: 175px;
         background-color: $base-background;
         border: solid 1px $border-grey;
@@ -201,10 +237,25 @@
         }
       }
       .graph-container {
-        width: 65vw;
+        width: 100%;
         left: 0px;
         top: -1px;
         text-align: center;
+        .loading-tsdb-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 1000;
+          background: rgba(0, 0, 0, 0.05);
+          img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate3d(-50%, -50%, 0);
+          }
+        }
       }
       .graph-info-container {
         margin-top: 15px;
@@ -283,19 +334,19 @@
       }
     }
 
-    .ant-checkbox-wrapper {
-      margin: 5px;
-      .ant-checkbox-checked {
-        .ant-checkbox-inner {
-          background-color: $base-turquoise;
-          border-color: $base-turquoise;
-        }
-      }
-      .ant-checkbox-inner {
-        border-color: $base-turquoise;
+    .sensor-type-togglers {
+      margin: 0;
+      .ant-checkbox-wrapper {
+        margin: 0;
+        padding: 2px 5px;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
     }
   }
+
   .ant-modal-footer {
     text-align: center;
   }
@@ -310,5 +361,16 @@
   }
   .ant-btn-primary:hover {
     opacity: 0.7;
+  }
+}
+.ant-checkbox-wrapper {
+  .ant-checkbox-checked {
+    .ant-checkbox-inner {
+      background-color: $base-turquoise;
+      border-color: $base-turquoise;
+    }
+  }
+  .ant-checkbox-inner {
+    border-color: $base-turquoise;
   }
 }
