@@ -133,8 +133,8 @@
           margin: 0 10px;
 
           .data-name {
-            font-size: 12px;
-            font-weight: 300;
+            font-size: 14px;
+            font-weight: 900;
             color: $base-black;
             border-bottom: 1px solid #b5c0d8;
             padding-bottom: 16px;
@@ -303,7 +303,7 @@
 .ant-modal-content {
   .ant-modal-header {
     border-bottom: none;
-    padding: 50px 20px;
+    padding: 50px 20px 10px 20px;
     .ant-modal-title {
       text-align: center;
       font-size: 26px;
