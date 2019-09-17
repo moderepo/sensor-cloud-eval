@@ -59,7 +59,7 @@ interface SensorTypeSetting {
     selected: boolean;
 }
 interface SensorModuleSettings {
-    name: string;
+    name?: string;
     sensors: SensorTypeSetting[];
 }
 
@@ -375,8 +375,14 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             // list of all possible sensor type this module has
             allSensorTypes = sensorModel.moduleSchema;
         } else {
-            // Use the sensor module's "sensors" array as the list of possible sensor type
-            allSensorTypes = sensorModuleObj.value.sensors;
+            // If sensor module definition is not found which mean this module is probably a CUSTOM module.
+            // For CUSTOM sensor module, we store the moduleSchema in the key/value store so try to find it
+            // there first. If it is not available then use "sensors" list
+            if (sensorModuleObj.value.moduleSchema && sensorModuleObj.value.moduleSchema.length > 0) {
+                allSensorTypes = sensorModuleObj.value.moduleSchema;
+            } else {
+                allSensorTypes = sensorModuleObj.value.sensors;
+            }
         }
 
         // sort sensor types by names

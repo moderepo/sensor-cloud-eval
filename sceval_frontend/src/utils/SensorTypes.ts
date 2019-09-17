@@ -1,4 +1,4 @@
-import { MODULE_CATELOG } from './Constants';
+import { MODULE_CATELOG, Constants } from './Constants';
 import { SensorModuleDefinition } from '../components/entities/SensorModule';
 
 /**
@@ -139,6 +139,8 @@ export function evaluateSensorModelName (modelId: string): string {
   const discoveredModule: SensorModuleDefinition | undefined = evaluateSensorModel(modelId);
   if (discoveredModule) {
     return discoveredModule.name;
+  } else if (modelId === Constants.CUSTOM_SENSOR_MODULE_MODEL_ID) {
+    return Constants.CUSTOM_SENSOR_MODULE_MODEL_ID;
   } else {
     return '';
   }
