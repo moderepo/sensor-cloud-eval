@@ -82,8 +82,9 @@
         }
 
         img {
-          padding: 20px;
-          max-width: 130px;
+          min-width: 100px;
+          margin-right: 20px;
+          flex-shrink: 0;
         }
 
         .info-section {
@@ -126,7 +127,7 @@
           background-color: $base-background;
           border: solid 1px #b5c0d8;
           border-radius: 2px;
-          width: 150px;
+          width: 160px;
           padding: 18px 15px;
           text-align: center;
           height: 100%;

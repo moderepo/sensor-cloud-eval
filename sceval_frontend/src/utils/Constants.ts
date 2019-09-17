@@ -1,4 +1,4 @@
-import { SensorModelInterface } from '../components/entities/SensorModule';
+import { SensorModuleDefinition } from '../components/entities/SensorModule';
 
 export namespace Constants {
   /**
@@ -15,22 +15,7 @@ export namespace Constants {
     'discoveredSensorModules';
   export const EVENT_REALTIME_DATA: string = 'realtimeData';
   export const EVENT_TIME_SERIES_DATA: string = 'timeSeriesData';
-  /**
-   * A constant used for specifying sensor types associated with the Alps sensor module.
-   */
-  export const ALPS_SENSOR_SET: Array<string> = [
-    'TEMPERATURE:0',
-    'HUMIDITY:0',
-    'UV:0',
-    'PRESSURE:0',
-    'AMBIENT:0',
-    'MAGNETIC_X:0',
-    'ACCELERATION_Y:0',
-    'ACCELERATION_Z:0',
-    'MAGNETIC_Y:0',
-    'MAGNETIC_Z:0',
-    'ACCELERATION_X:0'
-  ];
+
    /**
     * Error messages for user-related authentication.
     */
@@ -68,12 +53,15 @@ export namespace Constants {
   export const CENTURY_IN_MS: number      = 60 * 60 * 24 * 356 * 100 * 1000;
   export const MILLENNIUM_IN_SECS: number = 60 * 60 * 24 * 356 * 1000;
   export const MILLENNIUM_IN_MS: number   = 60 * 60 * 24 * 356 * 1000 * 1000;
+
+  // The modelId of custom sensor modules
+  export const CUSTOM_SENSOR_MODULE_MODEL_ID: string = 'CUSTOM';
 }
 
  /**
   * Sensor module catelog array containing hardware-specific information.
   */
-export const MODULE_CATELOG: SensorModelInterface[] = [
+export const MODULE_CATELOG: SensorModuleDefinition[] = [
   {
     'modelId': '0101',
     'vendor': 'Alps',
