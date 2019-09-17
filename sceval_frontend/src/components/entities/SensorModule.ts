@@ -32,15 +32,19 @@ export interface SensorModuleInterface extends Omit<KeyValueStore, 'value'> {
         // sensor module id
         id: string;
         // assoociated gateway
-        gateway: number;
+        gatewayID?: number;
+        // sensor module's model id
+        modelId?: string;
         // sensing interval
         interval: number;
         // sensing (off/on)
         sensing: string;
+        // OPTIONAL list of sensors the module has
+        moduleSchema?: Array<string>;
         // active sensors
-        sensors: Array<any>;
+        sensors: Array<string>;
         // sensor module name
-        name: string;
+        name?: string;
     };
 }
 export interface AddSensorModuleState {

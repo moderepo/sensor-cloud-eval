@@ -178,17 +178,23 @@ export class AddSensorModule extends Component<
     try {
       await Promise.all(this.state.selectedModules.map((selectedModule, index): Promise<any>[] => {
         const key: string = `${Constants.SENSOR_MODULE_KEY_PREFIX}${selectedModule.sensorModuleId}`;
-        const params: KeyValueStore = {
+        const params: SensorModuleInterface = {
           key: key,
           value: {
             id: selectedModule.sensorModuleId,
-            gatewayID: this.context.state.selectedGateway,
+            gatewayID: Number(this.context.state.selectedGateway),
             sensing: 'on',
             interval: 30,
             modelId: selectedModule.modelId,
-            sensors: selectedModule.moduleSchema
+            sensors: selectedModule.moduleSchema,
           }
         };
+
+        if (selectedModule.modelId === Constants.CUSTOM_SENSOR_MODULE_MODEL_ID) {
+          // For custom sensorm modules, add schema to the key/value store so that we have a list of sensors this
+          // sensor module support or else we won't know what sensor this module support later on
+          params.value.moduleSchema = selectedModule.moduleSchema;
+        }
 
         return [
           // associate new sensors to the home
