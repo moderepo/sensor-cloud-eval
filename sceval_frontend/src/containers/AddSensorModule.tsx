@@ -293,6 +293,7 @@ export class AddSensorModule extends Component<
                         <div className="sensor-module-wrapper col-12" key={index}>
                           <SensorModuleComp
                             id={sModule.modelSpecificId}
+                            modelId={`${sModule.modelId}`}
                             model={`${evaluateSensorModelName(sModule.modelId)}`}
                             sensors={sModule.moduleSchema}
                             isSelected={this.state.selectedModules.includes(sModule)}

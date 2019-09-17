@@ -1,4 +1,4 @@
-import { SensorModelInterface } from '../components/entities/SensorModule';
+import { SensorModuleDefinition } from '../components/entities/SensorModule';
 
 export namespace Constants {
   /**
@@ -73,7 +73,7 @@ export namespace Constants {
  /**
   * Sensor module catelog array containing hardware-specific information.
   */
-export const MODULE_CATELOG: SensorModelInterface[] = [
+export const MODULE_CATELOG: SensorModuleDefinition[] = [
   {
     'modelId': '0101',
     'vendor': 'Alps',

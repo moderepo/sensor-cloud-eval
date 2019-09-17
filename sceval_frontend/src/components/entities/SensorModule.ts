@@ -1,7 +1,11 @@
 import { KeyValueStore, Device, TimeSeriesBounds, DataPoint } from '../../components/entities/API';
 import { TimeSeriesData } from './API';
 
-export interface SensorModelInterface {
+/**
+ * This is the interface for generic sensor module definition. It defines all the properties that each sensor module
+ * type must have.
+ */
+export interface SensorModuleDefinition {
     modelId: string;
     vendor: string;
     vendorModelId: string;

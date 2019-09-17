@@ -16,14 +16,20 @@ import ClientStorage from '../controllers/ClientStorage';
 import moment, { Moment } from 'moment';
 import { Menu, Dropdown, Icon, Checkbox, Modal, Input, Radio } from 'antd';
 import ModeConnection  from '../controllers/ModeConnection';
-import { determineUnit, evaluateSensorModelName, evaluateSensorModel, parseSensorId } from '../utils/SensorTypes';
+import {
+    determineUnit,
+    evaluateSensorModelName,
+    evaluateSensorModel,
+    parseSensorUUID,
+    evaluateSensorModelIcon
+} from '../utils/SensorTypes';
 import {
     SensorModuleInterface,
     SensingInterval,
     SensorDataBundle,
     DateBounds,
     ChartTimespan as GraphTimespan,
-    SensorModelInterface
+    SensorModuleDefinition
 } from '../components/entities/SensorModule';
 import { Constants } from '../utils/Constants';
 import { Home } from '../components/entities/API';
@@ -361,8 +367,8 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         // this is the complete list of the sensor type this sensor module has, including disabled sensors
         let allSensorTypes: string[] = [];
 
-        const sensorModel: SensorModelInterface | undefined = evaluateSensorModel(
-            parseSensorId(sensorModuleObj.value.id).model
+        const sensorModel: SensorModuleDefinition | undefined = evaluateSensorModel(
+            parseSensorUUID(sensorModuleObj.value.id).modelId
         );
         if (sensorModel && sensorModel.moduleSchema) {
             // if we found the sensor model definition and it has a schema, use the moduleSchema to get the
@@ -1393,7 +1399,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     };
 
     return (
-
         <Fragment>
             <div className="module-section">
                 <NavLink 
@@ -1408,17 +1413,19 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 </NavLink>
                 <div className="module-container">
                     <div className="module-details row">
-                        {selectedSensorModuleObj ? (
+                        {selectedModule && selectedSensorModuleObj ? (
                             <Fragment>
                                 <div
                                     className={'module-left-container d-flex flex-row align-items-center' +
-                                        (selectedModule &&
-                                        evaluateSensorModelName(parseSensorId(selectedModule).model).includes('OMRON') ?
-                                        'extended col-12 col-xl-8' :
-                                        'col-12 col-xl-6 ')
+                                      (selectedModule &&
+                                      evaluateSensorModelName(
+                                          parseSensorUUID(selectedModule).modelId
+                                      ).includes('OMRON') ?
+                                      ' extended col-12 col-xl-8' :
+                                      ' col-12 col-xl-6 ')
                                     }
                                 >
-                                    <img src={sensorGeneral} />
+                                    <img src={evaluateSensorModelIcon(parseSensorUUID(selectedModule).modelId)} />
                                     <div
                                         className={
                                             'info-section d-flex flex-column align-items-start justify-content-center'
@@ -1435,7 +1442,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                         }</div>
                                         <div className="sensor-model">
                                         { selectedModule &&
-                                            `Sensor model: ${evaluateSensorModelName(selectedModule.split(':')[0])}`
+                                            `Sensor model: ${
+                                                evaluateSensorModelName(parseSensorUUID(selectedModule).modelId)
+                                            }`
                                         }</div>
                                         <div className="sensor-count">Active Sensors: {activeSensorBundles.length}</div>
                                     </div>
@@ -1450,7 +1459,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                 <div
                                     className={'data-cols d-flex flex-row' +
                                         (selectedModule &&
-                                        evaluateSensorModelName(parseSensorId(selectedModule).model).includes('OMRON') ?
+                                        evaluateSensorModelName(
+                                            parseSensorUUID(selectedModule).modelId
+                                        ).includes('OMRON') ?
                                         'col-12 col-xl-4' :
                                         'col-12 col-xl-6 ') +
                                         (isLoadingTSData ? ' disable-control' : '')
