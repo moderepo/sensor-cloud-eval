@@ -120,7 +120,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     const valueAxis = newChart.yAxes.push(new am4charts.ValueAxis());
     valueAxis.renderer.labels.template.fill = am4core.color('#7FCBCF');
     valueAxis.renderer.minWidth = 60;
-    valueAxis.extraMin = 0;
 
     // format data series:
     const series: am4charts.LineSeries = newChart.series.push(new am4charts.LineSeries());
