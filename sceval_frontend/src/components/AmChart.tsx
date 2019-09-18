@@ -7,7 +7,7 @@ import { Context, context } from '../context/Context';
 import { DateBounds } from '../components/entities/SensorModule';
 import { DataPoint } from './entities/API';
 import { Constants } from '../utils/Constants';
-import { consoleLog } from '../utils/Utils';
+import { consoleLog, consoleError } from '../utils/Utils';
 const debounce = require('debounce');
 
 am4core.useTheme(am4themes_animated);
@@ -93,8 +93,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
 
     // create amChart instance with custom identifier
     const newChart: am4charts.XYChart = am4core.create(props.identifier, am4charts.XYChart);
-    setSensorChart(newChart);
-    newChart.data = props.data;
 
     // push  new x-value axis
     const dateAxis = newChart.xAxes.push(new am4charts.DateAxis());
@@ -107,11 +105,11 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     dateAxis.tooltipDateFormat = 'YYYY-MM-dd HH:mm:ss';
     dateAxis.keepSelection = true;
 
-    // If the dataDateBounds is set, set the axis bounds to the same value to force the 
-    // axis to line up but only do this if the chart is not realtime chart
-    if (props.dataDateBounds && !props.isRealtime) {
-      dateAxis.min = props.dataDateBounds.beginTime;
-      dateAxis.max = props.dataDateBounds.endTime;
+    if (props.isRealtime) {
+      dateAxis.extraMax = 0.1;
+    } else {
+      dateAxis.extraMax = 0;
+      // Force the axis to line up if the chart is not realtime chart
       dateAxis.strictMinMax = true;
     }
 
@@ -123,15 +121,9 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     valueAxis.renderer.labels.template.fill = am4core.color('#7FCBCF');
     valueAxis.renderer.minWidth = 60;
     valueAxis.extraMin = 0;
-    if (props.isRealtime) {
-      valueAxis.extraMax = 0.1;
-    } else {
-      valueAxis.extraMax = 0;
-    }
 
     // format data series:
     const series: am4charts.LineSeries = newChart.series.push(new am4charts.LineSeries());
-    series.name = props.name;
     series.dataFields.dateX = 'date';
     series.dataFields.valueY = 'value';
 
@@ -145,22 +137,14 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     series.stroke = am4core.color('#7FCBCF');
     series.strokeWidth = 3;
     series.fillOpacity = 0.3;
-    if (props.fillChart) {
-      series.fill = am4core.color('#C6E4F2');
-    } else {
-      series.fill = am4core.color(undefined);
-    }
 
-    if (props.showBullets) {
-      const bullet: am4charts.CircleBullet = series.bullets.push(new am4charts.CircleBullet());
-      bullet.strokeWidth = 0;
-      bullet.width = 3;
-      bullet.fill = am4core.color('#7FCBCF');
-    }
- 
-    // Add a scrollbar so the user can zoom/pan but make it hiddne initially until the user click on the chart
-    newChart.scrollbarX = new am4charts.XYChartScrollbar();
-    (newChart.scrollbarX as am4charts.XYChartScrollbar).series.push(series);
+    // Add basic scrollbar to zoom/pan chart. We can't use the preview scrollbar because of a AMChart bug
+    // which the scrollbar doesn't sync with date axis if date axis has min/max set
+    // https://github.com/amcharts/amcharts4/issues/1487
+    newChart.scrollbarX = new am4core.Scrollbar();
+    newChart.scrollbarX.thumb.minWidth = 50;
+    newChart.scrollbarX.minHeight = 20;
+    newChart.scrollbarX.disabled = true;
 
     // format cursor:
     newChart.cursor = new am4charts.XYCursor();
@@ -176,21 +160,16 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     newChart.events.on('ready', (event: any): void => {
       consoleLog('Chart ready: ', props.identifier);
       newChart.scrollbarX.disabled = true;
-      
-      // handle initial zoom if there is one set
-      if (props.zoom && !props.isRealtime) {
-        dateAxis.events.disable();
-        dateAxis.zoomToDates(moment(props.zoom.beginDate).toDate(), moment(props.zoom.endDate).toDate(), false, true);
-        dateAxis.events.enable();
-      }
     });
+
+    setSensorChart(newChart);
 
     return function cleanup() {
       if (newChart && !newChart.isDisposed()) {
         newChart.dispose();
       }
     };
-  },        [props.isRealtime]);
+  },        [props.isRealtime, props.identifier]);
 
   /**
    * This useEffect is for enabling/disabling scrollbar which shows the snapshot of the data series's data.
@@ -240,7 +219,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
         // nothing
       };
     }
-  },        [sensorChart, props.hasFocus]);
+  },        [sensorChart, props.zoomEventDispatchDelay, props.hasFocus]);
 
   /**
    * This useEffect will listen to zoom state change and update the chart's zoom automatically.
@@ -271,7 +250,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
         dateAxis.events.enable();
       }
     }
-  },        [props.zoom]);
+  },        [sensorChart, props.hasFocus, props.zoom]);
 
   /**
    * this use effect will be used for listening to the data change event and update the chart data
@@ -297,7 +276,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       // listen to data invalidated event. Once data is invalidated, we can disable the scrollbar again
       // and also re-enable date axis events
       sensorChart.events.once('datavalidated', (): void => {
-        if (!props.hasFocus) {
+        if (!props.hasFocus && sensorChart.isReady()) {
           sensorChart.scrollbarX.disabled = true;
         }
         dateAxis.events.enable();
@@ -306,18 +285,24 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       // change chart data
       sensorChart.data = props.data;
     }
-  },        [props.data]);
+  },        [sensorChart, props.hasFocus, props.data]);
 
   useEffect(() => {
-    if (sensorChart && !sensorChart.isDisposed() && props.dataDateBounds && !props.isRealtime) {
-      consoleLog('Update bounds: ', props.dataDateBounds);
-      const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
-      // set the bounds for the axis
-      dateAxis.min = props.dataDateBounds.beginTime;
-      dateAxis.max = props.dataDateBounds.endTime;
-      dateAxis.invalidate();
+    if (sensorChart && !sensorChart.isDisposed() && props.dataDateBounds) {
+      if (!props.isRealtime) {
+        consoleLog('Update bounds: ', props.dataDateBounds);
+        const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
+        // set the bounds for the axis
+        if (props.hasFocus) {
+          dateAxis.events.disable();
+        }
+        dateAxis.min = props.dataDateBounds.beginTime;
+        dateAxis.max = props.dataDateBounds.endTime;
+        dateAxis.events.enable();
+        dateAxis.invalidate();
+      }
     }
-  },        [props.dataDateBounds]);
+  },        [sensorChart, props.isRealtime, props.hasFocus, props.dataDateBounds]);
 
   /**
    * This effect is used for listening to newDataPoint set to the props. If we have a newDataPoint AND if
@@ -329,11 +314,11 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       // data points currently, we won't remove any so that the chart don't look empty
       if (sensorChart.data.length > 10) {
         // TODO - This cause some error with the chart so disable this for now until we find out why
-        // sensorChart.removeData(1);
+        sensorChart.removeData(1);
       }
       sensorChart.addData(props.newDataPoint);
     }
-  },        [props.newDataPoint]);
+  },        [sensorChart, props.isRealtime, props.newDataPoint]);
 
   /**
    * This use effect is used for listing for the fillChart state and enable/disable line series fill accordingly
@@ -348,7 +333,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       }
       series.invalidate();
     }
-  },        [props.fillChart]);
+  },        [sensorChart, props.fillChart]);
 
   /**
    * This use effect is used for listing for the showBullets state and enable/disable bullets accordingly
@@ -372,7 +357,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       }
       series.invalidate();
     }
-  },        [props.showBullets]);
+  },        [sensorChart, props.showBullets]);
 
   return (
     <div>
