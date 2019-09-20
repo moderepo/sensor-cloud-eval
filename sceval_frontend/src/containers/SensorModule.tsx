@@ -64,8 +64,8 @@ interface SensorModuleSettings {
 }
 
 export const SensorModule = withRouter((props: SensorModuleProps & RouteComponentProps<RouteParams>) => {
-    // homeId state
-    const [homeId, setHomeId] = useState<number>(0);
+    // home state
+    const [home, setHome] = useState<Home>();
     // selected module state
     const [selectedModule, setSelectedModule] = useState<string|null>();
     // sensor module data object state
@@ -133,7 +133,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         dateBounds: DateBounds | null | undefined,
         insertToSnapshotData: boolean = true): Promise<void> => {
 
-        if (!dateBounds) {
+        if (!home || !dateBounds) {
             consoleLog('Fetch details data canceled');
             return;
         }
@@ -170,7 +170,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                          dateBounds.endTime !== sensorBundle.currentDateBounds.endTime) {
                             try {
                                 timeSeriesDataArray.push(await modeAPI.getTimeSeriesData(
-                                    homeId, sensorBundle.seriesId, dateBounds.beginDate, dateBounds.endDate
+                                    home.id, sensorBundle.seriesId, dateBounds.beginDate, dateBounds.endDate
                                 ));
                             } catch (error) {
                                 consoleLog('Failed to load time series data for series id: ', sensorBundle.seriesId);
@@ -346,20 +346,20 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         ModeConnection.openConnection();
 
         // get home id
-        const home: Home = await modeAPI.getHome(ClientStorage.getItem('user-login').user.id);
+        const userHome: Home = await modeAPI.getHome(ClientStorage.getItem('user-login').user.id);
 
         // load module data
         const sensorModuleData: SensorModuleInterface = await modeAPI.getDeviceKeyValueStore(
             gateway, `${Constants.SENSOR_MODULE_KEY_PREFIX}${sensorModuleId}`);
 
-        setHomeId(home.id);
+        setHome(userHome);
         setSelectedGateway(gateway);
         setSelectedModule(props.match.params.sensorModuleId);
         setSelectedSensorModuleObj(sensorModuleData);
     };
 
     const initializeTimeSeries = async (
-        home: number,
+        userHome: Home,
         gateway: number,
         sensorModuleId: string,
         sensorModuleObj: SensorModuleInterface) => {
@@ -394,7 +394,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         // sensors
         let allTimeSeriesInfo: TimeSeriesInfo[] = [];
         try {
-            allTimeSeriesInfo = (await modeAPI.getAllTimeSeriesInfo(home)).filter(
+            allTimeSeriesInfo = (await modeAPI.getAllTimeSeriesInfo(userHome.id)).filter(
                 (series: TimeSeriesInfo): boolean => {
                     // time series id will contain the sensor module id and the sensor type e.g.
                     // 0101:28a183311676-acceleration_y:0
@@ -416,7 +416,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         const timeSeriesBounds: TimeSeriesBounds[] = [];
         for (let series of allTimeSeriesInfo) {
             try {
-                timeSeriesBounds.push(await modeAPI.getTimeSeriesBounds(home, series.id));
+                timeSeriesBounds.push(await modeAPI.getTimeSeriesBounds(userHome.id, series.id));
             } catch (error) {
                 console.error(error);
                 break;
@@ -485,7 +485,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         const timeSeriesDataArray: TimeSeriesData[] = [];
         for (let seriesInfo of allTimeSeriesInfo) {
             try {
-                timeSeriesDataArray.push(await modeAPI.getTimeSeriesData(home, seriesInfo.id, beginDate, endDate));
+                timeSeriesDataArray.push(
+                    await modeAPI.getTimeSeriesData(userHome.id, seriesInfo.id, beginDate, endDate)
+                );
             } catch (error) {
                 consoleLog('Failed to load time series data for series id: ', seriesInfo.id);
             }
@@ -692,10 +694,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
      */
     useEffect(
         () => {
-            if (homeId && selectedGateway && selectedModule && selectedSensorModuleObj) {
+            if (home && selectedGateway && selectedModule && selectedSensorModuleObj) {
                 setIsLoadingTSData(true);
 
-                initializeTimeSeries(homeId, selectedGateway, selectedModule, selectedSensorModuleObj).then(() => {
+                initializeTimeSeries(home, selectedGateway, selectedModule, selectedSensorModuleObj).then(() => {
                     setIsLoadingTSData(false);
                 }).catch((error: ErrorResponse): void => {
                     // Failed initialize timeseries
@@ -703,7 +705,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     setIsLoadingTSData(false);
                 });
             }
-    },  [homeId, selectedGateway, selectedModule, selectedSensorModuleObj, homeId]);
+    },  [home, selectedGateway, selectedModule, selectedSensorModuleObj]);
 
     // React hook's componentDidMount and componentDidUpdate
     useEffect(
@@ -719,7 +721,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
                     // if app receives real time data, and it pertains to the selected Module:
                     if (message.eventType === Constants.EVENT_REALTIME_DATA &&
-                        homeId && allSensorBundles &&
+                        home && allSensorBundles &&
                         message.eventData && message.eventData.timeSeriesData &&
                         message.eventData.timeSeriesData.length > 0) {
                         
@@ -765,7 +767,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 ModeConnection.removeObserver(webSocketMessageHandler);
             };
     // method invoke dependencies
-    },  [homeId, selectedGateway, selectedModule, allSensorBundles]);
+    },  [home, selectedGateway, selectedModule, allSensorBundles]);
 
     const onUserInteractingWithChartHandler = (targetId: string): void => {
         // cancle debounce if there is one
