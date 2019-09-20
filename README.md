@@ -56,7 +56,6 @@ $ git clone https://github.com/moderepo/sensor-cloud-eval.git
 
 ```sh
 $ npm install -g typescript
-$ npm install -g node
 ```
 
 ## Quick Start
