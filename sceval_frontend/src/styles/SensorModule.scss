@@ -82,8 +82,9 @@
         }
 
         img {
-          padding: 20px;
-          max-width: 130px;
+          min-width: 100px;
+          margin-right: 20px;
+          flex-shrink: 0;
         }
 
         .info-section {
@@ -101,7 +102,8 @@
           }
 
           .gateway-name,
-          .sensor-model {
+          .sensor-model,
+          .sensor-count {
             width: 100%;
             text-align: left;
             margin-top: 5px;
@@ -116,19 +118,24 @@
         padding-top: 20px;
         justify-content: center;
 
+        &.disable-control {
+          pointer-events: none;
+          opacity: 0.5;
+        }
+
         .data-col {
           background-color: $base-background;
           border: solid 1px #b5c0d8;
           border-radius: 2px;
-          width: 150px;
+          width: 160px;
           padding: 18px 15px;
           text-align: center;
           height: 100%;
           margin: 0 10px;
 
           .data-name {
-            font-size: 12px;
-            font-weight: 300;
+            font-size: 14px;
+            font-weight: 900;
             color: $base-black;
             border-bottom: 1px solid #b5c0d8;
             padding-bottom: 16px;
@@ -143,6 +150,32 @@
             padding-top: 8px;
             font-size: 25px;
           }
+          .chart-options {
+            text-align: left;
+            .chart-option {
+              font-size: 12px;
+              width: 100%;
+              padding: 1px 0;
+              input {
+                margin-right: 5px;
+              }
+            }
+          }
+
+          .graph-timespan-options {
+            .ant-checkbox-wrapper {
+              font-size: 12px;
+              padding: 1px 0;
+            }
+
+            .static-time-options {
+              margin-top: 10px;
+              .default-timespan-value {
+                font-size: 14px;
+                width: auto;
+              }
+            }
+          }
         }
       }
     }
@@ -153,9 +186,12 @@
       .sensor-data-loader {
         margin-top: 20px;
         text-align: center;
+        padding: 20px;
+        font-size: 20px;
       }
     }
     .sensor-container {
+      position: relative;
       box-shadow: $base-box-shadow;
       margin: 20px;
       padding: 20px;
@@ -165,6 +201,7 @@
       display: flex;
       .unit-rt-container,
       .graph-container {
+        position: relative;
         width: 175px;
         background-color: $base-background;
         border: solid 1px $border-grey;
@@ -201,10 +238,25 @@
         }
       }
       .graph-container {
-        width: 65vw;
+        width: 100%;
         left: 0px;
         top: -1px;
         text-align: center;
+        .loading-tsdb-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 1000;
+          background: rgba(0, 0, 0, 0.05);
+          img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate3d(-50%, -50%, 0);
+          }
+        }
       }
       .graph-info-container {
         margin-top: 15px;
@@ -252,7 +304,7 @@
 .ant-modal-content {
   .ant-modal-header {
     border-bottom: none;
-    padding: 50px 20px;
+    padding: 50px 20px 10px 20px;
     .ant-modal-title {
       text-align: center;
       font-size: 26px;
@@ -283,19 +335,19 @@
       }
     }
 
-    .ant-checkbox-wrapper {
-      margin: 5px;
-      .ant-checkbox-checked {
-        .ant-checkbox-inner {
-          background-color: $base-turquoise;
-          border-color: $base-turquoise;
-        }
-      }
-      .ant-checkbox-inner {
-        border-color: $base-turquoise;
+    .sensor-type-togglers {
+      margin: 0;
+      .ant-checkbox-wrapper {
+        margin: 0;
+        padding: 2px 5px;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
     }
   }
+
   .ant-modal-footer {
     text-align: center;
   }
@@ -310,5 +362,16 @@
   }
   .ant-btn-primary:hover {
     opacity: 0.7;
+  }
+}
+.ant-checkbox-wrapper {
+  .ant-checkbox-checked {
+    .ant-checkbox-inner {
+      background-color: $base-turquoise;
+      border-color: $base-turquoise;
+    }
+  }
+  .ant-checkbox-inner {
+    border-color: $base-turquoise;
   }
 }
