@@ -1,4 +1,4 @@
-<img align="right" src="https://github.com/moderepo/sensor-cloud-eval/blob/master/sceval_frontend/src/common_images/mode-logo.png">
+<img align="right" src="https://github.com/moderepo/sensor-cloud-eval/blob/readme/v2/sceval_frontend/src/common_images/logos/mode-logo.svg">
 
 # Sensor-Cloud-Eval
 
@@ -10,16 +10,19 @@ Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be u
 - [Installation and Setup](#installation-and-setup)
 - [Prerequisites](#prerequisites)
 - [Quick start](#quick-start)
+- [Setting Up Custom SMS and Email Templates](#setting-up-custom-sms-and-email-templates)
 - [Mode API Reference](https://dev.tinkermode.com/docs/api/)
 - [App Navigation](#app-navigation)
-  -[Link and Unlink Sensor Modules to and from a Gateway](#link-and-unlink-sensor-modules-to-and-from-a-gateway)
-  -[Viewing and Manipulating the Sensor Module](#viewing-and-manipulating-the-sensor-module)
+  - [Adding and Deleting Gateways](#adding-and-deleting-gateways)
+  - [Link and Unlink Sensor Modules to and from a Gateway](#link-and-unlink-sensor-modules-to-and-from-a-gateway)
+  - [Viewing and Manipulating the Sensor Module](#viewing-and-manipulating-the-sensor-module)
 - [API Examples](#api-examples)
   - [Using REST Endpoints (GET, POST, PUT, PATCH, DELETE)](#using-rest-endpoints)
     - [Handling User Information](#handling-user-information)
     - [Linking / Unlinking Sensor Modules](#linking-and-unlinking-sensor-modules)
     - [Sending Device Commands](#sending-device-commands)
   - [Receiving Device Events (Websocket)](#receiving-device-events)
+- [Deployment](#deployment)
 - [Acknowledgements](#acknowledgements)
 - [Links](#links)
 
@@ -36,6 +39,7 @@ Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be u
 ## Installation and Setup
 
 To begin development off MODE's sensor cloud evaluation kit, first clone the repository to your local machine.
+
 ```sh
 $ git clone https://github.com/moderepo/sensor-cloud-eval.git
 ```
@@ -48,12 +52,10 @@ $ git clone https://github.com/moderepo/sensor-cloud-eval.git
 
 3. You must have an account with the [Tinkermode Console](https://console.tinkermode.com/console/signup).
 
-4. If you don't already have npm and typescript installed, you will need to install both in order to run the application. You will also need at least `Node 8.16.0` or `Node 10.16.0` or later version on your local development machine. If you don't already have node, please navigate [here](https://nodejs.org/en/download/) to download the source code compatible with your machine.
+4. If you don't already have npm and typescript installed, you will need to install both in order to run the application. You will also need at least `Node 8.16.0` or `Node 10.16.0` or later version on your local development machine. If you don't already have node, please navigate [here](https://nodejs.org/en/download/) to download the source code compatible with your machine. `NPM is distributed with Node.js`, which means that when you downlaod Node.js, you automatically get npm installed on your computer.
 
 ```sh
-$ npm install -g npm
 $ npm install -g typescript
-$ npm install -g node
 ```
 
 ## Quick Start
@@ -68,41 +70,63 @@ $ npm install -g node
 
 4. Navigate to http://localhost:3000 your browser to view the running application.
 
+## Setting Up Custom SMS and Email Templates
+
+The handling of user accounts and authentication involves communication with your users either via SMS texts or emails. MODE allows you to customize the content of these messages so that you can provide your users with the best possible experience. For more information setting up this kind of customization, please take a look at our documentation [here](https://dev.tinkermode.com/docs/handling_user_accounts_authentication.html#customizing-sms-and-email-messages).
+
 ## App Navigation
+
+### Adding and Deleting Gateways
+
+SCEVAL provides a way for a developer to add gateways to his/her project. In order to provision a device on demand, the developer must first put the device in `Claim Mode`. Running the provided shell script will put the device in claim mode, allowing the developer to add a gateway directly from the app.
+
+To properly configure the shell script, you will need to obtain the device ID and associated API key, assigning them to the correct variables. Once add, you can run:
+
+```sh
+$ sh provision.sh
+```
+
+Once you run the script, you will be able to add the claim code within the app. To do so, navigate to the Hardware page, click `Add Gateway` and enter the claim code found on your device. Once successfully added, the developer will see that a new gateway was added to their project.
+
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/readme/v2/sceval_frontend/src/common_images/screenshots/add_device.png" alt="Size Limit CLI" width="850">
+
+Deleting a gateway disassociates that gateway from the user's home. To delete a gateway and its sensor module associations, select `Delete Device` from the device settings dropdown. A popup will prompt the user to confirm whether this action is desired, and if the user selected `OK`, will remove the gateway and its associations from the project.
+
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/readme/v2/sceval_frontend/src/common_images/screenshots/confirm_delete.png" alt="Size Limit CLI" width="850">
 
 ### Link and Unlink Sensor Modules to and from a Gateway
 
 Linking and unlinking sensor modules to and from a gateway is simple. Assuming you have the sensor module(s) on hand, make sure they are within 5 feet of the gateway, and press the start scanning button.
 
-<img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/add_sensor_instructions.png" alt="Size Limit CLI" width="850">
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/readme/v2/sceval_frontend/src/common_images/screenshots/add_sensor_instructions.png" alt="Size Limit CLI" width="850">
 
 Once you press the start scanning button, the device will go into `discovery mode` and begin looking for sensors either available to connect via Bluetooth or USB.
 
-<img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/add_sensor_modules.png" alt="Size Limit CLI" width="850">
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/readme/v2/sceval_frontend/src/common_images/screenshots/add_sensor_modules.png" alt="Size Limit CLI" width="850">
 
 If the gateway discovers any sensor modules `currently not paired` to itself or any other gateways, they will be listed in the format below. Selecting any available module will allow you to add the sensor module to your desired gateway.
 
-<img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/sensor_modules_discovered.png" alt="Size Limit CLI" width="850">
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/readme/v2/sceval_frontend/src/common_images/screenshots/sensor_modules_discovered.png" alt="Size Limit CLI" width="850">
 
 In the gateway view, you will be able to see all sensor module(s) associated with your gateway(s). To unlink a particular sensor module from the gateway, click the settings icon and then press the `Unlink Sensor Modules` button that appears.
 
-<img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/toggle_gateway_settings.png" alt="Size Limit CLI" width="850">
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/readme/v2/sceval_frontend/src/common_images/screenshots/toggle_gateway_settings.png" alt="Size Limit CLI" width="850">
 
 After selecting the `Unlink Sensor Modules` button, the gateway will go into edit mode. It's worth mentioning you can put multiple gateways in edit mode.
 
-<img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/gateway_edit_mode.png" alt="Size Limit CLI" width="850">
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/readme/v2/sceval_frontend/src/common_images/screenshots/gateway_edit_mode.png" alt="Size Limit CLI" width="850">
 
 Selecting a particular sensor module in this mode will trigger a unlink confirmation of the selected module, and clicking okay will disassociate it from the gateway.
 
-<img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/confirm_unlink.png" alt="Size Limit CLI" width="850">
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/readme/v2/sceval_frontend/src/common_images/screenshots/confirm_unlink.png" alt="Size Limit CLI" width="850">
 
 Clicking on a sensor module in a gateway that is not in `edit mode` will show sensor module details. This page contains real-time data, time-series graphs, adjustments, and the general settings of the sensor module.
 
-<img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/sensor_module.png" alt="Size Limit CLI" width="850">
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/readme/v2/sceval_frontend/src/common_images/screenshots/sensor_module.png" alt="Size Limit CLI" width="850">
 
 Clicking the settings icon and then clicking the `Edit Settings` button will display the sensor module settings, including the name of the module and the currently active sensors. To modify this, edit the name and select or deselect sensors to activate or inactive the sensors respectively.
 
-<img src="https://github.com/moderepo/sensor-cloud-eval/blob/app/readme/sceval_frontend/src/common_images/screenshots/sensor_module_settings.png" alt="Size Limit CLI" width="850">
+<img src="https://github.com/moderepo/sensor-cloud-eval/blob/readme/v2/sceval_frontend/src/common_images/screenshots/sensor_module_settings.png" alt="Size Limit CLI" width="850">
 
 The active sensor time-series graphs and real-time data will be updated accordingly.
 
@@ -236,9 +260,21 @@ The application receives device events in the form of a websocket message. The f
 
 7. `sensorModuleStateChange`: The gateway emits this event whenever a sensor module changes its connection state and/or sensing state.
 
+## Deployment
+
+SCEVAL provides a built-in Dockerfile for generating Docker images to run as containerized applications in the cloud. SCEVAL was built using a NginX app server and hosted in Amazon's Fargate service, but can also be deployed and hosted on other platforms as outlined in [React's Deployment Documentation](https://create-react-app.dev/docs/deployment). If you are curious about how to deploy containerized applications to cloud platforms like AWS, GCP, and others, feel free to contact us directly.
+
+To create a local Docker image of your customized SCEVAL application, go to the root of the directory and run:
+
+```sh
+$ docker build . -t {your app name}
+```
+
+This will build your docker image locally, using React's `npm run-script build` method for production. This image can then be pushed to a containerized service like Dockerhub or Amazon Fargate.
+
 ## Acknowledgements
 
-We are grateful to the authors of SCEVAL and implementation of the MODE Platform API.
+We are grateful to the authors of SCEVAL and its implementation of the MODE Platform API.
 
 - [@mattthewong](https://github.com/mattthewong)
 
