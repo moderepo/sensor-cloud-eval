@@ -8,7 +8,7 @@ import {
   SensorModuleSet,
   SensorModuleInterface
 } from '../components/entities/SensorModule';
-import { evaluateSensorModelName, evaluateSensorModel, parseSensorUUID } from '../utils/SensorTypes';
+import { evaluateSensorModelName, evaluateSensorModel, parseSensorModuleUUID } from '../utils/SensorTypes';
 import { Modal, Menu, Dropdown } from 'antd';
 import { Context, context } from '../context/Context';
 import ModeConnection from '../controllers/ModeConnection';
@@ -311,8 +311,8 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                 <SensorModuleComp
                   name={sensor.value.name}
                   id={sensor.value.id}
-                  modelId={`${parseSensorUUID(sensor.value.id).modelId}`}
-                  model={`${evaluateSensorModelName(parseSensorUUID(sensor.value.id).modelId)}`}
+                  modelId={`${parseSensorModuleUUID(sensor.value.id).modelId}`}
+                  model={`${evaluateSensorModelName(parseSensorModuleUUID(sensor.value.id).modelId)}`}
                   sensors={sensor.value.sensors}
                   isEditing={isEditingDevice}
                   onClick={

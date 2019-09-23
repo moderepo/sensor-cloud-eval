@@ -20,8 +20,9 @@ import {
     determineUnit,
     evaluateSensorModelName,
     evaluateSensorModel,
-    parseSensorUUID,
-    evaluateSensorModelIcon
+    parseSensorModuleUUID,
+    evaluateSensorModelIcon,
+    parseTimeseriesId
 } from '../utils/SensorTypes';
 import {
     SensorModuleInterface,
@@ -364,11 +365,14 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         sensorModuleId: string,
         sensorModuleObj: SensorModuleInterface) => {
         
-        // this is the complete list of the sensor type this sensor module has, including disabled sensors
+        // This is the list of ACTIVE sensor types the module has
+        const activeSensorTypes: string[] = sensorModuleObj.value.sensors;
+
+        // this is the complete list of the sensor type this sensor module has, including inactive sensors
         let allSensorTypes: string[] = [];
 
         const sensorModel: SensorModuleDefinition | undefined = evaluateSensorModel(
-            parseSensorUUID(sensorModuleObj.value.id).modelId
+            parseSensorModuleUUID(sensorModuleObj.value.id).modelId
         );
         if (sensorModel && sensorModel.moduleSchema) {
             // if we found the sensor model definition and it has a schema, use the moduleSchema to get the
@@ -414,12 +418,15 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         // However, this API might not be efficient so for now, we will use the Home's create date and today's
         // date as the timeseries's time range
         const timeSeriesBounds: TimeSeriesBounds[] = [];
-        for (let series of allTimeSeriesInfo) {
-            try {
-                timeSeriesBounds.push(await modeAPI.getTimeSeriesBounds(userHome.id, series.id));
-            } catch (error) {
-                console.error(error);
-                break;
+        for (let seriesInfo of allTimeSeriesInfo) {
+            // Only load time series bounds for ACTIVE sensor types
+            if (activeSensorTypes.includes(parseTimeseriesId(seriesInfo.id, '-').sensorType.toLocaleUpperCase())) {
+                try {
+                    timeSeriesBounds.push(await modeAPI.getTimeSeriesBounds(userHome.id, seriesInfo.id));
+                } catch (error) {
+                    console.error(error);
+                    break;
+                }
             }
         }
 
@@ -484,12 +491,15 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         // time series data's data into an array of DataPoints so that it is easier to use.
         const timeSeriesDataArray: TimeSeriesData[] = [];
         for (let seriesInfo of allTimeSeriesInfo) {
-            try {
-                timeSeriesDataArray.push(
-                    await modeAPI.getTimeSeriesData(userHome.id, seriesInfo.id, beginDate, endDate)
-                );
-            } catch (error) {
-                consoleLog('Failed to load time series data for series id: ', seriesInfo.id);
+            // Only load time series data for ACTIVE sensor types
+            if (activeSensorTypes.includes(parseTimeseriesId(seriesInfo.id, '-').sensorType.toLocaleUpperCase())) {
+                try {
+                    timeSeriesDataArray.push(
+                        await modeAPI.getTimeSeriesData(userHome.id, seriesInfo.id, beginDate, endDate)
+                    );
+                } catch (error) {
+                    consoleLog('Failed to load time series data for series id: ', seriesInfo.id);
+                }
             }
         }
         const allTimeSeriesData: Map<string, DataPoint[]> = convertTimeSeriesDataArrayToMap(timeSeriesDataArray);
@@ -1427,13 +1437,13 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                     className={'module-left-container d-flex flex-row align-items-center' +
                                       (selectedModule &&
                                       evaluateSensorModelName(
-                                          parseSensorUUID(selectedModule).modelId
+                                          parseSensorModuleUUID(selectedModule).modelId
                                       ).includes('OMRON') ?
                                       ' extended col-12 col-xl-8' :
                                       ' col-12 col-xl-6 ')
                                     }
                                 >
-                                    <img src={evaluateSensorModelIcon(parseSensorUUID(selectedModule).modelId)} />
+                                    <img src={evaluateSensorModelIcon(parseSensorModuleUUID(selectedModule).modelId)}/>
                                     <div
                                         className={
                                             'info-section d-flex flex-column align-items-start justify-content-center'
@@ -1451,7 +1461,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                         <div className="sensor-model">
                                         { selectedModule &&
                                             `Sensor model: ${
-                                                evaluateSensorModelName(parseSensorUUID(selectedModule).modelId)
+                                                evaluateSensorModelName(parseSensorModuleUUID(selectedModule).modelId)
                                             }`
                                         }</div>
                                         <div className="sensor-count">Active Sensors: {activeSensorBundles.length}</div>
@@ -1468,7 +1478,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                     className={'data-cols d-flex flex-row' +
                                         (selectedModule &&
                                         evaluateSensorModelName(
-                                            parseSensorUUID(selectedModule).modelId
+                                            parseSensorModuleUUID(selectedModule).modelId
                                         ).includes('OMRON') ?
                                         'col-12 col-xl-4' :
                                         'col-12 col-xl-6 ') +
