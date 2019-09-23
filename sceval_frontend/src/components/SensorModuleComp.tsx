@@ -1,5 +1,5 @@
 import React from 'react';
-import { evaluateSensorTypes, evaluateSensorModelIcon, parseSensorUUID } from '../utils/SensorTypes';
+import { evaluateSensorTypes, evaluateSensorModelIcon, parseSensorModuleUUID } from '../utils/SensorTypes';
 import '../css/SensorModuleComp.css';
 
 const checkMark = require('../common_images/notifications/check-1.svg');
@@ -33,7 +33,7 @@ const SensorModuleComp: React.FC<SensorModuleCompProps> = (props: SensorModuleCo
     >
       <img
         className="module-image d-flex align-items-center"
-        src={evaluateSensorModelIcon(parseSensorUUID(props.modelId).modelId)}
+        src={evaluateSensorModelIcon(parseSensorModuleUUID(props.modelId).modelId)}
       />
       <img className="checked-module" src={checkMark}/>
       <div className="x-icon">x</div>
