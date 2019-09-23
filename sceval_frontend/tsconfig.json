@@ -1,6 +1,7 @@
 // added ts configurations
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "target": "es5",
     "lib": [
       "es2019",
