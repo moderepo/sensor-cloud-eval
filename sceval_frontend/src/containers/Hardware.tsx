@@ -10,7 +10,7 @@ import {
   SensorModuleSet,
   SensorModuleInterface
 } from '../components/entities/SensorModule';
-import { evaluateSensorModelName, evaluateSensorModel, parseSensorUUID } from '../utils/SensorTypes';
+import { evaluateSensorModelName, parseSensorUUID } from '../utils/SensorTypes';
 import { Modal, Menu, Dropdown } from 'antd';
 import { Context, context } from '../context/Context';
 import ModeConnection from '../controllers/ModeConnection';
@@ -40,7 +40,6 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     Array<number>
   >([]);
   const [deletionMode, setDeletionMode] = useState<boolean>(false);
-  const [deviceDeleted, setDeviceDeleted] = useState<boolean>(false);
   const [deviceDeleteError, setDeviceDeleteError] = useState<boolean>(false);
   const [editingGateways, setEditingGateways] = useState<Array<number>>([]);
   const sensorContext: Context = useContext(context);
@@ -213,9 +212,8 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
   ): void => {
     confirm({
       title: `Are you sure you want to delete gateway #${deviceId}?`,
-      content:
-        'Please note that your device must be configured to allow On-Demand Gateway Provisioning \
-        in order to sucessfully remove the device from your home.',
+      content: `Please note that your device must be configured to allow On-Demand Gateway Provisioning
+        in order to sucessfully remove the device from your home.`,
       onOk: async () => {
         setDeletionMode(true);
         const status = await modeAPI.deleteDevice(deviceId);
@@ -224,10 +222,8 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
             return sensorModule.device.id !== deviceId;
           });
           setlinkedModules(updatedLinkedModules);
-          setDeviceDeleted(true);
           setDeviceDeleteError(false);
         } else {
-          setDeviceDeleted(false);
           setDeviceDeleteError(true);
         }
         // show message for 3 seconds
@@ -251,8 +247,8 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     confirm({
       title: `Are you sure you want to unlink #${moduleID}?`,
       content:
-        'Your existing data can still be accessed, but you will need to re-add your sensor module to \
-             a gateway in order to receive new data.',
+        `Your existing data can still be accessed, but you will need to re-add your sensor module to
+             a gateway in order to receive new data.`,
       onOk: () => handleOkUnlinkModule(moduleID, deviceId, deviceIndex)
     });
   };
@@ -328,7 +324,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                 />
               </div>
             ) : (
-              <img src={loader} />
+              <img src={loader} alt="loader-spinner" />
             )}
           </Fragment>
         );
@@ -350,36 +346,33 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
     const menu = (
       <Menu>
         <Menu.Item>
-          <a
+          <div
             className="menu-setting-item" 
-            href="#" 
             onClick={() => toggleEditGateway(deviceId)}
           >
             Unlink Sensor Modules
-          </a>
+          </div>
         </Menu.Item>
         <Menu.Item>
-          <a 
+          <div
             className="menu-setting-item" 
-            href="#" 
             onClick={() => {
               renderDeleteDeviceModal(deviceId);
               setDeviceDeleteError(false);
             }}
           >
             Delete Gateway
-          </a>
+          </div>
         </Menu.Item>
       </Menu>
     );
     return (
       <Dropdown overlay={menu} trigger={['hover']}>
-        <a
+        <span
           onClick={() => showGatewayOptions(deviceId)}
           className="ant-dropdown-link"
-          href="#"
         >...
-        </a>
+        </span>
       </Dropdown>
     );
   };
@@ -398,10 +391,10 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
       
       <div className="gateway-header">
         <div className="gateway-info">
-          <img src={deviceImage} />
+          <img src={deviceImage} alt="device icon" />
           <div className="gateway-id">{`Gateway-${deviceId}`}</div>
           <div className="gateway-name">
-            <img className="gateway-location" src={deviceLocation} />
+            <img className="gateway-location" src={deviceLocation} alt="gateway icon" />
             {device.name}
           </div>
         </div>
@@ -414,7 +407,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
                   className="action-button"
                   onClick={event => addSensorModules(event, deviceId)}
                 >
-                  <img src={plus} className="plus" />
+                  <img src={plus} className="plus" alt="add icon" />
                   Add Modules
                 </button>
                 {renderDropDownSetting(deviceId)}
@@ -447,8 +440,6 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
   ): React.ReactNode => {
     const deviceId: number = device.id;
     const isEditingDevice: boolean = editingGateways.includes(deviceId);
-    const sensorModules: SensorModuleInterface[] =
-      linkedModules[deviceIndex].sensorModules;
 
     return (
       <div
@@ -496,7 +487,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
           {!isLoading ? (
             renderDevice(linkedModule.device, index)
           ) : (
-            <img src={loader} />
+            <img src={loader} alt="loader-spinner"/>
           )}
         </Fragment>
       );
@@ -517,7 +508,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
               className="add-gateway-button"
               to="/add_gateway"
             >
-            <img src={plus} className="plus" />
+            <img src={plus} className="plus" alt="add icon" />
             Add Gateway
             </NavLink>
             </h1>
@@ -546,7 +537,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
               to create and add devices to your home.
             </div>
           ) : (
-            <img src={loader} />
+            <img src={loader} alt="loader-spinner"/>
           )}
         </div>
       </div>

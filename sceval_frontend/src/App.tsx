@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import RouteDeclarations from './routes/RouteDeclarations';
-import { Route } from 'react-router-dom';
 import { ContextProvider } from './context/Context';
 import './css/App.css';
 

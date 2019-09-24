@@ -26,7 +26,7 @@ export const LeftNav: React.FC<LeftNavProps & React.Props<any>> = (props: LeftNa
         }
       }
     },
-    [appContext, userInfo]
+    [appContext, username]
   );
 
   if (!isLoggedIn) {
@@ -36,17 +36,17 @@ export const LeftNav: React.FC<LeftNavProps & React.Props<any>> = (props: LeftNa
   return (
     <div className="navigation-bar">
       <div className="sidebar-head">
-        <img src={modeLogo} className="nav-logo" />
+        <img src={modeLogo} className="nav-logo" alt="mode logo" />
         <hr />
       </div>
       <NavLink className="navigation-item account" to="/my_account">
-        <img src={profile} className="icon avatar" />
+        <img src={profile} className="icon avatar" alt="avatar"/>
         <p>
           {userInfo ? userInfo.user.name : username}
         </p>
       </NavLink>
       <NavLink className="navigation-item hardware" to="/devices">
-        <img src={hardware} className="icon hardware-logo" />
+        <img src={hardware} className="icon hardware-logo" alt="hardward logo" />
         <p>Hardware</p>
       </NavLink>
     </div>
