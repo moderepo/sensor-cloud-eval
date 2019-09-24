@@ -31,7 +31,7 @@ import {
     ChartTimespan as GraphTimespan,
     SensorModuleDefinition
 } from '../components/entities/SensorModule';
-import { Constants } from '../utils/Constants';
+import * as Constants from '../utils/Constants';
 import { Home } from '../components/entities/API';
 import { RouteParams } from '../components/entities/Routes';
 import handleErrors from '../utils/ErrorMessages';

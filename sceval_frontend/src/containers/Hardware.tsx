@@ -1,6 +1,8 @@
 import React, { Fragment, useState, useEffect, useContext } from 'react';
 import { Redirect, RouteComponentProps, withRouter } from 'react-router';
-import modeAPI, { ModeConstants } from '../controllers/ModeAPI';
+import modeAPI from '../controllers/ModeAPI';
+import * as ModeConstants from '../controllers/ModeConstants';
+import * as Constants from '../utils/Constants';
 import { KeyValueStore, Device, Home } from '../components/entities/API';
 import { LoginInfo } from '../components/entities/User';
 import AppContext from '../controllers/AppContext';
@@ -12,7 +14,6 @@ import { evaluateSensorModelName, evaluateSensorModel, parseSensorUUID } from '.
 import { Modal, Menu, Dropdown } from 'antd';
 import { Context, context } from '../context/Context';
 import ModeConnection from '../controllers/ModeConnection';
-import { Constants } from '../utils/Constants';
 import SensorModuleComp from '../components/SensorModuleComp';
 import { NavLink } from 'react-router-dom';
 

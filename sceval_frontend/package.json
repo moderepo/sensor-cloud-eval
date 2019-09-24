@@ -22,16 +22,15 @@
     "react-modal": "^3.9.1",
     "react-router-dom": "^5.0.1",
     "react-scripts": "3.0.1",
-    "react-scripts-ts": "^3.1.0",
     "react-toggle-display": "^2.2.0",
     "typescript": "3.5.3"
   },
   "scripts": {
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "start-js": "sh -ac '. ./.env; react-scripts-ts start'",
+    "start-js": "sh -ac '. ./.env; react-scripts start'",
     "start": "npm-run-all -p watch-css start-js",
-    "build-js": "react-scripts-ts build",
+    "build-js": "react-scripts build",
     "build": "npm-run-all build-css build-js",
     "build-env": "sh -ac '. ./.env; npm run build'",
     "build:production": "REACT_APP_ENV=production npm run build-env",
@@ -48,5 +47,17 @@
   },
   "devDependencies": {
     "extract-text-webpack-plugin": "^4.0.0-beta.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }

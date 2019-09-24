@@ -8,7 +8,7 @@ import { Context, context } from '../context/Context';
 import { Progress } from 'antd';
 import 'antd/dist/antd.css';
 import ClientStorage from '../controllers/ClientStorage';
-import { Constants } from '../utils/Constants';
+import * as Constants from '../utils/Constants';
 import { SensorModuleInterface, AddSensorModuleState } from '../components/entities/SensorModule';
 import { RouteParams } from '../components/entities/Routes';
 import SensorModuleComp from '../components/SensorModuleComp';

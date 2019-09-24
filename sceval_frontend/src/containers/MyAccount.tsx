@@ -46,7 +46,7 @@ const MyAccount = withRouter(
         console.log(error);
       }
       setTimeout(() => {
-        location.pathname = '/login';
+        window.location.pathname = '/login';
       },         1000);
     };
     // toggle editing vs. non-editing mode handler

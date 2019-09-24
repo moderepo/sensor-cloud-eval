@@ -2,7 +2,7 @@ import ClientStorage from './ClientStorage';
 import modeAPI from './ModeAPI';
 import { User, LoginInfo, ClientAuthInfo } from '../components/entities/User';
 import { ConcreteObservable } from './Observer';
-import { Constants } from '../utils/Constants';
+import * as Constants from '../utils/Constants';
 
 export class UserNameChangeException {}
 

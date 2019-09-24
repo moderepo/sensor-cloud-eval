@@ -6,7 +6,7 @@ import moment from 'moment';
 import { Context, context } from '../context/Context';
 import { DateBounds } from '../components/entities/SensorModule';
 import { DataPoint } from './entities/API';
-import { Constants } from '../utils/Constants';
+import * as Constants from '../utils/Constants';
 import { consoleLog, consoleError } from '../utils/Utils';
 const debounce = require('debounce');
 

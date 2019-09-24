@@ -1,4 +1,4 @@
-import { MODULE_CATELOG, Constants } from './Constants';
+import * as Constants from './Constants';
 import { SensorModuleDefinition } from '../components/entities/SensorModule';
 
 /**
@@ -126,7 +126,7 @@ export function parseSensorUUID (sensorId: string, separator: string = ':'): {mo
  * @param modelId 
  */
 export function evaluateSensorModel (modelId: string): SensorModuleDefinition | undefined {
-  return MODULE_CATELOG.find((sensorModule: any): boolean => {
+  return Constants.MODULE_CATELOG.find((sensorModule: any): boolean => {
     return sensorModule.modelId === modelId;
   });
 }
