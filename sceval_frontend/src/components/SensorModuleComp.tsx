@@ -19,7 +19,7 @@ interface SensorModuleCompProps extends React.Props<any> {
 const SensorModuleComp: React.FC<SensorModuleCompProps> = (props: SensorModuleCompProps) => {
 
   return (
-    <a
+    <div
       className={`sensor-module d-flex flex-row align-items-center` +
         `${props.isOff ? ' off' : ''}` +
         `${props.isEditing ? ' editing' : ''}` +
@@ -34,8 +34,9 @@ const SensorModuleComp: React.FC<SensorModuleCompProps> = (props: SensorModuleCo
       <img
         className="module-image d-flex align-items-center"
         src={evaluateSensorModelIcon(parseSensorModuleUUID(props.modelId).modelId)}
+        alt="sensor module icon"
       />
-      <img className="checked-module" src={checkMark}/>
+      <img className="checked-module" src={checkMark} alt="selected-icon"/>
       <div className="x-icon">x</div>
       <div className="module-info d-flex align-items-start flex-column">
         <div className="module-info-top d-flex flex-column align-items-top">
@@ -57,13 +58,14 @@ const SensorModuleComp: React.FC<SensorModuleCompProps> = (props: SensorModuleCo
                   key={sensorIndex}
                   className="sensor-type-image"
                   src={evaluateSensorTypes(type)}
+                  alt="sensor icon"
                 />
               );
             })
           }
         </div>
       </div>
-    </a>
+    </div>
   );
 };
 

@@ -1,5 +1,5 @@
-import { ModeConstants } from '../controllers/ModeAPI';
-import { Constants } from './Constants';
+import * as ModeConstants from '../controllers/ModeConstants';
+import * as Constants from './Constants';
 /**
  * error handler for user registration, sign-in, and other requests
  * @param reason 

@@ -1,13 +1,11 @@
-import React, { useEffect, useState, useRef, useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as am4core from '@amcharts/amcharts4/core';
 import * as am4charts from '@amcharts/amcharts4/charts';
 import am4themes_animated from '@amcharts/amcharts4/themes/animated';
 import moment from 'moment';
-import { Context, context } from '../context/Context';
 import { DateBounds } from '../components/entities/SensorModule';
 import { DataPoint } from './entities/API';
-import { Constants } from '../utils/Constants';
-import { consoleLog, consoleError } from '../utils/Utils';
+import * as Constants from '../utils/Constants';
 const debounce = require('debounce');
 
 am4core.useTheme(am4themes_animated);
@@ -33,7 +31,7 @@ interface AmChartProps extends React.Props<any> {
 
 export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
   // graph height state
-  const [graphHeight, setGraphHeight] = useState<string>('300px');
+  const [graphHeight] = useState<string>('300px');
   // sensor chart state
   const [sensorChart, setSensorChart] = useState<am4charts.XYChart>();
 
@@ -62,11 +60,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       event.target.minZoomed !== undefined &&
       event.target.maxZoomed !== undefined
     ) {
-      consoleLog('On Zoom Event Dispatch: ', {
-        series_id: props.identifier,
-        zoom: props.zoom,
-      });
-  
       const minZoom: number = Math.floor(event.target.minZoomed / 1000) * 1000;
       const maxZoom: number = Math.floor(event.target.maxZoomed / 1000) * 1000;
       if (props.dataDateBounds && minZoom <= props.dataDateBounds.beginTime &&
@@ -89,7 +82,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
   };
 
   useEffect(() => {
-    consoleLog('Creating chart');
 
     // create amChart instance with custom identifier
     const newChart: am4charts.XYChart = am4core.create(props.identifier, am4charts.XYChart);
@@ -159,7 +151,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     // Listen to chart ready event and then disable the scrollbar
     // If we disable it before it is rendered, the scrollbar will be blank
     newChart.events.on('ready', (event: any): void => {
-      consoleLog('Chart ready: ', props.identifier);
       newChart.scrollbarX.disabled = true;
     });
 
@@ -235,11 +226,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
       if (props.zoom && props.zoom.beginTime && props.zoom.endTime && !props.hasFocus &&
         (currentMinZoom !== props.zoom.beginTime || currentMaxZoom !== props.zoom.endTime)) {
 
-        consoleLog('Updating zoom: ', {
-          series_id: props.identifier,
-          zoom: props.zoom,
-        });
-
         // When we programatically zoom the chart, it will also trigger the zoom/pan event which
         // will cause the zoomPan event from being dispatched and all other chart will be trigger
         // to zoom again which will go into an infinite loop. So we need to disable the event first
@@ -261,10 +247,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
     // of updarting chart data.
     if (props.data && sensorChart && !sensorChart.isDisposed()) {
       const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
-      consoleLog('Updating data: ', {
-        series_id: props.identifier,
-        zoom: props.zoom,
-      });
   
       // update the data BUT note that this will cause the data range change which will trigger the
       // data zoom/pan event. We need to ignore those pan/zoom event so that we don't go into infinite loop
@@ -291,7 +273,6 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
   useEffect(() => {
     if (sensorChart && !sensorChart.isDisposed() && props.dataDateBounds) {
       if (!props.isRealtime) {
-        consoleLog('Update bounds: ', props.dataDateBounds);
         const dateAxis: am4charts.DateAxis = sensorChart.xAxes.getIndex(0) as am4charts.DateAxis;
         // set the bounds for the axis
         if (props.hasFocus) {

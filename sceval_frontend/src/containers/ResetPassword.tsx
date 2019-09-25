@@ -93,7 +93,7 @@ const ResetPassword: React.FC = () => {
           ) : 
           // if email has been sent:
           (
-            <img src={emailSent} />
+            <img src={emailSent} alt="email sent star"/>
           )}
           {!isSent &&
           // if no email has been sent yet:

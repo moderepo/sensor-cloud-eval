@@ -4,9 +4,10 @@ import './index.css';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import { AppContext } from './controllers/AppContext';
+import * as serviceWorker from './serviceWorker';
+
 require('dotenv').config();
 
-import * as serviceWorker from './serviceWorker';
 
 // from .env
 const projectId = process.env.REACT_APP_PROJECT_ID !== undefined ?

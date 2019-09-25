@@ -35,7 +35,7 @@ const MyAccount = withRouter(
           setUsername(userInfo.user.name);
         }
       }
-    },        [isEditing]);
+    },        [isEditing, appContext.state.userData, username]);
     // logout method on click of "Logout button"
     const logout = async () => {
       try {
@@ -46,7 +46,7 @@ const MyAccount = withRouter(
         console.log(error);
       }
       setTimeout(() => {
-        location.pathname = '/login';
+        window.location.pathname = '/login';
       },         1000);
     };
     // toggle editing vs. non-editing mode handler
@@ -185,7 +185,7 @@ const MyAccount = withRouter(
                   'There was an error updating your information.' : ''
                 }
               </div>
-              <img src={name} />
+              <img src={name} alt="user icon"/>
               <h4>Name</h4>
               {!isEditing ? (
                 <div className="user-data">{username}</div>
@@ -199,10 +199,10 @@ const MyAccount = withRouter(
                   onBlur={event => handleInputChange(event)}
                 />
               )}
-              <img className="mail" src={email} />
+              <img className="mail" src={email} alt="email icon"/>
               <h4> Email</h4>
               <div className="user-data">{userData.value.user.email}</div>
-              <img src={password} />
+              <img src={password} alt="password icon"/>
               <h4>Password</h4>
               {!isEditing ? (
                 <div className="user-data">•••••••••</div>
@@ -232,18 +232,6 @@ const MyAccount = withRouter(
                 Sign Out
               </button>
             </div>
-          </div>
-          <div className="footer">
-            <a href="https://www.tinkermode.com/legal/tos.html" target="_blank">
-              Terms of Service
-            </a>
-            <div>•</div>
-            <a
-              href="https://www.tinkermode.com/legal/privacy.html"
-              target="_blank"
-            >
-              Privacy Policy
-            </a>
           </div>
         </div>
       </div>

@@ -8,11 +8,11 @@ import { Context, context } from '../context/Context';
 import { Progress } from 'antd';
 import 'antd/dist/antd.css';
 import ClientStorage from '../controllers/ClientStorage';
-import { Constants } from '../utils/Constants';
+import * as Constants from '../utils/Constants';
 import { SensorModuleInterface, AddSensorModuleState } from '../components/entities/SensorModule';
 import { RouteParams } from '../components/entities/Routes';
 import SensorModuleComp from '../components/SensorModuleComp';
-import { evaluateSensorTypes, evaluateSensorModelName } from '../utils/SensorTypes';
+import { evaluateSensorModelName } from '../utils/SensorTypes';
 // required images imported
 const addModule1 = require('../common_images/sensor_modules/add-module-1.svg');
 const addModule2 = require('../common_images/sensor_modules/add-module-2.svg');
@@ -254,14 +254,14 @@ export class AddSensorModule extends Component<
                     <div className="step-1">
                       <span className="circled-number">1</span>
                       <div className="direction">
-                        <img src={addModule1} />
+                        <img src={addModule1} alt="Add module switch icon"/>
                         <p>Turn on all sensor modules.</p>
                       </div>
                     </div>
                     <div className="step-2">
                       <span className="circled-number">2</span>
                       <div className="direction">
-                        <img src={addModule2} />
+                        <img src={addModule2} alt="connect modules icon" />
                         <p>
                           Place the sensor modules you want to connect to
                           within 5 feet of the gateway.

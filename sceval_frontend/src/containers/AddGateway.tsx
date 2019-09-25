@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { withRouter, RouteComponentProps, NavLink } from 'react-router-dom';
-import { Input, Button } from 'antd';
+import { Input } from 'antd';
 import { LoginInfo } from '../components/entities/User';
 import AppContext from '../controllers/AppContext';
 import { Home } from '../components/entities/API';
@@ -72,14 +72,14 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
             <span className="circled-number">1</span>
             <p>Make sure your device is connected to power and wifi.</p>
           </div>
-          <img className="direction-image" src={connect} />
+          <img className="direction-image" src={connect} alt="direction icon"/>
         </div>
         <div className="direction-set">
           <div className="number-text">
             <span className="circled-number">2</span>
             <p>Turn your device into claim mode.</p>
           </div>
-          <img className="direction-image" src={gw} />
+          <img className="direction-image" src={gw} alt="direction icon"/>
         </div>
         <div className="direction-set">
           <div className="number-text">
@@ -89,7 +89,7 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
               the device.
             </p>
           </div>
-          <img className="direction-image" src={numbers} />
+          <img className="direction-image" src={numbers} alt="direction icon"/>
         </div>
         {addDeviceError && (
           <div className="warning-animation fade-out">

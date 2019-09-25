@@ -1,10 +1,8 @@
-import React, { useEffect, useState, Fragment, useContext } from 'react';
+import React, { useEffect, useState, useCallback, Fragment } from 'react';
 import { NavLink, withRouter, RouteComponentProps, Redirect } from 'react-router-dom';
 import AppContext from '../controllers/AppContext';
 import { AmChart } from '../components/AmChart';
-import { Context, context } from '../context/Context';
 import {
-    KeyValueStore,
     ErrorResponse,
     TimeSeriesData,
     TimeSeriesInfo,
@@ -13,8 +11,8 @@ import {
 } from '../components/entities/API';
 import modeAPI from '../controllers/ModeAPI';
 import ClientStorage from '../controllers/ClientStorage';
-import moment, { Moment } from 'moment';
-import { Menu, Dropdown, Icon, Checkbox, Modal, Input, Radio } from 'antd';
+import moment from 'moment';
+import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
 import ModeConnection  from '../controllers/ModeConnection';
 import {
     determineUnit,
@@ -32,14 +30,12 @@ import {
     ChartTimespan as GraphTimespan,
     SensorModuleDefinition
 } from '../components/entities/SensorModule';
-import { Constants } from '../utils/Constants';
+import * as Constants from '../utils/Constants';
 import { Home } from '../components/entities/API';
 import { RouteParams } from '../components/entities/Routes';
 import handleErrors from '../utils/ErrorMessages';
-import { consoleLog, consoleError } from '../utils/Utils';
 
 const loader = require('../common_images/notifications/loading_ring.svg');
-const sensorGeneral = require('../common_images/sensor_modules/sensor.png');
 const backArrow = require('../common_images/navigation/back.svg');
 const debounce = require('debounce');
 
@@ -83,10 +79,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     const [activeSensorBundles, setActiveSensorBundles] = useState<SensorDataBundle[]>([]);
     // sensor module settings modal display state
     const [settingsModalVisible, setSettingsModalVisible] = useState<boolean>(false);
-    // editing sensor module settings state
-    const [editingModuleSettings, setEditingModuleSettings] = useState<boolean>(false);
-    // declaration of a useContext hook
-    const sensorContext: Context = useContext(context);
     // The min/max date bounds of all the sensor time series
     const [masterDateBounds, setMasterDateBounds] = useState<DateBounds>();
     // The current zoom bounds
@@ -135,17 +127,14 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         insertToSnapshotData: boolean = true): Promise<void> => {
 
         if (!home || !dateBounds) {
-            consoleLog('Fetch details data canceled');
             return;
         }
 
-        consoleLog('Fetch details data');
         setIsLoadingTSData(true);
         
         let updatedBundles: SensorDataBundle[] | null = null;
 
         if (allSensorBundles) {
-            consoleLog(dateBounds, masterDateBounds);
             if (masterDateBounds && masterDateBounds.beginTime === dateBounds.beginTime &&
                 masterDateBounds.endTime === dateBounds.endTime) {
                 // If the dateBounds is exactly the same as the masterDateBounds. This mean the suer just zoomed out all
@@ -174,10 +163,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                     home.id, sensorBundle.seriesId, dateBounds.beginDate, dateBounds.endDate
                                 ));
                             } catch (error) {
-                                consoleLog('Failed to load time series data for series id: ', sensorBundle.seriesId);
+                                // error
                             }
                         } else {
-                            consoleLog('Requesting data for the same data, ngnoring the request: ', sensorBundle.type);
+                            // Requesting data for the same data, ngnoring the request
                         }
                     }
                 }
@@ -335,30 +324,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         ];
     };
 
-    /**
-     * initialize the page by loading all the required data
-     */
-    const initialize = async (gateway: number, sensorModuleId: string): Promise<any> => {
-
-        // restore login
-        await AppContext.restoreLogin();
-
-        // open new connection for refresh
-        ModeConnection.openConnection();
-
-        // get home id
-        const userHome: Home = await modeAPI.getHome(ClientStorage.getItem('user-login').user.id);
-
-        // load module data
-        const sensorModuleData: SensorModuleInterface = await modeAPI.getDeviceKeyValueStore(
-            gateway, `${Constants.SENSOR_MODULE_KEY_PREFIX}${sensorModuleId}`);
-
-        setHome(userHome);
-        setSelectedGateway(gateway);
-        setSelectedModule(props.match.params.sensorModuleId);
-        setSelectedSensorModuleObj(sensorModuleData);
-    };
-
     const initializeTimeSeries = async (
         userHome: Home,
         gateway: number,
@@ -424,7 +389,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 try {
                     timeSeriesBounds.push(await modeAPI.getTimeSeriesBounds(userHome.id, seriesInfo.id));
                 } catch (error) {
-                    console.error(error);
                     break;
                 }
             }
@@ -498,7 +462,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                         await modeAPI.getTimeSeriesData(userHome.id, seriesInfo.id, beginDate, endDate)
                     );
                 } catch (error) {
-                    consoleLog('Failed to load time series data for series id: ', seriesInfo.id);
+                    // Failed to load time series data for series id
                 }
             }
         }
@@ -685,6 +649,30 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
      */
     useEffect(
         () => {
+            /**
+             * initialize the page by loading all the required data
+             */
+            const initialize = async (gateway: number, sensorModuleId: string): Promise<any> => {
+
+                // restore login
+                await AppContext.restoreLogin();
+
+                // open new connection for refresh
+                ModeConnection.openConnection();
+
+                // get home id
+                const userHome: Home = await modeAPI.getHome(ClientStorage.getItem('user-login').user.id);
+
+                // load module data
+                const sensorModuleData: SensorModuleInterface = await modeAPI.getDeviceKeyValueStore(
+                    gateway, `${Constants.SENSOR_MODULE_KEY_PREFIX}${sensorModuleId}`);
+
+                setHome(userHome);
+                setSelectedGateway(gateway);
+                setSelectedModule(props.match.params.sensorModuleId);
+                setSelectedSensorModuleObj(sensorModuleData);
+            };
+
             if (props.match.params.deviceId && props.match.params.sensorModuleId) {
                 setIsLoadingPage(true);
 
@@ -692,7 +680,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     setIsLoadingPage(false);
                 }).catch((error: ErrorResponse): void => {
                     // Failed initialize
-                    consoleLog('Initialize failed');
                     setIsLoadingPage(false);
                 });
             }
@@ -711,7 +698,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     setIsLoadingTSData(false);
                 }).catch((error: ErrorResponse): void => {
                     // Failed initialize timeseries
-                    consoleLog('Initialize time series failed');
                     setIsLoadingTSData(false);
                 });
             }
@@ -760,7 +746,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                         });
 
                         if (dataUpdated) {
-                            setAllSensorBundles([... allSensorBundles]);
+                            setAllSensorBundles([...allSensorBundles]);
                             setActiveSensorBundles(allSensorBundles.filter((bundle: SensorDataBundle): boolean => {
                                 return bundle.active;
                             }));
@@ -780,10 +766,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     },  [home, selectedGateway, selectedModule, allSensorBundles]);
 
     const onUserInteractingWithChartHandler = (targetId: string): void => {
-        // cancle debounce if there is one
-        consoleLog('Cancel debounce');
-
-        // Call debounce but pass zoom as null. We will check for null in the requestDetailedData function
+        // cancel debounce if there is one
         getDetailDataDebouncer.clear();
     };
 
@@ -837,10 +820,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             setAllSensorBundles([...allSensorBundles]);
         }
 
-        // cancle debounce if there is one
-        consoleLog('Cancel debounce');
-
-        // Call debounce but pass zoom as null. We will check for null in the requestDetailedData function
+        // cancel debounce if there is one
         getDetailDataDebouncer.clear();
     };
 
@@ -911,7 +891,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 // save the settings and update the state
                 // update KV store for the device
                 try {
-                    const status: number = await modeAPI.setDeviceKeyValueStore(
+                    await modeAPI.setDeviceKeyValueStore(
                         selectedGateway,
                         updatedSensorModuleObject.key,
                         updatedSensorModuleObject
@@ -952,7 +932,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     }
                 } catch (error) {
                     alert(handleErrors(error && error.message ? error.message : error));
-                    console.error(error);
                 }
             }
         }
@@ -1023,9 +1002,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 trigger={['hover']}
                 placement="bottomRight"
             >
-                <a className="default-timespan-value sensing-interval">
+                <span className="default-timespan-value sensing-interval">
                     •••
-                </a>
+                </span>
             </Dropdown>
         );
     };
@@ -1059,7 +1038,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 fetchDetailedData(masterDateBounds);
             }
         }
-   },         [realtimeMode]);
+   },         [realtimeMode, masterDateBounds]);
 
     /**
      * Change realtime mode to the specified value.
@@ -1130,9 +1109,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     // If not showing realtime, show these options
                     <div className="static-time-options d-flex flex-column align-items-end">
                         <Dropdown overlay={graphTimespanMenu} className="dropdown">
-                            <a className="default-timespan-value d-flex align-items-center justify-content-center">
+                            <span className="default-timespan-value d-flex align-items-center justify-content-center">
                                 Select Timespan <Icon type="down" />
-                            </a>
+                            </span>
                         </Dropdown>
                     </div>
                 }
@@ -1162,7 +1141,6 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 setSelectedSensorModuleObj(updatedSensorModuleObj);
             },  (error: any): void => {
                 alert('Unable to update device key value store');
-                consoleLog('Unable to update device key value store', error);
             });
         }
     };
@@ -1353,7 +1331,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                             event.preventDefault();
                                         }}
                                     >
-                                        <img src={loader} />
+                                        <img src={loader} alt="loader spinner"/>
                                     </div>
                                 }
                             </div>
@@ -1426,6 +1404,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 <img
                     src={backArrow} 
                     className="back-arrow"
+                    alt="back arrow"
                 />
                 Back to Hardware Overview
                 </NavLink>
@@ -1443,7 +1422,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                       ' col-12 col-xl-6 ')
                                     }
                                 >
-                                    <img src={evaluateSensorModelIcon(parseSensorModuleUUID(selectedModule).modelId)}/>
+                                    <img src={evaluateSensorModelIcon(parseSensorModuleUUID(selectedModule).modelId)} alt="sensor module icon"/>
                                     <div
                                         className={
                                             'info-section d-flex flex-column align-items-start justify-content-center'
@@ -1503,7 +1482,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                             </Fragment>
                         ) : ( 
                             <div className="sensor-data-loader">
-                                <img src={loader} />
+                                <img src={loader} alt="loader spinner"/>
                             </div>
                         )}
                     </div>
@@ -1520,7 +1499,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                             // if TSDB data DOES NOT exists
                             (isLoadingPage || isLoadingTSData) ? (
                                 <div className="sensor-data-loader">
-                                    <img src={loader} />
+                                    <img src={loader} alt="loader spinner"/>
                                 </div>
                             ) : (
                                 // if the TSDB data for the timeframe is actually empty

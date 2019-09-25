@@ -218,10 +218,15 @@
   text-decoration: none;
   font-size: 14px;
   font-weight: 700;
+  cursor: pointer;
 }
 .ant-dropdown-link:hover {
   text-decoration: none;
   color: $base-black;
+}
+
+.ant-dropdown-menu-item:hover {
+  background-color: lighten($base-turquoise, 20%) !important;
 }
 
 .menu-setting-item {
@@ -229,6 +234,5 @@
 }
 
 .menu-setting-item:hover {
-  background-color: lighten($base-turquoise, 20%) !important;
   color: $base-black;
 }
