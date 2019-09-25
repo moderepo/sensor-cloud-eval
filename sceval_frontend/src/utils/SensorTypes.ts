@@ -105,13 +105,37 @@ export function determineUnit(sensorType: string) {
 }
 
 /**
- * Given a sensor id which contains sensor model and id separated by ":". Parse the ID
+ * Given a timeseries id, parse it and break it into 2 parts, sensor module id and sensor type.
+ * For example: if series id is "0107:dca7dd5461d7-temperature:0", the function will return
+ *   {
+ *     moduleUUID: "0107:dca7dd5461d7",
+ *     sensorType: "temperature:0"
+ *   }
+ * @param seriesId 
+ * @param separator 
+ */
+export function parseTimeseriesId (
+  seriesId: string,
+  separator: string = '-'
+): {moduleUUID: string, sensorType: string} {
+  const tokens: string[] = seriesId.split(separator);
+  return {
+    moduleUUID: tokens[0],
+    sensorType: tokens[1]
+  };
+}
+
+/**
+ * Given a sensor module id which contains sensor model and id separated by ":". Parse the ID
  * and return the data as an object with separated model and id.
  * For example: given this ID, 0101:34c731ffe6c1, this function returns {modelId: 0101, uid:34c731ffe6c1}
  * We need to do this alot so it is better to use this function to do it. Also, this helper
  * function will also take a separator incase we use a different separator for other sensors.
  */
-export function parseSensorUUID (sensorId: string, separator: string = ':'): {modelId: string, uid: string} {
+export function parseSensorModuleUUID (
+  sensorId: string,
+  separator: string = ':'
+): {modelId: string, uid: string} {
   const tokens: string[] = sensorId.split(separator);
   return {
     modelId: tokens[0],

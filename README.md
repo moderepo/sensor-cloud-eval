@@ -38,11 +38,7 @@ Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be u
 
 ## Installation and Setup
 
-To begin development off MODE's sensor cloud evaluation kit, first clone the repository to your local machine.
-
-```sh
-$ git clone https://github.com/moderepo/sensor-cloud-eval.git
-```
+To begin development off MODE's sensor cloud evaluation kit, first obtain the zip file containing the software.
 
 ## Prerequisites
 
@@ -50,19 +46,20 @@ $ git clone https://github.com/moderepo/sensor-cloud-eval.git
 
 2. You will also need to have any sensors you wish to pair with your gateway(s) in your possession.
 
-3. You must have an account with the [Tinkermode Console](https://console.tinkermode.com/console/signup).
+3. You must have an account with the [MODE Developer Console](https://console.tinkermode.com/console/signup).
 
-4. If you don't already have npm and typescript installed, you will need to install both in order to run the application. You will also need at least `Node 8.16.0` or `Node 10.16.0` or later version on your local development machine. If you don't already have node, please navigate [here](https://nodejs.org/en/download/) to download the source code compatible with your machine. `NPM is distributed with Node.js`, which means that when you downlaod Node.js, you automatically get npm installed on your computer.
-
-```sh
-$ npm install -g typescript
-```
+4. If you don't already have node installed, you will need to install Node. The application works with `Node 8.16.0` or `Node 10.16.0` or later version on your local development machine. If you don't already have node, please navigate [here](https://nodejs.org/en/download/) to download the source code compatible with your machine. `NPM is distributed with Node.js`, which means that when you downlaod Node.js, you automatically get npm installed on your computer.
 
 ## Quick Start
 
 **Assuming you have met the previously mentioned prerequisites**, follow these steps to get up and running in minutes:
 
-1. Create a `.env` file inside of the root directory with the `REACT_APP_API_KEY` and `REACT_APP_PROJECT_ID` variables associated with your project.
+1. Create a `.env` file inside of the `/sceval_frontend` directory with the and `REACT_APP_PROJECT_ID` and `REACT_APP_API_KEY` variables associated with your project. Please see the example below:
+
+```sh
+REACT_APP_PROJECT_ID={YOUR_PROJECT_ID}
+REACT_APP_API_KEY={YOUR_REACT_APP_API_KEY}
+```
 
 2. `cd` into `sceval_frontend` and run `npm i` or `npm install`. This will install the default app dependencies.
 
