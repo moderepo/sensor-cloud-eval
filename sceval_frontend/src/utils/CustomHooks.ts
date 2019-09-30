@@ -1,4 +1,4 @@
-import { useState, useEffect, } from 'react';
+import { useState, useEffect } from 'react';
 import { LoginInfo } from '../components/entities/User';
 import AppContext from '../controllers/AppContext';
 import modeAPI from '../controllers/ModeAPI';
@@ -77,3 +77,23 @@ export const useLoadUserHome = (loginInfo: LoginInfo | undefined): LoadHomeState
   return state;
 };
 
+/**
+ * Custom hook for checking if if something is loading. Use this hook when you many things that are loading
+ * and you need to wait until all of them are done.
+ * @param args 
+ */
+export const useIsLoading = (...args:boolean[]): boolean => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (args) {
+      // go through each item in the list of arguments to check each state. If one of the item is true,
+      // this will return true.
+      setIsLoading(args.find((state: boolean): boolean => {
+        return state;
+      }) === true);
+    }
+  }, args);
+
+  return isLoading;
+};

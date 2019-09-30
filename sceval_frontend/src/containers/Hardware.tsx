@@ -11,7 +11,7 @@ import { Modal, Menu, Dropdown } from 'antd';
 import { Context, context } from '../context/Context';
 import SensorModuleComp from '../components/SensorModuleComp';
 import { NavLink } from 'react-router-dom';
-import { useCheckUserLogin, useLoadUserHome } from '../utils/CustomHooks';
+import { useCheckUserLogin, useLoadUserHome, useIsLoading } from '../utils/CustomHooks';
 
 // use the confirm modal from AntD
 const { confirm } = Modal;
@@ -123,6 +123,7 @@ const useLoadDevicesModules = (devices: Device[] | undefined): [SensorModuleSet[
 };
 
 const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
+  console.log('Render Hardware');
   const loginInfoState = useCheckUserLogin();
   const loadHomeState = useLoadUserHome(loginInfoState.loginInfo);
   const loadDevicesState = useLoadHomeDevices(loadHomeState.home);
@@ -135,14 +136,13 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
   const [deviceDeleteError, setDeviceDeleteError] = useState<boolean>(false);
   const [editingGateways, setEditingGateways] = useState<Array<number>>([]);
   const sensorContext: Context = useContext(context);
+  const isLoadingData = useIsLoading(loginInfoState.isLoading, loadHomeState.isLoading, loadDevicesState.isLoading, isLoadingModules);
 
   // if the user isn't logged in, protect the route and redirect to /login
   if (!props.isLoggedIn) {
     return <Redirect to="/login" />;
   }
 
-  console.log('Render Hardware');
-  const isLoadingData = (loginInfoState.isLoading || loadHomeState.isLoading || loadDevicesState.isLoading || isLoadingModules);
 
   // handler for redirecting the user to a particular sensor module view on sensor module click
   const goToSensorModule = (
