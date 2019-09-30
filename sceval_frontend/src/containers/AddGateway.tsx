@@ -1,34 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { withRouter, RouteComponentProps, NavLink } from 'react-router-dom';
 import { Input } from 'antd';
 import { LoginInfo } from '../components/entities/User';
-import AppContext from '../controllers/AppContext';
 import { Home } from '../components/entities/API';
 import modeAPI from '../controllers/ModeAPI';
+import { useCheckUserLogin, useLoadUserHome } from '../utils/CustomHooks';
 // required images imported
 const connect = require('../common_images/devices/1-plug.svg');
 const gw = require('../common_images/devices/gateway-large.svg');
 const numbers = require('../common_images/devices/numbers.svg');
 
 const AddGateway = withRouter((props: RouteComponentProps) => {
+  // Get user login info
+  const loginInfoState = useCheckUserLogin();
   // stores the associated home
-  const [home, setHome] = useState<number>();
+  const loadHomeState = useLoadUserHome(loginInfoState.loginInfo);
+
   // stores the state of the claim code being typed
   const [claimCode, setClaimCode] = useState<string>('');
   // stores any device errors that may occur when submitting the claim code
   const [addDeviceError, setAddDeviceError] = useState<boolean>(false);
 
-  const initialize = async () => {
-    // get the user's login information
-    const loginInfo: LoginInfo = await AppContext.restoreLogin();
-    // get home associated with project
-    const homeObj: Home = await modeAPI.getHome(loginInfo.user.id);
-    setHome(homeObj.id);
-  };
-
-  useEffect(() => {
-    initialize();
-  },        []);
   /**
    * Method for handling the submission of a claim code. 
    * If an error occurs, the method will catch the error and handle it accordingly.
@@ -37,8 +29,8 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
     // if the event exists, and  the event key corresponds to enter, or method invoked by click:
     if ((event && event.key === 'Enter') || !event) {
       try {
-        if (home && claimCode) {
-          const status = await modeAPI.addDevice(home, claimCode);
+        if (loadHomeState.home && claimCode) {
+          const status = await modeAPI.addDevice(loadHomeState.home.id, claimCode);
           if (status === 201) {
             setAddDeviceError(false);
             setClaimCode('');
