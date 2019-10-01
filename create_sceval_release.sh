@@ -18,6 +18,8 @@ RELEASE_ZIP_FILE="${RELEASE_DIR}.tgz"
 # The final location where the zip file will be saved, inside the releases directory
 TARGET_RELEASE_FILE="${ALL_RELEASES_DIR}/${RELEASE_ZIP_FILE}"
 
+DOCUMENTATION_FILE_NAME="INSTRUCTION.html"
+
 # Make sure the user provide a release number
 if [ -z ${RELEASE_NUMBER} ]; then
   echo "Please provide a release number"
@@ -38,7 +40,7 @@ fi
 mkdir -p ${RELEASE_DIR}
 
 # generate HTML file for the README.md. This file will be a standalone file which mean all the images will be embed in the HTML
-pandoc --metadata pagetitle='MODE Sensor Cloud Developer Edition' --self-contained -c github-pandoc.css -s README.md -o ${RELEASE_DIR}/INSTRUCTION.html
+pandoc --metadata pagetitle='MODE Sensor Cloud Developer Edition' --self-contained -c github-pandoc.css -f markdown+emoji -s README.md -o ${RELEASE_DIR}/${DOCUMENTATION_FILE_NAME}
 
 # copy all the nessessary source file to the new release directory
 FILES_TO_BE_COPIED="public src package-lock.json package.json provision.sh tsconfig.json tslint.json Dockerfile Makefile nginx.conf tsconfig.prod.json"
