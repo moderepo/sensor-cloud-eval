@@ -1,6 +1,5 @@
-import React, { useEffect, useState, useCallback, Fragment } from 'react';
+import React, { useEffect, useState, Fragment } from 'react';
 import { NavLink, withRouter, RouteComponentProps, Redirect } from 'react-router-dom';
-import AppContext from '../controllers/AppContext';
 import { AmChart } from '../components/AmChart';
 import {
     ErrorResponse,
@@ -10,7 +9,6 @@ import {
     DataPoint
 } from '../components/entities/API';
 import modeAPI from '../controllers/ModeAPI';
-import ClientStorage from '../controllers/ClientStorage';
 import moment from 'moment';
 import { Menu, Dropdown, Icon, Checkbox, Modal, Input } from 'antd';
 import ModeConnection  from '../controllers/ModeConnection';
@@ -34,6 +32,8 @@ import * as Constants from '../utils/Constants';
 import { Home } from '../components/entities/API';
 import { RouteParams } from '../components/entities/Routes';
 import handleErrors from '../utils/ErrorMessages';
+import { useCheckUserLogin, useLoadUserHome } from '../utils/CustomHooks';
+import { LoginInfo } from '../components/entities/User';
 
 const loader = require('../common_images/notifications/loading_ring.svg');
 const backArrow = require('../common_images/navigation/back.svg');
@@ -61,8 +61,10 @@ interface SensorModuleSettings {
 }
 
 export const SensorModule = withRouter((props: SensorModuleProps & RouteComponentProps<RouteParams>) => {
+    // User login info state
+    const loginInfoState = useCheckUserLogin();
     // home state
-    const [home, setHome] = useState<Home>();
+    const loadHomeState = useLoadUserHome(loginInfoState.loginInfo);
     // selected module state
     const [selectedModule, setSelectedModule] = useState<string|null>();
     // sensor module data object state
@@ -126,7 +128,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         dateBounds: DateBounds | null | undefined,
         insertToSnapshotData: boolean = true): Promise<void> => {
 
-        if (!home || !dateBounds) {
+        if (!loadHomeState.home || !dateBounds) {
             return;
         }
 
@@ -160,7 +162,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                          dateBounds.endTime !== sensorBundle.currentDateBounds.endTime) {
                             try {
                                 timeSeriesDataArray.push(await modeAPI.getTimeSeriesData(
-                                    home.id, sensorBundle.seriesId, dateBounds.beginDate, dateBounds.endDate
+                                    loadHomeState.home.id,
+                                    sensorBundle.seriesId,
+                                    dateBounds.beginDate,
+                                    dateBounds.endDate
                                 ));
                             } catch (error) {
                                 // error
@@ -654,26 +659,19 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
              */
             const initialize = async (gateway: number, sensorModuleId: string): Promise<any> => {
 
-                // restore login
-                await AppContext.restoreLogin();
-
                 // open new connection for refresh
                 ModeConnection.openConnection();
-
-                // get home id
-                const userHome: Home = await modeAPI.getHome(ClientStorage.getItem('user-login').user.id);
 
                 // load module data
                 const sensorModuleData: SensorModuleInterface = await modeAPI.getDeviceKeyValueStore(
                     gateway, `${Constants.SENSOR_MODULE_KEY_PREFIX}${sensorModuleId}`);
 
-                setHome(userHome);
                 setSelectedGateway(gateway);
                 setSelectedModule(props.match.params.sensorModuleId);
                 setSelectedSensorModuleObj(sensorModuleData);
             };
 
-            if (props.match.params.deviceId && props.match.params.sensorModuleId) {
+            if (loadHomeState.home && props.match.params.deviceId && props.match.params.sensorModuleId) {
                 setIsLoadingPage(true);
 
                 initialize(Number(props.match.params.deviceId), props.match.params.sensorModuleId).then((): void => {
@@ -683,7 +681,16 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                     setIsLoadingPage(false);
                 });
             }
-    },  [props.match.params.deviceId, props.match.params.sensorModuleId]);
+    },  [loadHomeState.home, props.match.params.deviceId, props.match.params.sensorModuleId]);
+
+    /**
+     * Check loginInfoState for error. If there is an error, take user to login
+     */
+    useEffect(() => {
+        if (loginInfoState.error) {
+            props.history.push('/login');
+        }
+    },        [props.history, loginInfoState.error]);
 
     /**
      * This useEffected is used for loading time series data. This depends on the selectedGateway, selectedModule, etc.
@@ -691,17 +698,19 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
      */
     useEffect(
         () => {
-            if (home && selectedGateway && selectedModule && selectedSensorModuleObj) {
+            if (loadHomeState.home && selectedGateway && selectedModule && selectedSensorModuleObj) {
                 setIsLoadingTSData(true);
 
-                initializeTimeSeries(home, selectedGateway, selectedModule, selectedSensorModuleObj).then(() => {
+                initializeTimeSeries(
+                    loadHomeState.home, selectedGateway, selectedModule, selectedSensorModuleObj
+                ).then(() => {
                     setIsLoadingTSData(false);
                 }).catch((error: ErrorResponse): void => {
                     // Failed initialize timeseries
                     setIsLoadingTSData(false);
                 });
             }
-    },  [home, selectedGateway, selectedModule, selectedSensorModuleObj]);
+    },  [loadHomeState.home, selectedGateway, selectedModule, selectedSensorModuleObj]);
 
     // React hook's componentDidMount and componentDidUpdate
     useEffect(
@@ -717,7 +726,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
                     // if app receives real time data, and it pertains to the selected Module:
                     if (message.eventType === Constants.EVENT_REALTIME_DATA &&
-                        home && allSensorBundles &&
+                        loadHomeState.home && allSensorBundles &&
                         message.eventData && message.eventData.timeSeriesData &&
                         message.eventData.timeSeriesData.length > 0) {
                         
@@ -763,7 +772,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                 ModeConnection.removeObserver(webSocketMessageHandler);
             };
     // method invoke dependencies
-    },  [home, selectedGateway, selectedModule, allSensorBundles]);
+    },  [loadHomeState.home, selectedGateway, selectedModule, allSensorBundles]);
 
     const onUserInteractingWithChartHandler = (targetId: string): void => {
         // cancel debounce if there is one
@@ -1107,13 +1116,15 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
                 {!realtimeMode &&
                     // If not showing realtime, show these options
-                    <div className="static-time-options d-flex flex-column align-items-end">
-                        <Dropdown overlay={graphTimespanMenu} className="dropdown">
-                            <span className="default-timespan-value d-flex align-items-center justify-content-center">
-                                Select Timespan <Icon type="down" />
-                            </span>
-                        </Dropdown>
-                    </div>
+                    (
+                        <div className="static-time-options d-flex flex-column align-items-end">
+                            <Dropdown overlay={graphTimespanMenu} className="dropdown">
+                                <span className="default-timespan-value d-flex align-items-center justify-content-center">
+                                    Select Timespan <Icon type="down" />
+                                </span>
+                            </Dropdown>
+                        </div>
+                    )
                 }
             </div>
         );
@@ -1198,10 +1209,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
         return (
             <Dropdown overlay={menu} className="dropdown">
-                <a className="default-timespan-value d-flex align-items-center justify-content-center">
+                <div className="default-timespan-value d-flex align-items-center justify-content-center">
                     {selectedInterval.value} {selectedInterval.unit}
                     <Icon type="down" />
-                </a>
+                </div>
             </Dropdown>
         );
     };
@@ -1320,6 +1331,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                 {isLoadingTSData &&
                                     // If is loading details data, show an overlay on top of the chart to disable
                                     // the user from interacting with the chart
+                                    (
                                     <div
                                         className="loading-tsdb-overlay"
                                         onClick={(event) => {
@@ -1333,6 +1345,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                     >
                                         <img src={loader} alt="loader spinner"/>
                                     </div>
+                                    )
                                 }
                             </div>
                         </Fragment>                        
@@ -1422,7 +1435,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                       ' col-12 col-xl-6 ')
                                     }
                                 >
-                                    <img src={evaluateSensorModelIcon(parseSensorModuleUUID(selectedModule).modelId)} alt="sensor module icon"/>
+                                    <img
+                                        src={evaluateSensorModelIcon(parseSensorModuleUUID(selectedModule).modelId)}
+                                        alt="sensor module icon"
+                                    />
                                     <div
                                         className={
                                             'info-section d-flex flex-column align-items-start justify-content-center'
@@ -1465,10 +1481,12 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                     }
                                 >
                                     { selectedModule && selectedModule.split(':')[0] === '0101' &&
-                                    <div className="data-col">
-                                        <div className="data-name col-dropdown">Sensing Interval</div>
-                                        {renderSensingIntervalOptions(selectedSensorModuleObj)}
-                                    </div>
+                                    (
+                                        <div className="data-col">
+                                            <div className="data-name col-dropdown">Sensing Interval</div>
+                                            {renderSensingIntervalOptions(selectedSensorModuleObj)}
+                                        </div>
+                                    )
                                     }
                                     <div className="data-col">
                                         <div className="data-name col-dropdown">Graph Timespan</div>

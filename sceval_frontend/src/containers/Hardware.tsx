@@ -1,21 +1,17 @@
 import React, { Fragment, useState, useEffect, useContext } from 'react';
 import { Redirect, RouteComponentProps, withRouter } from 'react-router';
 import modeAPI from '../controllers/ModeAPI';
-import * as ModeConstants from '../controllers/ModeConstants';
 import * as Constants from '../utils/Constants';
-import { KeyValueStore, Device, Home } from '../components/entities/API';
-import { LoginInfo } from '../components/entities/User';
-import AppContext from '../controllers/AppContext';
+import { KeyValueStore, Device, Home, ErrorResponse } from '../components/entities/API';
 import {
-  SensorModuleSet,
-  SensorModuleInterface
+  SensorModuleSet
 } from '../components/entities/SensorModule';
 import { evaluateSensorModelName, parseSensorModuleUUID } from '../utils/SensorTypes';
 import { Modal, Menu, Dropdown } from 'antd';
 import { Context, context } from '../context/Context';
-import ModeConnection from '../controllers/ModeConnection';
 import SensorModuleComp from '../components/SensorModuleComp';
 import { NavLink } from 'react-router-dom';
+import { useCheckUserLogin, useLoadUserHome, useIsLoading } from '../utils/CustomHooks';
 
 // use the confirm modal from AntD
 const { confirm } = Modal;
@@ -30,143 +26,136 @@ interface HardwareProps extends React.Props<any> {
   onLogIn: () => void;
 }
 
+/**
+ * custom Hook for loading user's home devices. This hook is not really reuseable so we will keep it in here.
+ * If we ever need to do something like this in another component, we can move it into the CustomHooks.ts
+ * and export it.
+ * @param home 
+ */
+interface LoadDevicesState {
+  devices: Device[] | undefined;
+  isLoading: boolean;
+}
+const useLoadHomeDevices = (home: Home | undefined): LoadDevicesState => {
+  const [state, setState] = useState<LoadDevicesState>({
+    devices: undefined, isLoading: true
+  });
+  
+  useEffect (() => {
+    if (home) {
+      setState({...state, isLoading: true});
+      modeAPI.getDevices(home.id).then((devices: Device[]): void => {
+        setState({...state, devices: devices, isLoading: false});
+      }).catch((error: ErrorResponse) => {
+        // Unable to get devices
+        setState({...state, isLoading: false});
+      });
+    }
+  },         [home]);
+
+  // Return the devices state AND also the isLoading state so that the user of this hook can do something
+  // when we are loading devices
+  return state;
+};
+
+/**
+ * Custom hooks for loading sensor modules for a list of devices. This hook is defined here because
+ * it is not really reuseable
+ * @param devices 
+ */
+interface LoadModulesState {
+  modules: SensorModuleSet[];
+  isLoading: boolean;
+}
+const useLoadDevicesModules = (devices: Device[] | undefined): [SensorModuleSet[], Function, boolean] => {
+
+  const [state, setState] = useState<LoadModulesState>({
+    modules: [],
+    isLoading: true
+  });
+
+  useEffect(() => {
+    const loadModules = async (): Promise<void> => {
+      setState({...state, isLoading: true});
+
+      // declare linkedModules array of type SensorModuleSet
+      const newLinkedModules: SensorModuleSet[] = [];
+      // if associated devices exist
+      if (devices && devices.length > 0) {
+        // Load modules for each device. Because we need to wait until all the modules are loaded
+        // before we can continue, we have to *await* AND we must use For loop, not .forEach because
+        // await doesn't work in forEach
+        for (let device of devices) {
+          try {
+            // sensor modules are stored as Key/Value store which the keys are started with sensorModule*
+            const sensorModules: KeyValueStore[] = await modeAPI.getAllDeviceKeyValueStoreByPrefix(
+              device.id,
+              Constants.SENSOR_MODULE_KEY_PREFIX
+            );
+
+            newLinkedModules.push({
+              device: device,
+              sensorModules: sensorModules
+            });
+          } catch (error) {
+            console.log('Error loading device modules', error.message);
+          }
+        }
+      }
+      // sort linked modules by ID and update state accordingly
+      newLinkedModules.sort((a: SensorModuleSet, b: SensorModuleSet): number => {
+        return a.device.id - b.device.id;
+      });
+
+      setState({...state, modules: newLinkedModules, isLoading: false});
+    };
+    loadModules();
+  },        [devices]);
+
+  const setModules = (modules: SensorModuleSet[]): void => {
+    setState({...state, modules: modules});
+  };
+
+  // Return the current set of modules AND also expose the setModules API so that the user of this hook can call
+  // setModules to update the modules. And also return the loading state so that the user of this hook can do
+  // something when the hook is loading module
+  return [state.modules, setModules, state.isLoading];
+};
+
 const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [linkedModules, setlinkedModules] = useState<Array<SensorModuleSet>>(
-    []
-  );
+  console.log('Render Hardware');
+  const loginInfoState = useCheckUserLogin();
+  const loadHomeState = useLoadUserHome(loginInfoState.loginInfo);
+  const loadDevicesState = useLoadHomeDevices(loadHomeState.home);
+  const [linkedModules, setLinkedModules, isLoadingModules] = useLoadDevicesModules(loadDevicesState.devices);
   const [selectedDevice, setSelectedDevice] = useState<number>(0);
-  const [displayGatewayOptions, setdisplayGatewayOptions] = useState<
+  const [displayGatewayOptions, setDisplayGatewayOptions] = useState<
     Array<number>
   >([]);
   const [deletionMode, setDeletionMode] = useState<boolean>(false);
   const [deviceDeleteError, setDeviceDeleteError] = useState<boolean>(false);
   const [editingGateways, setEditingGateways] = useState<Array<number>>([]);
   const sensorContext: Context = useContext(context);
+  const isLoadingData = useIsLoading(
+    loginInfoState.isLoading,
+    loadHomeState.isLoading,
+    loadDevicesState.isLoading,
+    isLoadingModules
+  );
+
   // if the user isn't logged in, protect the route and redirect to /login
   if (!props.isLoggedIn) {
     return <Redirect to="/login" />;
   }
-  // initialize handler for opening the websocket and getting all devices and associated sensor modules
-  const initialize = async (): Promise<void> => {
-    setIsLoading(true);
-    // open websocket connection
-    ModeConnection.openConnection();
-    // restore login
-    const loginInfo: LoginInfo = await AppContext.restoreLogin();
-    // get home associated with project
-    const home: Home = await modeAPI.getHome(loginInfo.user.id);
-    // get devices in home
-    const devices: Device[] = await modeAPI.getDevices(home.id);
-    // declare linkedModules array of type SensorModuleSet
-    const newLinkedModules: SensorModuleSet[] = [];
-    // if associated devices exist
-    if (devices.length > 0) {
-      // Load modules for each device. Because we need to wait until all the modules are loaded
-      // before we can continue, we have to *await* AND we must use For loop, not .forEach because
-      // await doesn't work in forEach
-      for (let device of devices) {
-        try {
-          // sensor modules are stored as Key/Value store which the keys are started with sensorModule*
-          const sensorModules: KeyValueStore[] = await modeAPI.getAllDeviceKeyValueStoreByPrefix(
-            device.id,
-            Constants.SENSOR_MODULE_KEY_PREFIX
-          );
 
-          newLinkedModules.push({
-            device: device,
-            sensorModules: sensorModules
-          });
-        } catch (error) {
-          console.log('Error loading device modules', error.message);
-        }
-      }
+  /**
+   * Check loginInfoState for error. If there is an error, take user to login
+   */
+  useEffect(() => {
+    if (loginInfoState.error) {
+      props.history.push('/login');
     }
-    // sort linked modules by ID and update state accordingly
-    newLinkedModules.sort((a: SensorModuleSet, b: SensorModuleSet): number => {
-      return a.device.id - b.device.id;
-    });
-
-    setlinkedModules(newLinkedModules);
-    setIsLoading(false);
-  };
-
-  /**
-   * This useEffect doesn't depend on any state so it will only be called once, when the
-   * component is mounted.
-   */
-  useEffect(() => {
-    initialize();
-  },        []); // this argument outlines re-rendering dependencies
-
-  /**
-   * This useEffect depends on one or more states so it will be called each time one of the state change.
-   */
-  useEffect(() => {
-    // Listen to _keyValueSaved_ event from the web socket and reload the sensor module
-    // data for the module that triggered the event.
-    const messageHandler: any = {
-      notify: (message: any): void => {
-        if (
-          message.eventType === ModeConstants.EVENT_DEVICE_KEY_VALUE_SAVED &&
-          message.eventData &&
-          linkedModules !== undefined
-        ) {
-          // message.eventData will be the key/value store for the sensorModule
-          const updatedSensorModule: SensorModuleInterface = message.eventData;
-
-          // Find the linked module that has a sensor module with the same key and at the same time, find the deviceId
-          // of the device the module is connected to because we need the deviceId to make an API call to load the
-          // module data
-          interface Findable {
-            deviceId: number;
-            sensorModule: SensorModuleInterface;
-          }
-          // First, build an array of Findable and then find the sensor module that has the same
-          // key as the module that triggered the event
-          const result = linkedModules
-            .reduce(
-              (
-                prevValue: Findable[],
-                currValue: SensorModuleSet
-              ): Findable[] => {
-                return [
-                  ...prevValue,
-                  ...currValue.sensorModules.map(
-                    (module: SensorModuleInterface): Findable => {
-                      return {
-                        deviceId: currValue.device.id,
-                        sensorModule: module
-                      };
-                    }
-                  )
-                ];
-              },
-              []
-            )
-            .find((findable: Findable): boolean => {
-              return findable.sensorModule.key === updatedSensorModule.key;
-            });
-
-          if (result) {
-            // Found the sensor module, now reload the KV for the module and update the module's value
-            // update the module's data with data from response but this won't trigger a re-render
-            Object.assign(result.sensorModule, updatedSensorModule);
-            setlinkedModules([...linkedModules]); // copy the linkedModules and set it to trigger re-render
-          }
-        }
-      }
-    };
-    // add websocket event listener
-    ModeConnection.addObserver(messageHandler);
-
-    // return a cleanup function to be called when the component is unmounted
-    return (): void => {
-      // remove websocket event listener
-      ModeConnection.removeObserver(messageHandler);
-    };
-    // this argument outlines invoke dependencies
-  },        [linkedModules]);
+  },        [props.history, loginInfoState.error]);
 
   // handler for redirecting the user to a particular sensor module view on sensor module click
   const goToSensorModule = (
@@ -198,7 +187,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
         );
         let updatedLinkedModules = [...linkedModules];
         updatedLinkedModules[deviceIndex].sensorModules = filteredModules;
-        setlinkedModules(updatedLinkedModules);
+        setLinkedModules(updatedLinkedModules);
       }
     } catch (error) {
       alert(error.message);
@@ -221,7 +210,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
           const updatedLinkedModules = linkedModules.filter((sensorModule: any): boolean => {
             return sensorModule.device.id !== deviceId;
           });
-          setlinkedModules(updatedLinkedModules);
+          setLinkedModules(updatedLinkedModules);
           setDeviceDeleteError(false);
         } else {
           setDeviceDeleteError(true);
@@ -271,7 +260,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
       });
     }
     // update state accordingly
-    setdisplayGatewayOptions(selectedOptions);
+    setDisplayGatewayOptions(selectedOptions);
   };
   // method invoked after clicking on a the gateway options button to put gateway in edit-mode
   const toggleEditGateway = (gatewayID: number): void => {
@@ -303,7 +292,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
       const modules = linkedModules[deviceIndex].sensorModules.map((sensor, key) => {
         return (
           <Fragment key={key}>
-            {!isLoading ? (
+            {!isLoadingData ? (
               <div className="sensor-module-wrapper col-12">
                 <SensorModuleComp
                   name={sensor.value.name}
@@ -484,7 +473,7 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
       // Render each device/gateway
       return (
         <Fragment key={index}>
-          {!isLoading ? (
+          {!isLoadingData ? (
             renderDevice(linkedModule.device, index)
           ) : (
             <img src={loader} alt="loader-spinner"/>
@@ -518,16 +507,18 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
         </div>
         {
           deletionMode &&
-          <div className={deviceDeleteError ? 'warning-animation fade-out' : 'save-animation fade-out'}>
-            {deviceDeleteError ? 'Failed to delete device.' : 'Successfully deleted device.'}
-          </div>
+          (
+            <div className={deviceDeleteError ? 'warning-animation fade-out' : 'save-animation fade-out'}>
+              {deviceDeleteError ? 'Failed to delete device.' : 'Successfully deleted device.'}
+            </div>
+          )
         }
         <div className="gateways-section">
           {linkedModules !== undefined && linkedModules.length > 0 ? (
             renderDevices()
           ) : // If linkedModules is empty AND we are not loading data, this mean the home
           // does not have any device
-          !isLoading ? (
+          !isLoadingData ? (
             <div className="gateway-row no-device">
               You don't have any device. Please use the
               <a href="https://console.tinkermode.com" target="blank">
