@@ -10,7 +10,7 @@ ALL_RELEASES_DIR="releases"
 SOURCE_DIR="sceval_frontend"
 
 # The name of the new release directory to be generated, all the files for this released will be stored here and zipped
-RELEASE_DIR="sceval_release_${RELEASE_NUMBER}"
+RELEASE_DIR="mode_sensor_dev_edition_${RELEASE_NUMBER}"
 
 # The name of the zip file when the release directory is zipped
 RELEASE_ZIP_FILE="${RELEASE_DIR}.tgz"
@@ -22,8 +22,8 @@ DOCUMENTATION_FILE_NAME="INSTRUCTION.html"
 
 # Make sure the user provide a release number
 if [ -z ${RELEASE_NUMBER} ]; then
-  echo "Please provide a release number"
-  echo "usage: './create_sceval_release.sh 123'"
+  echo "Please provide a release/version number"
+  echo "Usage: './create_sceval_release.sh 1.0.3'"
   exit;
 fi
 
@@ -52,6 +52,9 @@ do
     cp ${SOURCE_DIR}/${FILE} ${RELEASE_DIR}/${FILE}
   fi
 done
+
+# create .env file for the developer so he doesn't need to create one but just need to fill in the values
+echo "REACT_APP_PROJECT_ID=\nREACT_APP_API_KEY=" > "${RELEASE_DIR}/.env"
 
 # If releases directory does not exist, create it.
 mkdir -p ${ALL_RELEASES_DIR}
