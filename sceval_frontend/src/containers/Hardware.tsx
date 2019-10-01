@@ -51,12 +51,12 @@ const useLoadHomeDevices = (home: Home | undefined): LoadDevicesState => {
         setState({...state, isLoading: false});
       });
     }
-  }, [home]);
+  },         [home]);
 
   // Return the devices state AND also the isLoading state so that the user of this hook can do something
   // when we are loading devices
   return state;
-}
+};
 
 /**
  * Custom hooks for loading sensor modules for a list of devices. This hook is defined here because
@@ -110,11 +110,11 @@ const useLoadDevicesModules = (devices: Device[] | undefined): [SensorModuleSet[
       setState({...state, modules: newLinkedModules, isLoading: false});
     };
     loadModules();
-  }, [devices]);
+  },        [devices]);
 
-  const setModules = (modules: SensorModuleSet[]):void => {
+  const setModules = (modules: SensorModuleSet[]): void => {
     setState({...state, modules: modules});
-  }
+  };
 
   // Return the current set of modules AND also expose the setModules API so that the user of this hook can call
   // setModules to update the modules. And also return the loading state so that the user of this hook can do
@@ -136,13 +136,26 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
   const [deviceDeleteError, setDeviceDeleteError] = useState<boolean>(false);
   const [editingGateways, setEditingGateways] = useState<Array<number>>([]);
   const sensorContext: Context = useContext(context);
-  const isLoadingData = useIsLoading(loginInfoState.isLoading, loadHomeState.isLoading, loadDevicesState.isLoading, isLoadingModules);
+  const isLoadingData = useIsLoading(
+    loginInfoState.isLoading,
+    loadHomeState.isLoading,
+    loadDevicesState.isLoading,
+    isLoadingModules
+  );
 
   // if the user isn't logged in, protect the route and redirect to /login
   if (!props.isLoggedIn) {
     return <Redirect to="/login" />;
   }
 
+  /**
+   * Check loginInfoState for error. If there is an error, take user to login
+   */
+  useEffect(() => {
+    if (loginInfoState.error) {
+      props.history.push('/login');
+    }
+  },        [props.history, loginInfoState.error]);
 
   // handler for redirecting the user to a particular sensor module view on sensor module click
   const goToSensorModule = (
@@ -494,9 +507,11 @@ const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
         </div>
         {
           deletionMode &&
-          <div className={deviceDeleteError ? 'warning-animation fade-out' : 'save-animation fade-out'}>
-            {deviceDeleteError ? 'Failed to delete device.' : 'Successfully deleted device.'}
-          </div>
+          (
+            <div className={deviceDeleteError ? 'warning-animation fade-out' : 'save-animation fade-out'}>
+              {deviceDeleteError ? 'Failed to delete device.' : 'Successfully deleted device.'}
+            </div>
+          )
         }
         <div className="gateways-section">
           {linkedModules !== undefined && linkedModules.length > 0 ? (

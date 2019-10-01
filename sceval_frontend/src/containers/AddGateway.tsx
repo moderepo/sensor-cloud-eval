@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { withRouter, RouteComponentProps, NavLink } from 'react-router-dom';
 import { Input } from 'antd';
 import { LoginInfo } from '../components/entities/User';
@@ -20,6 +20,15 @@ const AddGateway = withRouter((props: RouteComponentProps) => {
   const [claimCode, setClaimCode] = useState<string>('');
   // stores any device errors that may occur when submitting the claim code
   const [addDeviceError, setAddDeviceError] = useState<boolean>(false);
+
+  /**
+   * Check loginInfoState for error. If there is an error, take user to login
+   */
+  useEffect(() => {
+    if (loginInfoState.error) {
+      props.history.push('/login');
+    }
+  },        [props.history, loginInfoState.error]);
 
   /**
    * Method for handling the submission of a claim code. 

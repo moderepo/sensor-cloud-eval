@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { LoginInfo } from '../components/entities/User';
 import AppContext from '../controllers/AppContext';
 import modeAPI from '../controllers/ModeAPI';
-import { Home } from '../components/entities/API';
-
+import { Home, ErrorResponse } from '../components/entities/API';
 
 /**
  * Custom Hook for checking user's login status.
  */
 export interface LoginInfoState {
   loginInfo: LoginInfo | undefined;
+  error: ErrorResponse | undefined;
   isLoading: boolean;
 }
 export const useCheckUserLogin = (): LoginInfoState => {
@@ -17,27 +17,24 @@ export const useCheckUserLogin = (): LoginInfoState => {
   // so we only need to call setState 1 time. If they were separated, we have to call setLoginInfo and setIsLoading
   // which will cause the user of this hook to rerender twice.
   const [state, setState] = useState<LoginInfoState>({
-    loginInfo: undefined, isLoading: true
+    loginInfo: undefined, isLoading: true, error: undefined
   });
  
   useEffect(() => {
     setState((currentState: LoginInfoState): LoginInfoState => {
-      return {...currentState, isLoading: true}
+      return {...currentState, isLoading: true};
     });
     AppContext.restoreLogin().then((loginInfo: LoginInfo): void => {
       setState((currentState: LoginInfoState): LoginInfoState => {
-        return {...currentState, loginInfo: loginInfo, isLoading: false}
+        return {...currentState, loginInfo: loginInfo, isLoading: false};
       });
     }).catch ((error): void => {
-      // TODO - Check if this is a bad way to handle unauthenticated user
-      // the reason I like to do it in here is so that we don't need to handle error
-      // everywhere we use this hook.
+      // Put the error in the state and let the suer handle the error
       setState((currentState: LoginInfoState): LoginInfoState => {
-        return {...currentState, isLoading: false}
+        return {...currentState, isLoading: false, error: error};
       });
-      window.location.href = '/login';
     });
-  }, []);
+  },        []);
 
   // Return the loginInfo and also the isLoading state so the user of this hook can do something when loading
   return state;
@@ -58,20 +55,20 @@ export const useLoadUserHome = (loginInfo: LoginInfo | undefined): LoadHomeState
   useEffect(() => {
     if (loginInfo) {
       setState((currentState: LoadHomeState): LoadHomeState => {
-        return {...currentState, isLoading: true}
+        return {...currentState, isLoading: true};
       });
       modeAPI.getHome(loginInfo.user.id).then((home: Home): void => {
         setState((currentState: LoadHomeState): LoadHomeState => {
-          return {...currentState, home: home, isLoading: false}
+          return {...currentState, home: home, isLoading: false};
         });
       }).catch((error: any): void => {
         // Something is wrong, user is homeless.
         setState((currentState: LoadHomeState): LoadHomeState => {
-          return {...currentState, isLoading: false}
+          return {...currentState, isLoading: false};
         });
       });
     }
-  }, [loginInfo]);
+  },        [loginInfo]);
 
   // Return the home and also the isLoading state so the user of this hook can do something when loading
   return state;
@@ -82,7 +79,7 @@ export const useLoadUserHome = (loginInfo: LoginInfo | undefined): LoadHomeState
  * and you need to wait until all of them are done.
  * @param args 
  */
-export const useIsLoading = (...args:boolean[]): boolean => {
+export const useIsLoading = (...args: boolean[]): boolean => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -93,7 +90,7 @@ export const useIsLoading = (...args:boolean[]): boolean => {
         return state;
       }) === true);
     }
-  }, args);
+  },        args);
 
   return isLoading;
 };

@@ -162,7 +162,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                          dateBounds.endTime !== sensorBundle.currentDateBounds.endTime) {
                             try {
                                 timeSeriesDataArray.push(await modeAPI.getTimeSeriesData(
-                                    loadHomeState.home.id, sensorBundle.seriesId, dateBounds.beginDate, dateBounds.endDate
+                                    loadHomeState.home.id,
+                                    sensorBundle.seriesId,
+                                    dateBounds.beginDate,
+                                    dateBounds.endDate
                                 ));
                             } catch (error) {
                                 // error
@@ -681,6 +684,15 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
     },  [loadHomeState.home, props.match.params.deviceId, props.match.params.sensorModuleId]);
 
     /**
+     * Check loginInfoState for error. If there is an error, take user to login
+     */
+    useEffect(() => {
+        if (loginInfoState.error) {
+            props.history.push('/login');
+        }
+    },        [props.history, loginInfoState.error]);
+
+    /**
      * This useEffected is used for loading time series data. This depends on the selectedGateway, selectedModule, etc.
      * So once those info are loaded, we can start loading time series data
      */
@@ -689,7 +701,9 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
             if (loadHomeState.home && selectedGateway && selectedModule && selectedSensorModuleObj) {
                 setIsLoadingTSData(true);
 
-                initializeTimeSeries(loadHomeState.home, selectedGateway, selectedModule, selectedSensorModuleObj).then(() => {
+                initializeTimeSeries(
+                    loadHomeState.home, selectedGateway, selectedModule, selectedSensorModuleObj
+                ).then(() => {
                     setIsLoadingTSData(false);
                 }).catch((error: ErrorResponse): void => {
                     // Failed initialize timeseries
@@ -1102,13 +1116,15 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
                 {!realtimeMode &&
                     // If not showing realtime, show these options
-                    <div className="static-time-options d-flex flex-column align-items-end">
-                        <Dropdown overlay={graphTimespanMenu} className="dropdown">
-                            <span className="default-timespan-value d-flex align-items-center justify-content-center">
-                                Select Timespan <Icon type="down" />
-                            </span>
-                        </Dropdown>
-                    </div>
+                    (
+                        <div className="static-time-options d-flex flex-column align-items-end">
+                            <Dropdown overlay={graphTimespanMenu} className="dropdown">
+                                <span className="default-timespan-value d-flex align-items-center justify-content-center">
+                                    Select Timespan <Icon type="down" />
+                                </span>
+                            </Dropdown>
+                        </div>
+                    )
                 }
             </div>
         );
@@ -1315,6 +1331,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                 {isLoadingTSData &&
                                     // If is loading details data, show an overlay on top of the chart to disable
                                     // the user from interacting with the chart
+                                    (
                                     <div
                                         className="loading-tsdb-overlay"
                                         onClick={(event) => {
@@ -1328,6 +1345,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                     >
                                         <img src={loader} alt="loader spinner"/>
                                     </div>
+                                    )
                                 }
                             </div>
                         </Fragment>                        
@@ -1417,7 +1435,10 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                       ' col-12 col-xl-6 ')
                                     }
                                 >
-                                    <img src={evaluateSensorModelIcon(parseSensorModuleUUID(selectedModule).modelId)} alt="sensor module icon"/>
+                                    <img
+                                        src={evaluateSensorModelIcon(parseSensorModuleUUID(selectedModule).modelId)}
+                                        alt="sensor module icon"
+                                    />
                                     <div
                                         className={
                                             'info-section d-flex flex-column align-items-start justify-content-center'
@@ -1460,10 +1481,12 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
                                     }
                                 >
                                     { selectedModule && selectedModule.split(':')[0] === '0101' &&
-                                    <div className="data-col">
-                                        <div className="data-name col-dropdown">Sensing Interval</div>
-                                        {renderSensingIntervalOptions(selectedSensorModuleObj)}
-                                    </div>
+                                    (
+                                        <div className="data-col">
+                                            <div className="data-name col-dropdown">Sensing Interval</div>
+                                            {renderSensingIntervalOptions(selectedSensorModuleObj)}
+                                        </div>
+                                    )
                                     }
                                     <div className="data-col">
                                         <div className="data-name col-dropdown">Graph Timespan</div>
