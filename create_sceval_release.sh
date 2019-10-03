@@ -42,6 +42,9 @@ mkdir -p ${RELEASE_DIR}
 # generate HTML file for the README.md. This file will be a standalone file which mean all the images will be embed in the HTML
 pandoc --metadata pagetitle='MODE Sensor Cloud Developer Edition' --self-contained -c github-pandoc.css -f markdown+emoji -s README.md -o ${RELEASE_DIR}/${DOCUMENTATION_FILE_NAME}
 
+# Copy the API manual to the release folder
+cp "how_to_use_local_api_manual_ja.pdf" "${RELEASE_DIR}/how_to_use_local_api_manual_ja.pdf"
+
 # copy all the nessessary source file to the new release directory
 FILES_TO_BE_COPIED="public src package-lock.json package.json provision.sh tsconfig.json tslint.json Dockerfile Makefile nginx.conf tsconfig.prod.json"
 for FILE in ${FILES_TO_BE_COPIED}
