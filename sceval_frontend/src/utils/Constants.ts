@@ -15,9 +15,9 @@ export const EVENT_DISCOVERED_SENSOR_MODULES: string =
 export const EVENT_REALTIME_DATA: string = 'realtimeData';
 export const EVENT_TIME_SERIES_DATA: string = 'timeSeriesData';
 
-  /**
-  * Error messages for user-related authentication.
-  */
+/**
+ * Error messages for user-related authentication.
+ */
 export const ERROR_USER_NOT_FOUND: string = 'USER_NOT_FOUND';
 export const ERROR_CONNECTION_ERROR: string = 'CONNECTION_ERROR';
 export const ERROR_LOGIN_CREDENTIALS_NOT_PRESENT: string =
@@ -55,7 +55,6 @@ export const MILLENNIUM_IN_MS: number   = 60 * 60 * 24 * 356 * 1000 * 1000;
 
 // The modelId of custom sensor modules
 export const CUSTOM_SENSOR_MODULE_MODEL_ID: string = 'CUSTOM';
-
 
  /**
   * Sensor module catelog array containing hardware-specific information.

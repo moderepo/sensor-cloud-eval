@@ -3,6 +3,7 @@ import modeAPI from './ModeAPI';
 import { User, LoginInfo, ClientAuthInfo } from '../components/entities/User';
 import { ConcreteObservable } from './Observer';
 import * as Constants from '../utils/Constants';
+import { ErrorResponse } from '../components/entities/API';
 
 export class UserNameChangeException {}
 
@@ -132,7 +133,7 @@ export class AppContext {
   public static restoreLogin() {
     return new Promise(function(
       resolve: (result: LoginInfo) => void,
-      reject: (reason: any) => void
+      reject: (error: ErrorResponse) => void
     ) {
       const loginInfo = ClientStorage.getItem(AppContext.entryName);
       AppContext.loginInfo = loginInfo;
@@ -148,17 +149,15 @@ export class AppContext {
             AppContext.updateLoginInfo(loginInfo);
             resolve(loginInfo);
           })
-          .catch(function(res: any) {
-            if (res.data && res.data.reason) {
-              // Remove invalid/obsolete login credentials.
-              ClientStorage.deleteItem(AppContext.entryName);
-              reject(Constants.ERROR_USER_NOT_FOUND);
-            } else {
-              reject(Constants.ERROR_CONNECTION_ERROR);
-            }
+          .catch(function(error: ErrorResponse) {
+            ClientStorage.deleteItem(AppContext.entryName);
+            reject(error);
           });
       } else {
-        reject(Constants.ERROR_LOGIN_CREDENTIALS_NOT_PRESENT);
+        reject({
+          status: 400,
+          message: Constants.ERROR_LOGIN_CREDENTIALS_NOT_PRESENT
+        });
       }
     });
   }
