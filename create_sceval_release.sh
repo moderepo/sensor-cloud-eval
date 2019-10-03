@@ -35,6 +35,24 @@ if [ -f ${TARGET_RELEASE_FILE} ]; then
   fi
 fi
 
+# Create a release in Github. This is for internal use only incase the developer report issues with this release,
+# we can checkout the release and test or make changes.
+CREATE_TAG_RESULT=$(git tag ${RELEASE_NUMBER} 2>&1)
+if [[ ${CREATE_TAG_RESULT} =~ 'fatal' ]]; then
+  if [[ ${CREATE_TAG_RESULT} =~ 'already exists' ]]; then
+    # if the error is because tag already existed, we can show a warning but still continue creating Zip file
+    # May be the user is just trying to create a new Zip file without creating a new release
+    echo 'WARNING: Unable to create Tag on Github: ' $CREATE_TAG_RESULT
+  else
+    # If the error is something else, may be stop the script
+    echo 'ERROR: Unable to create Tag on Github: ' $CREATE_TAG_RESULT
+    exit
+  fi
+else
+  # Tag created successfully, push to github
+  git push origin ${RELEASE_NUMBER}
+fi
+
 # Create a directory for the new release. We will copy all the neccessary files into this directory
 # and then zip it. Then we copy the zip file to the releases directory and delete this directory.
 mkdir -p ${RELEASE_DIR}
