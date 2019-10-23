@@ -16,7 +16,7 @@ export const LeftNav: React.FC<LeftNavProps & React.Props<any>> = (props: LeftNa
   const appContext: Context = useContext(context);
   const [username, setUsername] = useState();
 
-  const isLoggedIn: boolean = localStorage.getItem('user-login') !== null;
+  const isLoggedIn: boolean = ClientStorage.getItem('user-login') !== null;
 
   useEffect(
     () => {

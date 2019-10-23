@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import RouteDeclarations from './routes/RouteDeclarations';
 import { ContextProvider } from './context/Context';
 import './css/App.css';
+import ClientStorage from './controllers/ClientStorage';
 
 const App: React.FC = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -9,7 +10,7 @@ const App: React.FC = () => {
 
     useEffect(
         () => {
-            if (localStorage.getItem('user-login')) {
+            if (ClientStorage.getItem('user-login')) {
                 setIsLoggedIn(true); // set login to true if user-login exists in LS.
                 setIsAuthenticated(true); // set auth to true if user-login exists in LS.
             }

@@ -2,6 +2,9 @@ import React, { Fragment, useState, useEffect, useContext } from 'react';
 import { AppContext } from '../controllers/AppContext';
 import { Context, context } from '../context/Context';
 import { Redirect, withRouter, RouteComponentProps } from 'react-router';
+import ClientStorage from '../controllers/ClientStorage';
+import { UserInfo } from 'os';
+import { User, LoginInfo } from '../components/entities/User';
 // required images imported
 const email = require('../common_images/user/acct_email.svg');
 const name = require('../common_images/user/acct_name.svg');
@@ -108,8 +111,7 @@ const MyAccount = withRouter(
           break;
       }
       // if the username is new and not blank:
-      const userName = JSON.parse(`${localStorage.getItem('user-login')}`).value
-        .user.name;
+      const userName = ClientStorage.getItem('user-login').user.name;
       if (
         target.name === 'name' &&
         target.value !== '' &&
@@ -136,7 +138,7 @@ const MyAccount = withRouter(
       return <Redirect to="/login" />;
     }
 
-    const userData = JSON.parse(`${localStorage.getItem('user-login')}`);
+    const userData: LoginInfo = ClientStorage.getItem('user-login');
 
     return (
       <div>
@@ -201,7 +203,7 @@ const MyAccount = withRouter(
               )}
               <img className="mail" src={email} alt="email icon"/>
               <h4> Email</h4>
-              <div className="user-data">{userData.value.user.email}</div>
+              <div className="user-data">{userData.user.email}</div>
               <img src={password} alt="password icon"/>
               <h4>Password</h4>
               {!isEditing ? (
