@@ -14,6 +14,8 @@ export class AppContext {
   private static appSetting: { [id: string]: any };
   private static loginInfo: LoginInfo | null = null;
   private static userChangeObservable = new ConcreteObservable<User>();
+  private static sessionDuration = Constants.DAY_IN_SECS * 90; // 90 days
+
   // public method for retreiving AppContext.appSetting
   public static getAppSetting() {
     return AppContext.appSetting;
@@ -183,7 +185,7 @@ export class AppContext {
   }
   // provide method for updating login information
   private static updateLoginInfo(loginInfo: LoginInfo) {
-    ClientStorage.setItem(AppContext.entryName, loginInfo, 0);
+    ClientStorage.setItem(AppContext.entryName, loginInfo, AppContext.sessionDuration);
     AppContext.loginInfo = loginInfo;
   }
 }
