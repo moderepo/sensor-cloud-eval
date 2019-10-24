@@ -64,7 +64,7 @@ pandoc --metadata pagetitle='MODE Sensor Cloud Developer Edition' --self-contain
 cp "how_to_use_local_api_manual_ja.pdf" "${RELEASE_DIR}/how_to_use_local_api_manual_ja.pdf"
 
 # copy all the nessessary source file to the new release directory
-FILES_TO_BE_COPIED="public src package-lock.json package.json provision.sh tsconfig.json tslint.json Dockerfile Makefile nginx.conf tsconfig.prod.json"
+FILES_TO_BE_COPIED="public src package-lock.json package.json provision.sh tsconfig.json tslint.json Dockerfile nginx.conf tsconfig.prod.json"
 for FILE in ${FILES_TO_BE_COPIED}
 do
   if [ -d ${SOURCE_DIR}/${FILE} ]; then
