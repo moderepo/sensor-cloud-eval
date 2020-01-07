@@ -58,7 +58,8 @@ To begin development off MODE's sensor cloud evaluation kit, first obtain the zi
 
 ```sh
 REACT_APP_PROJECT_ID={YOUR_PROJECT_ID}
-REACT_APP_API_KEY={YOUR_REACT_APP_API_KEY}
+REACT_APP_API_KEY={YOUR_API_KEY}
+REACT_APP_APP_ID={YOUR_APP_ID}
 ```
 
 2. `cd` into `sceval_frontend` and run `npm i` or `npm install`. This will install the default app dependencies.
