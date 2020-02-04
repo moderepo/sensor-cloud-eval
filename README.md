@@ -54,11 +54,10 @@ To begin development off MODE's sensor cloud evaluation kit, first obtain the zi
 
 **Assuming you have met the previously mentioned prerequisites**, follow these steps to get up and running in minutes:
 
-1. Create a `.env` file inside of the `/sceval_frontend` directory with the and `REACT_APP_PROJECT_ID` and `REACT_APP_API_KEY` variables associated with your project. Please see the example below:
+1. Create a `.env` file inside of the `/sceval_frontend` directory with the `REACT_APP_PROJECT_ID` and `REACT_APP_ID` variables associated with your project. Please see the example below:
 
 ```sh
 REACT_APP_PROJECT_ID={YOUR_PROJECT_ID}
-REACT_APP_API_KEY={YOUR_API_KEY}
 REACT_APP_APP_ID={YOUR_APP_ID}
 ```
 
