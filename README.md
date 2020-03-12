@@ -69,7 +69,7 @@ REACT_APP_APP_ID={YOUR_APP_ID}
 
 ## Setting Up Custom SMS and Email Templates
 
-The handling of user accounts and authentication involves communication with your users either via SMS texts or emails. MODE allows you to customize the content of these messages so that you can provide your users with the best possible experience. For more information setting up this kind of customization, please take a look at our documentation [here](https://dev.tinkermode.com/docs/handling_user_accounts_authentication.html#customizing-sms-and-email-messages).
+The handling of user accounts and authentication involves communication with your users either via SMS texts or emails. MODE allows you to customize the content of these messages so that you can provide your users with the best possible experience. For more information setting up this kind of customization, please take a look at our documentation [here](https://dev.tinkermode.com/doc/platform/user-accounts).
 
 ## App Navigation
 
