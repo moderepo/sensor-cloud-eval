@@ -42,11 +42,11 @@ To begin development off MODE's sensor cloud evaluation kit, first obtain the zi
 
 ## Prerequisites
 
-1. You will need MODE, Inc. to pre-provision the gateway(s) to your project before running the application
+1. You must have an account with the [MODE Developer Console](https://console.tinkermode.com/console/signup).
 
-2. You will also need to have any sensors you wish to pair with your gateway(s) in your possession.
+2. You will need to pre-provision the gateway(s) for your project and create an App before running the application. Follow the instruction from the [MODE Developer Central](https://dev.tinkermode.com/getting-started/step-one).
 
-3. You must have an account with the [MODE Developer Console](https://console.tinkermode.com/console/signup).
+3. You will also need to have any sensors you wish to pair with your gateway(s) in your possession.
 
 4. If you don't already have node installed, you will need to install Node. The application works with `Node 8.16.0` or `Node 10.16.0` or later version on your local development machine. If you don't already have node, please navigate [here](https://nodejs.org/en/download/) to download the source code compatible with your machine. `NPM is distributed with Node.js`, which means that when you downlaod Node.js, you automatically get npm installed on your computer.
 
