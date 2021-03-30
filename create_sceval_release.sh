@@ -75,7 +75,7 @@ do
 done
 
 # create .env file for the developer so he doesn't need to create one but just need to fill in the values
-echo "REACT_APP_PROJECT_ID=\nREACT_APP_API_KEY=" > "${RELEASE_DIR}/.env"
+echo "REACT_APP_PROJECT_ID=\nREACT_APP_APP_ID" > "${RELEASE_DIR}/.env"
 
 # If releases directory does not exist, create it.
 mkdir -p ${ALL_RELEASES_DIR}
