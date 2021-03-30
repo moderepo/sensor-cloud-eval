@@ -58,12 +58,14 @@ const Login: React.FC<LoginProps> = (props: LoginProps) => {
             // validate email on change
             onChange={event => validateEmail(event)}
             type="email"
+            placeholder="Email Address*"
             className="form-control"
           />
           <input
             // handle password change on user keystroke
             onChange={event => passwordChange(event)}
             type="password"
+            placeholder="Password*"
             className="form-control"
           />
           {error !== '' && 
