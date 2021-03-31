@@ -48,7 +48,7 @@ To begin development off MODE's sensor cloud evaluation kit, first obtain the zi
 
 3. You must have an account with the [MODE Developer Console](https://console.tinkermode.com/console/signup).
 
-4. If you don't already have node installed, you will need to install Node. The application works with `Node 8.16.0` or `Node 10.16.0` or later version on your local development machine. If you don't already have node, please navigate [here](https://nodejs.org/en/download/) to download the source code compatible with your machine. `NPM is distributed with Node.js`, which means that when you downlaod Node.js, you automatically get npm installed on your computer.
+4. If you don't already have node installed, you will need to install Node. The application works with `Node 8.16.0` or `Node 10.16.0` or later version on your local development machine. If you don't already have node, please navigate [here](https://nodejs.org/en/download/) to download the source code compatible with your machine. `NPM is distributed with Node.js`, which means that when you download Node.js, you automatically get npm installed on your computer.
 
 ## Quick Start
 

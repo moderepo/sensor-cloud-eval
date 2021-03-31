@@ -8,12 +8,14 @@ import * as serviceWorker from './serviceWorker';
 
 require('dotenv').config();
 
+if (!process.env.REACT_APP_PROJECT_ID || !process.env.REACT_APP_APP_ID) {
+    throw new Error("Invalid configuration. Please make sure your environment file contain configuration for REACT_APP_PROJECT_ID and REACT_APP_APP_ID");
+}
 
 // from .env
-const projectId = process.env.REACT_APP_PROJECT_ID !== undefined ?
-    parseInt(process.env.REACT_APP_PROJECT_ID, 10) :
-    1235;
-const appId = process.env.REACT_APP_APP_ID !== undefined ? process.env.REACT_APP_APP_ID : 'sceval_app';
+const projectId = parseInt(process.env.REACT_APP_PROJECT_ID, 10);
+const appId = process.env.REACT_APP_APP_ID;
+
 AppContext.setProjectId(projectId);
 AppContext.setAppId(appId);
 
