@@ -10,7 +10,7 @@ ALL_RELEASES_DIR="releases"
 SOURCE_DIR="sceval_frontend"
 
 # The name of the new release directory to be generated, all the files for this released will be stored here and zipped
-RELEASE_DIR="mode_sensor_dev_edition_${RELEASE_NUMBER}"
+RELEASE_DIR="sensor-cloud-eval-${RELEASE_NUMBER}"
 
 # The name of the zip file when the release directory is zipped
 RELEASE_ZIP_FILE="${RELEASE_DIR}.tgz"
