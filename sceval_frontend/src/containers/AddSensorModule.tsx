@@ -14,8 +14,8 @@ import { RouteParams } from '../components/entities/Routes';
 import SensorModuleComp from '../components/SensorModuleComp';
 import { evaluateSensorModelName } from '../utils/SensorTypes';
 // required images imported
-const addModule1 = require('../common_images/sensor_modules/add-module-1.svg');
-const addModule2 = require('../common_images/sensor_modules/add-module-2.svg');
+import addModule1 from '../common_images/sensor_modules/add-module-1.svg';
+import addModule2 from '../common_images/sensor_modules/add-module-2.svg';
 // declared props interface
 interface AddSensorModuleProps extends React.Props<any> {
   isLoggedIn: boolean;

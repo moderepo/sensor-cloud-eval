@@ -2,7 +2,7 @@ import React from 'react';
 import { evaluateSensorTypes, evaluateSensorModelIcon, parseSensorModuleUUID } from '../utils/SensorTypes';
 import '../css/SensorModuleComp.css';
 
-const checkMark = require('../common_images/notifications/check-1.svg');
+import checkMark from '../common_images/notifications/check-1.svg';
 
 interface SensorModuleCompProps extends React.Props<any> {
   id: string;           // Sensor module UUID

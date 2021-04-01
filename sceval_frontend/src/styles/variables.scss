@@ -20,6 +20,14 @@ $saveTransition: visibility 0s 2s, opacity 2s;
 $saveDuration: 3s; // apply to webkit and animation
 $saveFillMode: forwards;
 
+// breakpoints
+// breakpoints
+$monitor-break: 1500px;
+$laptop-break: 1250px;
+$medial-break: 1100px;
+$tabular-break: 900px;
+$mobile-break: 600px;
+
 // application font
 $font-family: "ProximaNova", "Helvetica Neue", Helvetica, Arial, sans-serif;
 

@@ -3,12 +3,11 @@ import { AppContext } from '../controllers/AppContext';
 import { Context, context } from '../context/Context';
 import { Redirect, withRouter, RouteComponentProps } from 'react-router';
 import ClientStorage from '../controllers/ClientStorage';
-import { UserInfo } from 'os';
-import { User, LoginInfo } from '../components/entities/User';
+import { LoginInfo } from '../components/entities/User';
 // required images imported
-const email = require('../common_images/user/acct_email.svg');
-const name = require('../common_images/user/acct_name.svg');
-const password = require('../common_images/user/acct_password.svg');
+import email from '../common_images/user/acct_email.svg';
+import name from '../common_images/user/acct_name.svg';
+import password from '../common_images/user/acct_password.svg';
 
 interface HardwareProps extends React.Props<any> {
   isLoggedIn: boolean;

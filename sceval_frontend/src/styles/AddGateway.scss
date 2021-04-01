@@ -23,10 +23,19 @@
 
 .add-gateway-section {
   background-color: $section-background;
-  height: 100%;
+  min-height: 100vh;
   padding-top: 2vh;
   .add-gateway-header {
     margin-left: 11vw;
+    @media screen and (max-width: $medial-break) {
+      margin-left: 15vw;
+    }
+    @media screen and (max-width: $tabular-break) {
+      margin-left: 19vw;
+    }
+    @media screen and (max-width: $mobile-break) {
+      margin-left: 27vw;
+    }
   }
   .directions {
     margin: 3vh 2vw 2vh 11vw;
@@ -39,12 +48,22 @@
     grid-gap: 1em;
     grid-template-columns: repeat("auto-fit", minmax(200px, 200px));
     grid-auto-flow: row;
+    @media screen and (max-width: $medial-break) {
+      margin: 3vh 4vw 2vh 15vw;
+    }
+    @media screen and (max-width: $tabular-break) {
+      margin: 3vh 4vw 2vh 19vw;
+    }
+    @media screen and (max-width: $mobile-break) {
+      margin: 3vh 4vw 2vh 27vw;
+    }
     .direction-set {
       display: grid;
       grid-template-columns: 1fr 1fr;
       grid-gap: 1em;
       .number-text {
         align-self: center;
+        min-width: 200px;
       }
       p {
         font-family: $font-family;
@@ -56,6 +75,9 @@
         margin-left: 3vw;
         align-self: center;
         max-width: 250px;
+        @media screen and (max-width: $mobile-break) {
+          max-width: 100px;
+        }
       }
     }
   }
