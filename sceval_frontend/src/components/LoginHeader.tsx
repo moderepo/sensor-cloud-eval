@@ -1,6 +1,6 @@
 import React from 'react';
 // import required images
-const modeLogo = require('../common_images/logos/mode-logo-dark.svg');
+import modeLogo from '../common_images/logos/mode-logo-dark.svg';
 
 const LoginHeader: React.FC = () => {
   return (

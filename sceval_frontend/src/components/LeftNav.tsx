@@ -3,9 +3,9 @@ import { NavLink, Redirect } from 'react-router-dom';
 import { Context, context } from '../context/Context';
 import ClientStorage from '../controllers/ClientStorage';
 // import required images
-const modeLogo = require('../common_images/logos/mode-logo.svg');
-const hardware = require('../common_images/navigation/nav-gateway.svg');
-const profile = require('../common_images/navigation/default-avatar.svg');
+import modeLogo from '../common_images/logos/mode-logo.svg';
+import hardware from '../common_images/navigation/nav-gateway.svg';
+import profile from '../common_images/navigation/default-avatar.svg';
 
 const userInfo = ClientStorage.getItem('user-info');
 interface LeftNavProps {

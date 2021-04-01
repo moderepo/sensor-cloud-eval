@@ -10,14 +10,14 @@ import { Context, context } from '../context/Context';
 import SensorModuleComp from '../components/SensorModuleComp';
 import { NavLink } from 'react-router-dom';
 import { useCheckUserLogin, useLoadUserHome, useIsLoading } from '../utils/CustomHooks';
+// required images imported
+import loader from '../common_images/notifications/loading_ring.svg';
+import deviceImage from '../common_images/devices/gateway.svg';
+import deviceLocation from '../common_images/devices/location-pin.svg';
+import plus from '../common_images/buttons/plus.svg';
 
 // use the confirm modal from AntD
 const { confirm } = Modal;
-// required images imported
-const loader = require('../common_images/notifications/loading_ring.svg');
-const deviceImage = require('../common_images/devices/gateway.svg');
-const deviceLocation = require('../common_images/devices/location-pin.svg');
-const plus = require('../common_images/buttons/plus.svg');
 
 interface HardwareProps extends React.Props<any> {
   isLoggedIn: boolean;

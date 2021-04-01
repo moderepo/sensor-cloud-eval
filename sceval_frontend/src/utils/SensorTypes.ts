@@ -4,25 +4,40 @@ import { SensorModuleDefinition } from '../components/entities/SensorModule';
 /**
  * load all the sensor module icons that we know of
  */
-const sensorModuleIconGeneric = require('../common_images/sensor_modules/generic-module.svg');
-const sensorModuleIconAlpsSnm3 = require('../common_images/sensor_modules/alps-snm3.png');
-const sensorModuleIconAlpsSubg1 = require('../common_images/sensor_modules/alps-subg.png');
-const sensorModuleIconOmron2jciebl01 = require('../common_images/sensor_modules/omron-2jcie-bl01.png');
-const sensorModuleIconOmron2jciebu01 = require('../common_images/sensor_modules/omron-2jcie-bu01.png');
-const sensorModuleIconPanasonicEny = require('../common_images/sensor_modules/eny-sensor.png');
-const sensorModuleIconLapiSmj1011 = require('../common_images/sensor_modules/lapis-mj1011.png');
-const sensorModuleIconUniDenshiLogttaCo2Uni02 = require('../common_images/sensor_modules/logtta_co2_uni-02.png');
-const sensorModuleIconMioMS106 = require('../common_images/sensor_modules/mio-sensor-ms_106.png');
-const sensorModuleIconJetecWsc120 = require('../common_images/sensor_modules/jetec-wsc-120.png');
-const sensorModuleIconTwelite2525a = require('../common_images/sensor_modules/twelite-2525a.png');
-const sensorModuleIconRohmSensorMedal = require('../common_images/sensor_modules/rohm-sensor-medal.png');
-const sensorModuleIconRionNl42 = require('../common_images/sensor_modules/rion-nl42.png');
-const sensorModuleIconRionVm55 = require ('../common_images/sensor_modules/rion-vm55.png');
-const sensorModuleIconChugaiDust = require('../common_images/sensor_modules/chugai-dust.png');
-const sensorModuleIconSwTbSensor = require('../common_images/sensor_modules/sw-tb-sensor.jpg');
-const sensorModuleIconDeltaSeatSensor = require('../common_images/sensor_modules/delta-seat-sensor.png');
-const sensorModuleIconTohokChair = require('../common_images/sensor_modules/tohoku-chair.png');
-const sensorModuleIconSwTeSensor = require('../common_images/sensor_modules/sw-te-sensor.jpg');
+import sensorModuleIconGeneric from '../common_images/sensor_modules/generic-module.svg';
+import sensorModuleIconAlpsSnm3 from '../common_images/sensor_modules/alps-snm3.png';
+import sensorModuleIconAlpsSubg1 from '../common_images/sensor_modules/alps-subg.png';
+import sensorModuleIconOmron2jciebl01 from '../common_images/sensor_modules/omron-2jcie-bl01.png';
+import sensorModuleIconOmron2jciebu01 from '../common_images/sensor_modules/omron-2jcie-bu01.png';
+import sensorModuleIconPanasonicEny from '../common_images/sensor_modules/eny-sensor.png';
+import sensorModuleIconLapiSmj1011 from '../common_images/sensor_modules/lapis-mj1011.png';
+import sensorModuleIconUniDenshiLogttaCo2Uni02 from '../common_images/sensor_modules/logtta_co2_uni-02.png';
+import sensorModuleIconMioMS106 from '../common_images/sensor_modules/mio-sensor-ms_106.png';
+import sensorModuleIconJetecWsc120 from '../common_images/sensor_modules/jetec-wsc-120.png';
+import sensorModuleIconTwelite2525a from '../common_images/sensor_modules/twelite-2525a.png';
+import sensorModuleIconRohmSensorMedal from '../common_images/sensor_modules/rohm-sensor-medal.png';
+import sensorModuleIconRionNl42 from '../common_images/sensor_modules/rion-nl42.png';
+import sensorModuleIconRionVm55 from '../common_images/sensor_modules/rion-vm55.png';
+import sensorModuleIconChugaiDust from '../common_images/sensor_modules/chugai-dust.png';
+import sensorModuleIconSwTbSensor from '../common_images/sensor_modules/sw-tb-sensor.jpg';
+import sensorModuleIconDeltaSeatSensor from '../common_images/sensor_modules/delta-seat-sensor.png';
+import sensorModuleIconTohokChair from '../common_images/sensor_modules/tohoku-chair.png';
+import sensorModuleIconSwTeSensor from '../common_images/sensor_modules/sw-te-sensor.jpg';
+
+/**
+ * Load all sensor icon that we know of
+ */
+import sensorHumidity from '../common_images/sensors/humidity-active.svg';
+import sensorLight from '../common_images/sensors/uv-active.svg';
+import sensorUV from '../common_images/sensors/uv-active.svg';
+import sensorPressure from '../common_images/sensors/pressure-active.svg';
+import sensorTemp from '../common_images/sensors/temp-active.svg';
+import sensorCount from '../common_images/sensors/count-active.svg';
+import sensorMagnetic from '../common_images/sensors/battery-active.svg';
+import acceleration from '../common_images/sensors/generic-active.svg';
+import sound from '../common_images/sensors/noise-active.svg';
+import omronDiscomport from '../common_images/sensors/discomfort-active.svg';
+import omronHeatstroke from '../common_images/sensors/heatstroke-active.svg';
 
 /**
  * Build a map of sensor module icon name -> sensor module icon image. The icon name will come
@@ -49,21 +64,6 @@ const sensorModuleIconMap: Map<string, string> = new Map<string, string>(Object.
   'tohoku-chair.png': sensorModuleIconTohokChair,
   'logtta_co2_uni-02.png': sensorModuleIconUniDenshiLogttaCo2Uni02,
 }));
-
-/**
- * Load all sensor icon that we know of
- */
-const sensorHumidity = require('../common_images/sensors/humidity-active.svg');
-const sensorLight = require('../common_images/sensors/uv-active.svg');
-const sensorUV = require('../common_images/sensors/uv-active.svg');
-const sensorPressure = require('../common_images/sensors/pressure-active.svg');
-const sensorTemp = require('../common_images/sensors/temp-active.svg');
-const sensorCount = require('../common_images/sensors/count-active.svg');
-const sensorMagnetic = require('../common_images/sensors/battery-active.svg');
-const acceleration = require('../common_images/sensors/generic-active.svg');
-const sound = require('../common_images/sensors/noise-active.svg');
-const omronDiscomport = require('../common_images/sensors/discomfort-active.svg');
-const omronHeatstroke = require('../common_images/sensors/heatstroke-active.svg');
 
 /**
  * helper method for determining the unit associated with a provided sensor type.

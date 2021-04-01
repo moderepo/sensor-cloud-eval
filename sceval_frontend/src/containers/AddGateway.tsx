@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { withRouter, RouteComponentProps, NavLink } from 'react-router-dom';
 import { Input } from 'antd';
-import { LoginInfo } from '../components/entities/User';
-import { Home } from '../components/entities/API';
 import modeAPI from '../controllers/ModeAPI';
 import { useCheckUserLogin, useLoadUserHome } from '../utils/CustomHooks';
 // required images imported
-const connect = require('../common_images/devices/1-plug.svg');
-const gw = require('../common_images/devices/gateway-large.svg');
-const numbers = require('../common_images/devices/numbers.svg');
+import connect from '../common_images/devices/1-plug.svg';
+import gw from '../common_images/devices/gateway-large.svg';
+import numbers from '../common_images/devices/numbers.svg';
 
 const AddGateway = withRouter((props: RouteComponentProps) => {
   // Get user login info

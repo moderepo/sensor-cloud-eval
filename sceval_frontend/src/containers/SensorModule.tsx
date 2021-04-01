@@ -27,10 +27,9 @@ import { Home } from '../components/entities/API';
 import { RouteParams } from '../components/entities/Routes';
 import handleErrors from '../utils/ErrorMessages';
 import { useCheckUserLogin, useLoadUserHome } from '../utils/CustomHooks';
-import { LoginInfo } from '../components/entities/User';
 
-const loader = require('../common_images/notifications/loading_ring.svg');
-const backArrow = require('../common_images/navigation/back.svg');
+import loader from '../common_images/notifications/loading_ring.svg';
+import backArrow from '../common_images/navigation/back.svg';
 const debounce = require('debounce');
 
 // declare the SensorModuleProps interface

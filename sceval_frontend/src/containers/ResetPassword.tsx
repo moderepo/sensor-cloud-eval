@@ -5,7 +5,7 @@ import { AppContext } from '../controllers/AppContext';
 import modeAPI from '../controllers/ModeAPI';
 import { ErrorResponse } from '../components/entities/API';
 // required images imported
-const emailSent = require('../common_images/notifications/email_sent.svg');
+import emailSent from '../common_images/notifications/email_sent.svg';
 
 const ResetPassword: React.FC = () => {
   // email input state
