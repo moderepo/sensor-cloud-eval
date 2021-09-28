@@ -112,7 +112,7 @@ export const useIsLoading = (...args: boolean[]): boolean => {
         }) === true
       );
     }
-  }, args);
+  }, [args]);
 
   return isLoading;
 };
