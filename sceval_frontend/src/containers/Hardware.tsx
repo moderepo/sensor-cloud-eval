@@ -124,7 +124,6 @@ const useLoadDevicesModules = (devices: Device[] | undefined): [SensorModuleSet[
 };
 
 const Hardware = withRouter((props: HardwareProps & RouteComponentProps) => {
-  console.log('Render Hardware');
   const loginInfoState = useCheckUserLogin();
   const loadHomeState = useLoadUserHome(loginInfoState.loginInfo);
   const loadDevicesState = useLoadHomeDevices(loadHomeState.home);
