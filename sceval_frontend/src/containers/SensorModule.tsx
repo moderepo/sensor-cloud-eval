@@ -1,4 +1,4 @@
-import React, { useEffect, useState, Fragment } from 'react';
+import React, { useEffect, useState, Fragment, useRef } from 'react';
 import { NavLink, withRouter, RouteComponentProps, Redirect } from 'react-router-dom';
 import { AmChart } from '../components/AmChart';
 import { ErrorResponse, TimeSeriesData, TimeSeriesInfo, TimeSeriesBounds, DataPoint } from '../components/entities/API';
@@ -91,7 +91,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
   const [realtimeMode, setRealtimeMode] = useState<boolean>(false);
 
   // to keep track of component mounted/unmounted event so we don't call set state when component is unmounted
-  let componentUnmounted: boolean;
+  const componentUnmounted = useRef<boolean>(false);
 
   /**
    * Given an Array of TimeSeriesData objects, return the time series data in a map using time series id as keys
@@ -722,12 +722,12 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
   // React hook's componentDidMount and componentDidUpdate
   useEffect(() => {
-    componentUnmounted = false;
+    componentUnmounted.current = false;
 
     // websocket message handler for RT data
     const webSocketMessageHandler: any = {
       notify: (message: any): void => {
-        if (componentUnmounted) {
+        if (componentUnmounted.current) {
           return;
         }
 
@@ -781,7 +781,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
 
     // Return cleanup function to be called when the component is unmounted
     return (): void => {
-      componentUnmounted = true;
+      componentUnmounted.current = true;
       ModeConnection.removeObserver(webSocketMessageHandler);
     };
     // method invoke dependencies
