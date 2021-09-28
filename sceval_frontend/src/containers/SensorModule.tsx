@@ -718,6 +718,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
           setIsLoadingTSData(false);
         });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadHomeState.home, selectedGateway, selectedModule, selectedSensorModuleObj]);
 
   // React hook's componentDidMount and componentDidUpdate
@@ -1054,6 +1055,7 @@ export const SensorModule = withRouter((props: SensorModuleProps & RouteComponen
         fetchDetailedData(masterDateBounds);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [realtimeMode, masterDateBounds]);
 
   /**
