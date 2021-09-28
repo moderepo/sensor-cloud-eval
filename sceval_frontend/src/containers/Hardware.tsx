@@ -42,15 +42,21 @@ const useLoadHomeDevices = (home: Home | undefined): LoadDevicesState => {
 
   useEffect(() => {
     if (home) {
-      setState({ ...state, isLoading: true });
+      setState((currentState) => {
+          return { ...currentState, isLoading: true }
+      });
       modeAPI
         .getDevices(home.id)
         .then((devices: Device[]): void => {
-          setState({ ...state, devices: devices, isLoading: false });
+          setState((currentState) => {
+              return { ...currentState, devices: devices, isLoading: false }
+          });
         })
         .catch((error: ErrorResponse) => {
           // Unable to get devices
-          setState({ ...state, isLoading: false });
+          setState((currentState) => {
+              return { ...currentState, isLoading: false }
+          });
         });
     }
   }, [home]);
@@ -77,7 +83,9 @@ const useLoadDevicesModules = (devices: Device[] | undefined): [SensorModuleSet[
 
   useEffect(() => {
     const loadModules = async (): Promise<void> => {
-      setState({ ...state, isLoading: true });
+      setState((currentState) => {
+          return { ...currentState, isLoading: true }
+      });
 
       // declare linkedModules array of type SensorModuleSet
       const newLinkedModules: SensorModuleSet[] = [];
@@ -108,7 +116,9 @@ const useLoadDevicesModules = (devices: Device[] | undefined): [SensorModuleSet[
         return a.device.id - b.device.id;
       });
 
-      setState({ ...state, modules: newLinkedModules, isLoading: false });
+      setState((currentState) => {
+          return { ...currentState, modules: newLinkedModules, isLoading: false }
+      });
     };
     loadModules();
   }, [devices]);
