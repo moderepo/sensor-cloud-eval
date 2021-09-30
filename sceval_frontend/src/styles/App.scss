@@ -13,7 +13,5 @@
 body {
   background-color: $base-background;
   font-family: $font-family;
-  -webkit-font-smoothing: unset;  /* Unset font-smoothing setting interited from one of the libraries we are using */
-  -moz-font-smoothing: unset;
-  -ms-font-smoothing: unset;
+  font-smoothing: unset;  /* Unset font-smoothing setting inherited from one of the libraries we are using */
 }

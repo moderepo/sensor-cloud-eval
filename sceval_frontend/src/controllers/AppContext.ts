@@ -141,7 +141,6 @@ export class AppContext {
       AppContext.loginInfo = loginInfo;
 
       if (loginInfo && loginInfo.user && loginInfo.authToken) {
-        console.log('Validating saved login for', loginInfo.user);
         modeAPI.setAuthToken(loginInfo.authToken);
         modeAPI
           .getUserInfo(loginInfo.user.id)

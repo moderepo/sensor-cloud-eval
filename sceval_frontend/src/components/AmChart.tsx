@@ -211,6 +211,7 @@ export const AmChart: React.FC<AmChartProps> = (props: AmChartProps) => {
         // nothing
       };
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },        [sensorChart, props.zoomEventDispatchDelay, props.hasFocus]);
 
   /**

@@ -240,7 +240,6 @@ export class ModeAPI {
   public async getHome(userId: number): Promise<Home> {
     if (this.defaultHome === null) {
       const homes: Home[] = await this.getHomes(userId);
-      console.log('GET /homes - success');
       if (homes.length > 0) {
         // pick the first home
         this.defaultHome = homes[0];
@@ -654,7 +653,6 @@ export class ModeAPI {
       this.makeHomePromise = this.request('POST', 'homes', {
         name: 'home'
       }).then((response: any) => {
-        console.log('POST /homes success');
         this.defaultHome = response.data;
         return response.data;
       });
