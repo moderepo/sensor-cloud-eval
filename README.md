@@ -56,12 +56,12 @@ To begin development off MODE's sensor cloud evaluation kit, first obtain the zi
 
 1. Create a `.env` file inside of the `/sceval_frontend` directory with the `REACT_APP_PROJECT_ID` and `REACT_APP_ID` variables associated with your project. Please see the example below:
 
-```sh
+```shell
 REACT_APP_PROJECT_ID={YOUR_PROJECT_ID}
 REACT_APP_APP_ID={YOUR_APP_ID}
 ```
 
-2. `cd` into `sceval_frontend` and run `npm i` or `npm install`. This will install the default app dependencies.
+2. `cd` into `sceval_frontend` and run `npm ci`. This will install the default app dependencies.
 
 3. Run `npm start` to immediately bring up the application at http://localhost:3000.
 
@@ -79,8 +79,8 @@ SCEVAL provides a way for a developer to add gateways to his/her project. In ord
 
 To properly configure the shell script, you will need to obtain the device ID and associated API key, assigning them to the correct variables. Once add, you can run:
 
-```sh
-$ sh provision.sh
+```shell
+sh provision.sh
 ```
 
 Once you run the script, you will be able to add the claim code within the app. To do so, navigate to the Hardware page, click `Add Gateway` and enter the claim code found on your device. Once successfully added, the developer will see that a new gateway was added to their project.
@@ -162,7 +162,7 @@ Below are some examples pertaining to the usage of **REST endpoints**.
 `/users`  
 To create [user](https://dev.tinkermode.com/docs/api/models.html#user) a user with an email and password, create a POST request with the following parameters:
 
-```javascript
+```
 projectId: {project id},
 email: {email},
 password: {password},
@@ -172,7 +172,7 @@ name: {name}
 `/auth/users`  
 To verify a user's credentials, create a POST request with the following parameters to check whether or not the user exists.
 
-```javascript
+```
 projectId: {project id},
 appId: {app id},
 email: {email},
@@ -182,7 +182,7 @@ password: {password}
 `/users/{userId}`  
 To update a user's name and/or password, create a PATCH request with the following parameters.
 
-```javascript
+```
 name: {newName},
 password: {newPassword}
 ```
@@ -192,7 +192,7 @@ password: {newPassword}
 `/devices/{deviceId}/kv/{sensorModuleId}`  
 MODE stores key-value pairs in a given home to manage kinds of data, including sensor data. One can associate or disassociate sensor modules to/from a particular gateway by using a PUT or DELETE request and the following payload parameters. It's worth mentioning that the `arrayOfSensorsActive` can be used to enable/disable sensing of particular sensors within a given sensor module.
 
-```javascript
+```
 id: {sensorModuleId},
 sensing: 'on',
 interval: '30',
@@ -206,35 +206,35 @@ Sending commands to gateways within a project can allow the user to control the 
 
 - Using the `startDiscovery` command
 
-```javascript
+```
 action: 'startDiscovery',
 parameters: { timeout: 1000 }
 ```
 
 - Using the `listSensorModules` command
 
-```javascript
+```
 action: 'listSensorModules',
 parameters: { timeout: 1000 }
 ```
 
 - Using the `getSensorModuleStatus` command
 
-```javascript
+```
 action: 'getSensorModuleStatus',
 parameters: { sensorId: {sensorId} }
 ```
 
 - Using the `syncClock` command
 
-```javascript
+```
 action: 'syncClock',
 parameters: { sensorId: {sensorId} }
 ```
 
 - Using the `getLog` command
 
-```javascript
+```
 action: 'getLog',
 parameters: { sensorId: {sensorId} }
 ```
@@ -263,8 +263,8 @@ SCEVAL provides a built-in Dockerfile for generating Docker images to run as con
 
 To create a local Docker image of your customized SCEVAL application, go to the root of the directory and run:
 
-```sh
-$ docker build . -t {your app name}
+```shell
+docker build . -t {your app name}
 ```
 
 This will build your docker image locally, using React's `npm run-script build` method for production. This image can then be pushed to a containerized service like Dockerhub or Amazon Fargate.
