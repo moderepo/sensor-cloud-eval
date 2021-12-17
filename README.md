@@ -1,5 +1,9 @@
 <img align="right" src="sceval_frontend/src/common_images/logos/mode-logo.svg">
 
+# IMPORTANT NOTICE
+
+**As of Decemver 2021, MODE has discontinued official support of Sensor Cloud Eval. No futher updates will be made to this repo.**
+
 # Sensor-Cloud-Eval
 
 Sensor Cloud Eval is a **TSX version** of MODE's Sensor Cloud, developed to be used as an evaluation kit by business partners and app developers. The codebase outlines the latest SPA development design from React / Typescript, including [context](https://reactjs.org/docs/context.html) and [flux-style data flow](https://facebook.github.io/flux/), [hooks](https://reactjs.org/docs/hooks-intro.html), [websockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_client_applications), and more.
